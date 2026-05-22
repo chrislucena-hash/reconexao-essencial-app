@@ -1,49 +1,46 @@
-# Backend Routes & Data Model (Firebase)
+# Backend Routes, Data Model & AI Services
 
-This application is completely "serverless" and client-side driven, meaning it does not have a traditional Express.js or Node.js backend. Instead, it interacts directly with Firebase services (Firestore Database & Firebase Authentication) from the client SDK (`firebase.ts`).
+This application is completely "serverless" and client-side driven. It doesn't use a traditional backend server like Express.js or Node.js. Instead, the "backend" consists of direct integrations with Firebase (Firestore Database & Authentication) and the Google Gemini API, all managed securely from the client SDKs.
 
-The "routes" are effectively the paths to collections and documents within the Firestore database, governed by security rules (`firestore.rules`).
+Below is the comprehensive list of all routes, collections, data models, and services from the backend layer to the database.
 
 ---
 
-## Authentication
+## 1. Authentication (Firebase Auth)
 
-Authentication is handled securely via Firebase Authentication.
-The main provider being used is:
-*   **Email and Password**
+Login data and credentials come directly from the **Firebase Console** (Google's backend).
+The main provider being used is **Email and Password**.
 
 ### Login Flow Constraints
-*   The application does not allow "Account Creation/Sign Up" from the UI. It expects users to use specific credentials provisioned externally (e.g., via Hotmart/Firebase Admin).
-*   Users must authenticate with their registered Email and Password.
+*   **No UI Sign up:** The application does not allow "Account Creation" natively. It acts as a locked portal.
+*   **Provisioning:** Users access the platform using credentials previously provisioned from external sales/membership platforms (e.g., Hotmart) via Firebase Admin or pre-cadred directly inside the Firebase Console.
+*   The application connects to Google Firebase Auth using SDK `signInWithEmailAndPassword`.
 
 ---
 
-## Firestore Database Routes / Collections
+## 2. Firestore Database Routes / Collections
 
-Access to these collections is restricted by Firestore Security Rules. All write operations validate schema and types before saving.
+Access to these collections is restricted by Firestore Security Rules (`firestore.rules`). All write operations validate schema and types before saving.
 
-### 1. Users Collection
-
-Contains user profiles and progression states.
+### 👥 Users Collection
+Contains user profiles, progression states, and roles.
 *   **Path:** `/users/{userId}`
-*   **Access:**
-    *   **Read:** Only the owner (`userId == auth.uid`) or Admins.
-    *   **Write:** Only the owner or Admins. Users cannot change their own role to 'admin'.
+*   **Access Rules:** Read/Write by Owner or Admins. Users cannot change their own role to 'admin'.
 *   **Fields:**
-    *   `name` (string)
+    *   `name` (string, required)
     *   `email` (string, optional)
     *   `phone` (string, optional)
     *   `startDate` (string, optional)
     *   `awakeningScore` (number, optional)
-    *   `hasSeenWarning` (boolean)
-    *   `hasAcceptedTerms` (boolean)
+    *   `hasSeenWarning` (boolean, required)
+    *   `hasAcceptedTerms` (boolean, required)
     *   `isOnPath` (boolean, optional)
     *   `role` (string, default: 'client')
 
-#### 1A. User Logs Subcollection
-Contains daily reflection logs and tracking.
+#### ➡️ 1A. User Logs Subcollection
+Daily reflection logs and tracking, generated or entered daily.
 *   **Path:** `/users/{userId}/logs/{logId}` (Where `logId` is usually `YYYY-MM-DD`)
-*   **Access:** Owner or Admin only.
+*   **Access Rules:** Owner or Admin only.
 *   **Fields:**
     *   `date` (string)
     *   `reflection` (string, optional)
@@ -51,47 +48,66 @@ Contains daily reflection logs and tracking.
     *   `awarenessLevel` (number, 1-5, optional)
     *   `completedActions` (map/object, optional)
 
-#### 1B. User Journey Subcollection
+#### ➡️ 1B. User Journey Subcollection
+Stores states of long-term challenges or journeys (e.g., the 21 days reset).
 *   **Path:** `/users/{userId}/journey/{docId}`
-*   **Access:** Owner or Admin only.
+*   **Access Rules:** Owner or Admin only.
 
 ---
 
-### 2. Posts Collection
-
-Contains social sharing and community engagement posts.
+### 🌐 Posts Collection
+Community feed, social sharing, and user engagement posts.
 *   **Path:** `/posts/{postId}`
-*   **Access:**
+*   **Access Rules:**
     *   **Read:** Any authenticated user.
     *   **Create:** Any authenticated user (must be authored by them).
-    *   **Update:** Only the author (or any authenticated user, if only updating `likes`).
-    *   **Delete:** Only the author or Admins.
+    *   **Update:** Author (or any authenticated user, if only updating `likes`).
+    *   **Delete:** Author or Admins.
 *   **Fields:**
-    *   `author` (string)
-    *   `authorId` (string, matches `auth.uid`)
+    *   `author` (string, required)
+    *   `authorId` (string, matches `auth.uid`, required)
     *   `avatar` (string, optional)
-    *   `content` (string, < 2000 chars)
-    *   `timestamp` (number)
+    *   `content` (string, < 2000 chars, required)
+    *   `timestamp` (number, required)
     *   `likes` (number, optional)
 
-#### 2A. Post Comments Subcollection
-Contains replies to posts.
+#### ➡️ 2A. Post Comments Subcollection
+Replies and conversations embedded inside a specific post.
 *   **Path:** `/posts/{postId}/comments/{commentId}`
-*   **Access:**
-    *   **Read:** Any authenticated user.
-    *   **Create:** Any authenticated user (must be authored by them).
-    *   **Delete:** Only the author or Admins.
+*   **Access Rules:** Read/Create by any authenticated user. Delete by Author or Admin.
 *   **Fields:**
-    *   `author` (string)
-    *   `authorId` (string, matches `auth.uid`)
-    *   `text` (string, < 500 chars)
-    *   `timestamp` (number)
+    *   `author` (string, required)
+    *   `authorId` (string, matches `auth.uid`, required)
+    *   `text` (string, < 500 chars, required)
+    *   `timestamp` (number, required)
 
 ---
 
-## Roles and Admin Access
+## 3. Roles and Admin Access
 
 *   The system uses Role-Based Access Control (RBAC).
-*   A user can be granted the `admin` role by manually setting `role: 'admin'` on their user document in the Firebase Console.
-*   Additionally, the email `chrislucena@gmail.com` is hardcoded as an Admin when their email is strictly verified.
-*   Admin users have global read/write/delete access across all users, logs, and posts.
+*   A user can be granted the `admin` role by manually setting `role: 'admin'` on their user document in the **Firebase Console**.
+*   **Super Admin:** The email `chrislucena@gmail.com` is hardcoded as an Admin when their email is strictly verified.
+*   Admin users bypass the "Owner Only" constraints and have global read/write/delete access across all users, logs, and posts.
+
+---
+
+## 4. Artificial Intelligence Services (Gemini API)
+
+The backend logic for AI content generation acts dynamically through the **Google GenAI SDK** (located in `services/geminiService.ts`). It makes secure HTTP serverless calls to the Gemini models to compute data in real-time.
+
+### Text & JSON Generation (Model: `gemini-3-flash-preview` and `gemini-3-pro-preview`)
+*   **`generateDailyInsight()`**: Generates daily spiritual guidance, exercises (safe bioenergetics), and reflections (JSON response).
+*   **`analyzeSoulJourney(logs)`**: Deep semantic analysis of the last 5 days of a user's logs to return an evolutionary insight.
+*   **`generateDailyContent()`**: Generates nutrition plans free of gluten, dairy, sugar, and veg oils.
+*   **`generateRecipeOptions(mealType)`**: Generates 5 dietary-compliant recipe variations.
+*   **`generateFermentationRecipe()`**: Returns recipes for probiotic healing (Kefir, Kombucha, etc.).
+*   **`generatePurificationTips()`**: Tips for natural biological purification.
+*   **`generateAlchemistRecipe(ingredients)`**: Analyzes the user's available ingredients and creates a compliant custom recipe.
+*   **`moderateContent(text)`**: Auto-moderation tool for social posts (checks for hate speech, spam, violence).
+
+### Image Generation (Model: `gemini-2.5-flash-image`)
+*   **`generateAppCover()`**: Dynamically prompts for mystical and atmospheric background artwork generation.
+
+### Audio Generation (Model: `gemini-2.5-flash-preview-tts`)
+*   **`generateSpeech(text, instruction)`**: Converts generated guided texts and instructions into a soothing audio narration using Text-to-Speech (Kore voice profile).
