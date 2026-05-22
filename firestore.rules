@@ -1,0 +1,132 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (auth.uid)
+    // Fields:
+    //   - name: string (required)
+    //   - email: string (optional)
+    //   - phone: string (optional)
+    //   - startDate: string (optional)
+    //   - awakeningScore: number (optional)
+    //   - hasSeenWarning: bool (required)
+    //   - hasAcceptedTerms: bool (required)
+    //   - isOnPath: bool (optional)
+    //   - role: string (optional, default 'client')
+    //
+    // Collection: users/{userId}/logs
+    // Document ID: logId (date string YYYY-MM-DD)
+    // Fields:
+    //   - date: string (required)
+    //   - reflection: string (optional)
+    //   - energyLevel: number (optional, 1-5)
+    //   - awarenessLevel: number (optional, 1-5)
+    //   - completedActions: map (optional)
+    //
+    // Collection: posts
+    // Document ID: postId
+    // Fields:
+    //   - author: string (required)
+    //   - authorId: string (required)
+    //   - avatar: string (optional)
+    //   - content: string (required, < 1000 chars)
+    //   - timestamp: number (required)
+    //   - likes: number (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "chrislucena@gmail.com" && request.auth.token.email_verified == true));
+    }
+    
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.hasSeenWarning is bool &&
+             data.hasAcceptedTerms is bool &&
+             (!('email' in data) || isValidEmail(data.email)) &&
+             (!('role' in data) || data.role in ['admin', 'client']);
+    }
+
+    function isValidPost(data) {
+      return data.author is string && data.author.size() > 0 &&
+             data.authorId == request.auth.uid &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 2000 &&
+             data.timestamp is number;
+    }
+
+    function isValidComment(data) {
+      return data.author is string && data.author.size() > 0 &&
+             data.authorId == request.auth.uid &&
+             data.text is string && data.text.size() > 0 && data.text.size() < 500 &&
+             data.timestamp is number;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && 
+                      (request.resource.data.role == 'client' || isAdmin());
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
+                      (request.resource.data.role == resource.data.role || isAdmin());
+      
+      match /logs/{logId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+      
+      match /journey/{docId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    match /posts/{postId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidPost(request.resource.data);
+      allow update: if isAuthenticated() && (
+        (request.auth.uid == resource.data.authorId && isValidPost(request.resource.data)) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) // Simplified like update
+      );
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || isAdmin());
+      
+      match /comments/{commentId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && isValidComment(request.resource.data);
+        allow delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || isAdmin());
+      }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Reconexão Essencial",
+  "description": "Inicie sua jornada de autoconhecimento e autocuidado. Reconecte-se com sua essência através de uma autocura profunda, guiada pela centelha divina que já habita em você. O despertar que você busca começa agora.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

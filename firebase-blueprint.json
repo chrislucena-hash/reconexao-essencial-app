@@ -1,0 +1,135 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information and awakening status",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "User's name" },
+        "email": { "type": "string", "format": "email", "description": "User's email" },
+        "phone": { "type": "string", "description": "User's phone number" },
+        "startDate": { "type": "string", "description": "Date the user started the journey" },
+        "awakeningScore": { "type": "number", "description": "Current awakening score" },
+        "hasSeenWarning": { "type": "boolean", "description": "Whether the user has seen the medical warning" },
+        "hasAcceptedTerms": { "type": "boolean", "description": "Whether the user has accepted the terms" },
+        "isOnPath": { "type": "boolean", "description": "Whether the user is currently on the path" },
+        "favoriteActivities": { "type": "array", "items": { "type": "string" }, "description": "List of favorite activities" }
+      },
+      "required": ["name", "hasSeenWarning", "hasAcceptedTerms"]
+    },
+    "DailyLog": {
+      "title": "DailyLog",
+      "description": "Daily spiritual and physical log",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "description": "Date of the log (YYYY-MM-DD)" },
+        "spiritualPractices": {
+          "type": "object",
+          "properties": {
+            "morning": { "type": "string" },
+            "afternoon": { "type": "string" },
+            "evening": { "type": "string" }
+          }
+        },
+        "reflection": { "type": "string" },
+        "energyLevel": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "awarenessLevel": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "synchronicities": { "type": "string" },
+        "shadowObservations": { "type": "string" },
+        "foodRecord": {
+          "type": "object",
+          "properties": {
+            "breakfast": { "type": "string" },
+            "lunch": { "type": "string" },
+            "dinner": { "type": "string" },
+            "snacks": { "type": "string" },
+            "waterGlasses": { "type": "integer" },
+            "fastingHours": { "type": "integer" }
+          }
+        },
+        "completedActions": {
+          "type": "object",
+          "properties": {
+            "purification": { "type": "boolean" },
+            "nourishment": { "type": "boolean" },
+            "movement": { "type": "boolean" },
+            "nature": { "type": "boolean" },
+            "presence": { "type": "boolean" },
+            "shadowWork": { "type": "boolean" },
+            "study": { "type": "boolean" },
+            "gratitude": { "type": "boolean" },
+            "journaling": { "type": "boolean" },
+            "journeyTask": { "type": "boolean" },
+            "dailyChallenge": { "type": "boolean" },
+            "alignmentConfirmed": { "type": "boolean" }
+          }
+        }
+      },
+      "required": ["date"]
+    },
+    "CommunityPost": {
+      "title": "CommunityPost",
+      "description": "A post in the community feed",
+      "type": "object",
+      "properties": {
+        "author": { "type": "string" },
+        "authorId": { "type": "string" },
+        "avatar": { "type": "string" },
+        "content": { "type": "string" },
+        "image": { "type": "string" },
+        "video": { "type": "string" },
+        "caption": { "type": "string" },
+        "likes": { "type": "integer" },
+        "comments": { "type": "integer" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["author", "authorId", "content", "timestamp"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "A comment on a community post",
+      "type": "object",
+      "properties": {
+        "author": { "type": "string" },
+        "authorId": { "type": "string" },
+        "avatar": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["author", "authorId", "text", "timestamp"]
+    },
+    "JourneyProgress": {
+      "title": "JourneyProgress",
+      "description": "User's progress in the 21-day journey",
+      "type": "object",
+      "properties": {
+        "currentDay": { "type": "integer" },
+        "lastCompletedDate": { "type": "string" },
+        "completedDays": { "type": "array", "items": { "type": "integer" } }
+      },
+      "required": ["currentDay"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document"
+    },
+    "/users/{userId}/logs/{logId}": {
+      "schema": "DailyLog",
+      "description": "Daily logs for the user"
+    },
+    "/users/{userId}/journey/progress": {
+      "schema": "JourneyProgress",
+      "description": "User's journey progress"
+    },
+    "/posts/{postId}": {
+      "schema": "CommunityPost",
+      "description": "Community posts"
+    },
+    "/posts/{postId}/comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Comments on a post"
+    }
+  }
+}
