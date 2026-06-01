@@ -18,7 +18,7 @@ service cloud.firestore {
     //   - hasSeenWarning: bool (required)
     //   - hasAcceptedTerms: bool (required)
     //   - isOnPath: bool (optional)
-    //   - role: string (optional, default 'client')
+    //   - role: string (required, default 'client')
     //
     // Collection: users/{userId}/logs
     // Document ID: logId (date string YYYY-MM-DD)
@@ -76,7 +76,7 @@ service cloud.firestore {
              data.hasSeenWarning is bool &&
              data.hasAcceptedTerms is bool &&
              (!('email' in data) || isValidEmail(data.email)) &&
-             (!('role' in data) || data.role in ['admin', 'client']);
+             data.role in ['admin', 'client'];
     }
 
     function isValidPost(data) {
@@ -102,7 +102,9 @@ service cloud.firestore {
       allow create: if isOwner(userId) && isValidUser(request.resource.data) && 
                       (request.resource.data.role == 'client' || isAdmin());
       allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
-                      (request.resource.data.role == resource.data.role || isAdmin());
+                      (request.resource.data.role == resource.data.role ||
+                       (!('role' in resource.data) && request.resource.data.role == 'client') ||
+                       isAdmin());
       
       match /logs/{logId} {
         allow read, write: if isOwner(userId) || isAdmin();

@@ -95,7 +95,7 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile }) 
   }
 
   return (
-    <div className="p-4 pb-32 max-w-2xl mx-auto space-y-10 animate-in fade-in">
+    <div className="store-page navigated-screen p-4 pb-32 max-w-2xl mx-auto space-y-10 animate-in fade-in">
       <header className="text-center space-y-4">
         <div className="flex items-center justify-center gap-2 text-aura-violet">
           <TrendingUp size={20} className="animate-pulse" />

@@ -382,7 +382,7 @@ const Wellness: React.FC = () => {
   };
 
   return (
-    <div className="p-4 pb-32 max-w-2xl mx-auto space-y-12 animate-in fade-in">
+    <div className="store-page navigated-screen p-4 pb-32 max-w-2xl mx-auto space-y-12 animate-in fade-in">
       <header className="px-4 text-center space-y-3">
         <div className="flex items-center justify-center gap-2 text-magic-gold">
           <Stars size={16} />

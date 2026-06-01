@@ -121,7 +121,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
 
   if (step === 'intro') {
     return (
-      <div className="p-8 min-h-screen flex flex-col justify-center items-center text-center animate-in fade-in">
+      <div className="safe-screen p-4 sm:p-8 flex flex-col justify-center items-center text-center animate-in fade-in">
         <div className="glass-mystic p-10 rounded-[3rem] space-y-8 max-w-sm border-magic-gold/20 shadow-[0_0_50px_rgba(212,175,55,0.1)]">
           <div className="w-20 h-20 bg-magic-gold/20 rounded-full flex items-center justify-center mx-auto border border-magic-gold/30">
             <Flame size={36} className="text-magic-gold" />
@@ -148,7 +148,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
 
   if (step === 'symptoms') {
     return (
-      <div className="p-4 pt-12 pb-32 space-y-8 animate-in fade-in">
+      <div className="store-page navigated-screen p-4 pt-12 pb-32 space-y-8 animate-in fade-in">
         <header className="px-4 text-center space-y-2">
           <h2 className="text-3xl font-serif text-white tracking-tight italic">Exame do Templo</h2>
           <p className="text-[10px] font-black text-magic-gold uppercase tracking-[0.3em]">Passo 1: Sensibilidades e Inflamação</p>
@@ -242,7 +242,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-6 md:px-8 py-8 bg-gradient-to-t from-ethereal-950 via-ethereal-950 to-transparent z-50">
+        <div className="safe-action-bar fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-6 md:px-8 py-8 bg-gradient-to-t from-ethereal-950 via-ethereal-950 to-transparent z-50">
           <button 
             onClick={() => setStep('spiritual')}
             className="w-full bg-white text-nature-950 py-6 rounded-[2.5rem] font-bold shadow-2xl transition-all active:scale-95"
@@ -256,7 +256,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
 
   if (step === 'spiritual') {
     return (
-      <div className="p-4 pt-12 pb-32 space-y-8 animate-in fade-in">
+      <div className="store-page navigated-screen p-4 pt-12 pb-32 space-y-8 animate-in fade-in">
         <header className="px-4 text-center space-y-2">
           <h2 className="text-3xl font-serif text-white tracking-tight italic">Exame do Espírito</h2>
           <p className="text-[10px] font-black text-aura-indigo uppercase tracking-[0.3em]">Passo 2: A Senda da Alma</p>
@@ -291,7 +291,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-6 md:px-8 py-8 bg-gradient-to-t from-ethereal-950 via-ethereal-950 to-transparent z-50 flex gap-3">
+        <div className="safe-action-bar fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-6 md:px-8 py-8 bg-gradient-to-t from-ethereal-950 via-ethereal-950 to-transparent z-50 flex gap-3">
           <button 
             onClick={() => setStep('symptoms')}
             className="flex-1 bg-white/5 text-white py-6 rounded-[2.5rem] font-bold border border-white/10 transition-all active:scale-95"
@@ -311,7 +311,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
 
   if (step === 'result') {
     return (
-      <div className="p-8 flex flex-col items-center justify-center min-h-screen animate-in zoom-in">
+      <div className="safe-screen p-4 sm:p-8 flex flex-col items-center justify-center animate-in zoom-in">
         <div className="text-center space-y-12 w-full max-w-sm">
           <div className="relative w-48 h-48 mx-auto">
             <div className="absolute inset-0 bg-magic-gold/10 blur-[50px] rounded-full animate-pulse" />
@@ -354,7 +354,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
 
   if (step === 'movement') {
     return (
-      <div className="p-4 pt-12 pb-32 space-y-8 animate-in fade-in">
+      <div className="store-page navigated-screen p-4 pt-12 pb-32 space-y-8 animate-in fade-in">
         <header className="px-4 text-center space-y-2">
           <h2 className="text-3xl font-serif text-white tracking-tight italic">Movimento Amado</h2>
           <p className="text-[10px] font-black text-aura-teal uppercase tracking-[0.3em]">Passo Final: O Prazer de Habitar o Corpo</p>
@@ -389,7 +389,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-6 md:px-8 py-8 bg-gradient-to-t from-ethereal-950 via-ethereal-950 to-transparent z-50 flex gap-3">
+        <div className="safe-action-bar fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-6 md:px-8 py-8 bg-gradient-to-t from-ethereal-950 via-ethereal-950 to-transparent z-50 flex gap-3">
           <button 
             onClick={() => setStep('result')}
             className="flex-1 bg-white/5 text-white py-6 rounded-[2.5rem] font-bold border border-white/10 transition-all active:scale-95"

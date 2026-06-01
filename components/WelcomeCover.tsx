@@ -5,14 +5,20 @@ import { generateAppCover } from '../services/geminiService';
 
 interface WelcomeCoverProps {
   onStart: () => void;
+  preview?: boolean;
 }
 
-const WelcomeCover: React.FC<WelcomeCoverProps> = ({ onStart }) => {
+const WelcomeCover: React.FC<WelcomeCoverProps> = ({ onStart, preview = false }) => {
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showManifesto, setShowManifesto] = useState(false);
 
   useEffect(() => {
+    if (preview) {
+      setLoading(false);
+      return;
+    }
+
     const fetchCover = async () => {
       setLoading(true);
       const img = await generateAppCover();
@@ -20,10 +26,10 @@ const WelcomeCover: React.FC<WelcomeCoverProps> = ({ onStart }) => {
       setLoading(false);
     };
     fetchCover();
-  }, []);
+  }, [preview]);
 
   return (
-    <div className="fixed inset-0 z-[200] bg-aura-deep flex flex-col items-center justify-center overflow-hidden">
+    <div className="safe-overlay fixed inset-0 z-[200] bg-aura-deep flex flex-col items-center justify-center overflow-hidden">
       {/* Background Cinematográfico e Vibrante */}
       <div className="absolute inset-0 transition-opacity duration-[3000ms]">
         {coverImage ? (
@@ -116,7 +122,7 @@ const WelcomeCover: React.FC<WelcomeCoverProps> = ({ onStart }) => {
 
       {/* Modal Manifesto - Magnético */}
       {showManifesto && (
-        <div className="fixed inset-0 z-[300] bg-aura-deep/95 backdrop-blur-3xl flex items-center justify-center p-8 animate-in fade-in duration-700">
+        <div className="safe-overlay fixed inset-0 z-[300] bg-aura-deep/95 backdrop-blur-3xl flex items-center justify-center p-8 animate-in fade-in duration-700">
           <div className="relative w-full max-w-sm glass-mystic p-12 rounded-[4rem] iridescent-border shadow-[0_0_100px_rgba(139,92,246,0.2)] text-center space-y-10 animate-in zoom-in duration-500 overflow-hidden">
             <button 
               onClick={() => setShowManifesto(false)}

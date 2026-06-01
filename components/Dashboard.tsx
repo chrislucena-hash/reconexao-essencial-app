@@ -19,9 +19,10 @@ interface DashboardProps {
   logs: DailyLog[];
   onToggleGoal: (goalKey: keyof DailyLog['completedActions']) => void;
   setView: (view: AppView) => void;
+  preview?: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, setView }) => {
+const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, setView, preview = false }) => {
   const [insight, setInsight] = useState<string | null>(null);
   const [loadingInsight, setLoadingInsight] = useState(false);
   const [dailyContent, setDailyContent] = useState<DailyContent | null>(null);
@@ -42,6 +43,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
   const [journeyTask, setJourneyTask] = useState("");
 
   useEffect(() => {
+    if (preview) {
+      setJourneyDay(7);
+      setJourneyPercent(29);
+      setJourneyTitle(INITIAL_JOURNEY[6].title);
+      setJourneyTask(INITIAL_JOURNEY[6].task);
+      return;
+    }
+
     const saved = localStorage.getItem('soul_journey_progress');
     if (saved) {
       try {
@@ -60,9 +69,13 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
       setJourneyTitle(INITIAL_JOURNEY[0].title);
       setJourneyTask(INITIAL_JOURNEY[0].task);
     }
-  }, []);
+  }, [preview]);
 
   useEffect(() => {
+    if (preview) {
+      return;
+    }
+
     const fetchContent = async () => {
       setLoadingContent(true);
       const content = await generateDailyContent();
@@ -70,7 +83,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
       setLoadingContent(false);
     };
     fetchContent();
-  }, []);
+  }, [preview]);
 
   const todaysGoals = useMemo(() => {
     const activityMap: Record<string, string> = {
@@ -110,6 +123,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
   const allTasksDone = completedCount >= totalGoals;
 
   useEffect(() => {
+    if (preview) {
+      return;
+    }
+
     const fetchInsight = async () => {
       if (logs.length >= 2 && !insight) {
         setLoadingInsight(true);
@@ -119,10 +136,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
       }
     };
     fetchInsight();
-  }, [logs]);
+  }, [logs, insight, preview]);
 
   return (
-    <div className="p-6 pb-40 max-w-2xl mx-auto space-y-12 animate-in fade-in relative">
+    <div className="store-page navigated-screen p-4 sm:p-6 pb-40 max-w-2xl mx-auto space-y-12 animate-in fade-in relative">
       <header className="flex justify-between items-end">
         <div className="space-y-2">
           <p className="text-aura-gold font-black text-[10px] uppercase tracking-[0.5em] animate-pulse">Portal do Início</p>
@@ -469,7 +486,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
 
       {/* Modal de Confirmação de Alinhamento */}
       {showConfirmation && (
-        <div className="fixed inset-0 z-[100] bg-ethereal-950/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-500">
+        <div className="safe-overlay fixed inset-0 z-[100] bg-ethereal-950/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-500">
           <div className="glass-mystic border border-white/10 w-full max-w-md rounded-[3rem] p-10 flex flex-col items-center text-center space-y-8 shadow-2xl animate-in zoom-in duration-500">
             <div className="w-20 h-20 bg-aura-violet/20 rounded-full flex items-center justify-center text-aura-violet shadow-[0_0_30px_rgba(139,92,246,0.2)]">
               <StarIcon size={36} className="animate-spin-slow" />

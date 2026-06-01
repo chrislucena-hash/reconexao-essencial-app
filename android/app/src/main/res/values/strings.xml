@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Reconexao Essencial</string>
+    <string name="title_activity_main">Reconexao Essencial</string>
+    <string name="package_name">com.reconexaoessencial</string>
+    <string name="custom_url_scheme">com.reconexaoessencial</string>
+</resources>

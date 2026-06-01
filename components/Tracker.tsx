@@ -127,7 +127,7 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs }) => {
   };
 
   return (
-    <div className="p-4 pb-40 max-w-2xl mx-auto space-y-12 animate-in fade-in">
+    <div className="store-page navigated-screen p-4 pb-40 max-w-2xl mx-auto space-y-12 animate-in fade-in">
       <header className="px-4 text-center">
         <h2 className="text-4xl font-serif text-white italic tracking-tighter">Livro de Espelhos</h2>
         <p className="text-magic-gold text-[10px] uppercase tracking-[0.4em] font-black mt-2">Portal do Diário</p>

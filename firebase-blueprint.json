@@ -13,9 +13,10 @@
         "hasSeenWarning": { "type": "boolean", "description": "Whether the user has seen the medical warning" },
         "hasAcceptedTerms": { "type": "boolean", "description": "Whether the user has accepted the terms" },
         "isOnPath": { "type": "boolean", "description": "Whether the user is currently on the path" },
-        "favoriteActivities": { "type": "array", "items": { "type": "string" }, "description": "List of favorite activities" }
+        "favoriteActivities": { "type": "array", "items": { "type": "string" }, "description": "List of favorite activities" },
+        "role": { "type": "string", "enum": ["admin", "client"], "description": "Authorization role" }
       },
-      "required": ["name", "hasSeenWarning", "hasAcceptedTerms"]
+      "required": ["name", "hasSeenWarning", "hasAcceptedTerms", "role"]
     },
     "DailyLog": {
       "title": "DailyLog",

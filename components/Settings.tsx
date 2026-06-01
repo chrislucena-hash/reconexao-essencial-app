@@ -55,7 +55,7 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
   };
 
   return (
-    <div className="min-h-screen pb-40 p-6 space-y-8 animate-in fade-in duration-500">
+    <div className="store-page navigated-screen min-h-screen pb-40 p-4 sm:p-6 space-y-8 animate-in fade-in duration-500">
       <header className="flex items-center gap-4">
         <button 
           onClick={() => setView(AppView.DASHBOARD)}
@@ -200,7 +200,7 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-ethereal-950/95 backdrop-blur-2xl flex items-center justify-center p-6"
+            className="safe-overlay fixed inset-0 z-[100] bg-ethereal-950/95 backdrop-blur-2xl flex items-center justify-center p-6"
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}

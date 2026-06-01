@@ -1,0 +1,24 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from .config import get_settings
+from .routers.users import router as users_router
+
+settings = get_settings()
+app = FastAPI(title="Reconexao Essencial API", version="0.1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/api/v1/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+app.include_router(users_router, prefix="/api/v1")

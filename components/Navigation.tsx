@@ -20,7 +20,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView }) => {
   ];
 
   return (
-    <div className="fixed bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 w-[95%] xs:w-[92%] max-w-md md:max-w-2xl lg:max-w-3xl bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] sm:rounded-[3rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] z-50 p-2 sm:p-3 iridescent-border overflow-hidden">
+    <div className="safe-nav fixed bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 w-[95%] xs:w-[92%] max-w-md md:max-w-2xl lg:max-w-3xl bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] sm:rounded-[3rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] z-50 p-2 sm:p-3 iridescent-border overflow-hidden">
       <div className="flex justify-around items-center h-14 sm:h-16 relative">
         {navItems.map((item) => (
           <button

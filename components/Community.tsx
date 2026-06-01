@@ -1,20 +1,11 @@
 
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, Image as ImageIcon, Video as VideoIcon, X, Send, Sparkles, Edit3, Save, MoreVertical, Camera, Play, Pause, Star, ShieldAlert, Loader2, Trash2, Flag } from 'lucide-react';
+import { Heart, MessageCircle, Share2, X, Send, Sparkles, MoreVertical, Play, Pause, Star, ShieldAlert, Loader2, Trash2, Flag } from 'lucide-react';
 import { CommunityPost } from '../types';
 import { moderateContent } from '../services/geminiService';
 import { useFirebase } from './FirebaseProvider';
 import { collection, onSnapshot, query, orderBy, limit, addDoc, deleteDoc, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase';
-
-const MOCK_POSTS: CommunityPost[] = [];
-
-const MOMENTS = [
-  { id: 'm1', author: 'Guia', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=100&auto=format&fit=crop', video: 'https://www.w3schools.com/html/movie.mp4' },
-  { id: 'm2', author: 'Ana', avatar: 'https://picsum.photos/50/50?random=10', video: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-  { id: 'm3', author: 'João', avatar: 'https://picsum.photos/50/50?random=2', video: 'https://www.w3schools.com/html/movie.mp4' },
-  { id: 'm4', author: 'Bia', avatar: 'https://picsum.photos/50/50?random=30', video: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-];
 
 type FilterType = 'recent' | 'liked' | 'following';
 
@@ -25,8 +16,7 @@ const Community: React.FC = () => {
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [followedAuthors, setFollowedAuthors] = useState<Set<string>>(new Set());
   const [newPost, setNewPost] = useState('');
-  const [newCaption, setNewCaption] = useState('');
-  const [activeMoment, setActiveMoment] = useState<typeof MOMENTS[0] | null>(null);
+  const [activeMoment, setActiveMoment] = useState<CommunityPost | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [showIndicator, setShowIndicator] = useState(false);
   const [isModerating, setIsModerating] = useState(false);
@@ -35,8 +25,6 @@ const Community: React.FC = () => {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(50));
@@ -62,6 +50,9 @@ const Community: React.FC = () => {
     }
     return result;
   }, [posts, activeFilter, followedAuthors]);
+
+  const moments = useMemo(() => posts.filter(post => Boolean(post.video)).slice(0, 12), [posts]);
+  const currentAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.name || 'Buscador')}&background=random`;
 
   const toggleFollow = (authorName: string) => {
     setFollowedAuthors(prev => {
@@ -121,7 +112,7 @@ const Community: React.FC = () => {
       const postData = {
         author: userProfile?.name || 'Buscador',
         authorId: user.uid,
-        avatar: userProfile?.name ? `https://ui-avatars.com/api/?name=${userProfile.name}&background=random` : 'https://picsum.photos/50/50?random=99',
+        avatar: currentAvatar,
         content: newPost,
         likes: 0,
         comments: 0,
@@ -152,7 +143,7 @@ const Community: React.FC = () => {
   };
 
   return (
-    <div className="p-4 pb-32 max-w-2xl mx-auto space-y-10 animate-in fade-in">
+    <div className="store-page navigated-screen p-4 pb-32 max-w-2xl mx-auto space-y-10 animate-in fade-in">
       <header className="flex flex-col items-center text-center gap-2">
         <h2 className="text-4xl font-serif text-white tracking-tighter italic leading-tight">Tribo Essência</h2>
         <p className="text-magic-gold text-[10px] font-black uppercase tracking-[0.4em]">Portal da Tribo</p>
@@ -160,17 +151,12 @@ const Community: React.FC = () => {
 
       {/* Moments Bar */}
       <section className="flex items-center gap-5 overflow-x-auto no-scrollbar py-4 px-2">
-        <div className="flex flex-col items-center gap-2 shrink-0">
-          <button 
-            onClick={() => videoInputRef.current?.click()}
-            className="w-16 h-16 rounded-full glass-mystic border-2 border-dashed border-magic-gold/30 flex items-center justify-center text-magic-gold hover:border-magic-gold transition-all active:scale-95 shadow-[0_0_20px_rgba(212,175,55,0.1)] group"
-          >
-            <Camera size={24} className="group-hover:scale-110 transition-transform" />
-          </button>
-          <span className="text-[8px] font-black text-ethereal-500 uppercase tracking-widest">Ritual</span>
-        </div>
-
-        {MOMENTS.map((moment) => (
+        {moments.length === 0 && (
+          <p className="text-[10px] text-ethereal-500 uppercase tracking-widest py-5">
+            Nenhum video publicado pela comunidade.
+          </p>
+        )}
+        {moments.map((moment) => (
           <div 
             key={moment.id} 
             onClick={() => {
@@ -193,7 +179,7 @@ const Community: React.FC = () => {
       <div className="glass-mystic p-8 rounded-[3rem] shadow-2xl border border-white/5 space-y-6 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-magic-gold/5 blur-3xl pointer-events-none" />
         <div className="flex gap-4 mb-4">
-          <img src="https://picsum.photos/50/50?random=99" className="w-12 h-12 rounded-full border-2 border-magic-gold/20 shadow-md" alt="Você" />
+          <img src={currentAvatar} className="w-12 h-12 rounded-full border-2 border-magic-gold/20 shadow-md" alt="Você" />
           <textarea
             className="w-full bg-white/5 border border-white/5 rounded-[2rem] p-6 text-sm text-ethereal-100 focus:border-magic-gold/30 outline-none resize-none placeholder:text-ethereal-700 italic leading-relaxed transition-all"
             placeholder="O que pulsa em sua alma agora?"
@@ -204,13 +190,7 @@ const Community: React.FC = () => {
         </div>
 
         <div className="flex justify-between items-center border-t border-white/5 pt-6">
-          <div className="flex gap-3">
-            <button className="p-4 text-ethereal-400 hover:text-magic-gold bg-white/5 hover:bg-white/10 rounded-2xl transition-all"><ImageIcon size={22} /></button>
-            <button className="p-4 text-indigo-400 bg-white/5 hover:bg-white/10 rounded-2xl transition-all flex items-center gap-3">
-              <VideoIcon size={22} />
-              <span className="text-[9px] font-black uppercase tracking-widest hidden sm:inline">Vibração em Vídeo</span>
-            </button>
-          </div>
+          <p className="text-[9px] font-black uppercase tracking-widest text-ethereal-600">Publicacao em texto</p>
           <button 
             onClick={handlePost}
             disabled={!newPost.trim() || isModerating}
@@ -269,7 +249,7 @@ const Community: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-3">
                     <h4 className="font-serif text-lg text-white font-bold italic">{post.author}</h4>
-                    {post.author !== 'Você' && (
+                    {post.authorId !== user?.uid && (
                       <button 
                         onClick={() => toggleFollow(post.author)}
                         className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${
@@ -296,7 +276,7 @@ const Community: React.FC = () => {
                 </button>
                 {activeMenuId === post.id && (
                   <div className="absolute right-0 top-full mt-2 w-48 glass-mystic border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in zoom-in duration-200">
-                    {post.author === 'Você' ? (
+                    {post.authorId === user?.uid ? (
                       <button 
                         onClick={() => deletePost(post.id)}
                         className="w-full px-6 py-4 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-rose-400 hover:bg-rose-500/10 transition-all"
@@ -361,7 +341,7 @@ const Community: React.FC = () => {
 
       {/* Moment Immersive Player */}
       {activeMoment && (
-        <div className="fixed inset-0 z-[300] bg-black flex flex-col animate-in fade-in duration-500">
+        <div className="safe-overlay fixed inset-0 z-[300] bg-black flex flex-col animate-in fade-in duration-500">
           <div className="absolute top-0 inset-x-0 p-8 flex justify-between items-center z-[310] bg-gradient-to-b from-black/80 to-transparent">
             <div className="flex items-center gap-4">
               <img src={activeMoment.avatar} className="w-12 h-12 rounded-full border-2 border-magic-gold shadow-lg" alt="" />

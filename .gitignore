@@ -10,7 +10,21 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.tools/
 *.local
+.env
+__pycache__/
+*.py[cod]
+.venv/
+backend/*service-account*.json
+android/.gradle/
+android/local.properties
+android/key.properties
+android/*.jks
+android/*.keystore
+android/app/*.jks
+android/app/*.keystore
+ios/App/App/public/
 
 # Editor directories and files
 .vscode/*

@@ -21,11 +21,22 @@ import {
   Stars,
   Flower2
 } from 'lucide-react';
-import { JourneyDay, JourneyProgress } from '../types';
+import { JourneyProgress, UserProfile } from '../types';
 import { INITIAL_JOURNEY } from '../constants';
+import { isBackendConfigured, saveBackendProgress } from '../services/apiClient';
 
-const Journey: React.FC = () => {
+interface JourneyProps {
+  userProfile: UserProfile;
+  preview?: boolean;
+}
+
+const Journey: React.FC<JourneyProps> = ({ userProfile, preview = false }) => {
   const [progress, setProgress] = useState<JourneyProgress>(() => {
+    if (preview) {
+      const days = INITIAL_JOURNEY.map((day, index) => ({ ...day, completed: index < 6 }));
+      return { currentDay: 7, days, lastCompletedDate: '2026-05-25' };
+    }
+
     const saved = localStorage.getItem('soul_journey_progress');
     if (saved) {
       try {
@@ -38,8 +49,17 @@ const Journey: React.FC = () => {
   });
 
   useEffect(() => {
-    localStorage.setItem('soul_journey_progress', JSON.stringify(progress));
-  }, [progress]);
+    if (!preview) {
+      localStorage.setItem('soul_journey_progress', JSON.stringify(progress));
+    }
+    if (!preview && isBackendConfigured) {
+      const completedCount = progress.days.filter(day => day.completed).length;
+      const progressPercent = Math.round((completedCount / progress.days.length) * 100);
+      saveBackendProgress('jornada-21-dias', progressPercent, userProfile).catch(error => {
+        console.error('Error syncing journey progress:', error);
+      });
+    }
+  }, [progress, userProfile, preview]);
 
   const toggleDay = (dayNum: number) => {
     const today = new Date().toISOString().split('T')[0];
@@ -72,7 +92,7 @@ const Journey: React.FC = () => {
   const progressPercent = Math.round((completedCount / 21) * 100);
 
   return (
-    <div className="p-4 pb-32 max-w-2xl mx-auto space-y-8 animate-in fade-in">
+    <div className="store-page navigated-screen p-4 pb-32 max-w-2xl mx-auto space-y-8 animate-in fade-in">
       <header className="text-center space-y-4">
         <div className="flex items-center justify-center gap-2 text-magic-gold">
           <Compass size={20} className="animate-spin-slow" />

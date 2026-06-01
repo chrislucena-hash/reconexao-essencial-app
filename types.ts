@@ -28,9 +28,10 @@ export interface UserProfile {
   startDate: string | null;
   awakeningScore: number;
   hasSeenWarning: boolean;
-  hasAcceptedTerms?: boolean;
+  hasAcceptedTerms: boolean;
   isOnPath: boolean;
   favoriteActivities?: string[];
+  role?: 'admin' | 'client';
 }
 
 export interface DailyLog {
@@ -72,6 +73,7 @@ export interface DailyLog {
 export interface Comment {
   id: string;
   author: string;
+  authorId: string;
   avatar: string;
   text: string;
   timestamp: number;
@@ -80,6 +82,7 @@ export interface Comment {
 export interface CommunityPost {
   id: string;
   author: string;
+  authorId: string;
   avatar: string;
   content: string;
   image?: string;

@@ -5,7 +5,7 @@ import { auth } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
 interface DisclaimerScreenProps {
-  onAccept: (email: string) => void;
+  onAccept: (email: string) => void | Promise<void>;
 }
 
 const DisclaimerScreen: React.FC<DisclaimerScreenProps> = ({ onAccept }) => {
@@ -33,7 +33,7 @@ const DisclaimerScreen: React.FC<DisclaimerScreenProps> = ({ onAccept }) => {
     try {
       // Sign In only
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      onAccept(email.trim());
+      await onAccept(email.trim());
     } catch (err: any) {
       console.error("Auth error:", err);
       let errMsg = 'Erro ao processar autenticação.';
@@ -51,7 +51,7 @@ const DisclaimerScreen: React.FC<DisclaimerScreenProps> = ({ onAccept }) => {
   };
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 flex flex-col items-center justify-center bg-ethereal-950 text-white animate-in fade-in duration-700">
+    <div className="safe-screen p-4 sm:p-6 flex flex-col items-center justify-center bg-ethereal-950 text-white animate-in fade-in duration-700">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

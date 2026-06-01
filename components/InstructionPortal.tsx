@@ -17,7 +17,7 @@ const InstructionPortal: React.FC<InstructionPortalProps> = ({ onProceed }) => {
   ];
 
   return (
-    <div className="min-h-screen p-8 flex flex-col items-center justify-center space-y-10 animate-in fade-in">
+    <div className="safe-screen p-4 sm:p-8 flex flex-col items-center justify-center space-y-10 animate-in fade-in">
       <header className="text-center space-y-4">
         <div className="w-20 h-20 bg-magic-gold/10 rounded-full flex items-center justify-center mx-auto border border-magic-gold/30 shadow-[0_0_40px_rgba(212,175,55,0.2)]">
           <Flame size={36} className="text-magic-gold animate-pulse" />

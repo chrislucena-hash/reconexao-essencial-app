@@ -47,10 +47,16 @@ import {
   generatePurificationTips
 } from '../services/geminiService';
 import { DailyInsight, DailyContent, Recipe } from '../types';
+import { UserProfile } from '../types';
+import { endBackendFastingSession, isBackendConfigured, startBackendFastingSession } from '../services/apiClient';
 
 const FASTING_WINDOWS = [12, 14, 16, 18, 24];
 
-const Guidance: React.FC = () => {
+interface GuidanceProps {
+  userProfile: UserProfile;
+}
+
+const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
   const [activeSubTab, setActiveSubTab] = useState<'jornada' | 'autocura' | 'alquimista' | 'saude-intestinal'>('jornada');
   const [content, setContent] = useState<DailyContent | null>(null);
   const [insight, setInsight] = useState<DailyInsight | null>(null);
@@ -70,6 +76,7 @@ const Guidance: React.FC = () => {
   const [loadingExtras, setLoadingExtras] = useState(false);
   const [fastingWindow, setFastingWindow] = useState<number>(16);
   const [isFasting, setIsFasting] = useState(false);
+  const [fastingSession, setFastingSession] = useState<Awaited<ReturnType<typeof startBackendFastingSession>> | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -143,6 +150,30 @@ const Guidance: React.FC = () => {
     setLoadingExtras(false);
   };
 
+  const toggleFasting = async () => {
+    if (!isFasting) {
+      setIsFasting(true);
+      if (isBackendConfigured) {
+        try {
+          setFastingSession(await startBackendFastingSession(fastingWindow, userProfile));
+        } catch (error) {
+          console.error('Error starting fasting session:', error);
+        }
+      }
+      return;
+    }
+
+    setIsFasting(false);
+    if (isBackendConfigured && fastingSession) {
+      try {
+        await endBackendFastingSession(fastingSession);
+        setFastingSession(null);
+      } catch (error) {
+        console.error('Error ending fasting session:', error);
+      }
+    }
+  };
+
   const handleShare = (recipe: Recipe) => {
     const shareText = `Confira esta alquimia nutritiva do ReViva: ${recipe.title}. ✨`;
     if (navigator.share) {
@@ -163,7 +194,7 @@ const Guidance: React.FC = () => {
   }
 
   return (
-    <div className="p-4 pb-28 max-w-2xl mx-auto space-y-8 animate-in fade-in">
+    <div className="store-page navigated-screen p-4 pb-28 max-w-2xl mx-auto space-y-8 animate-in fade-in">
        <header className="space-y-1 text-center">
           <h2 className="text-4xl font-serif text-white italic">Bússola da Alma</h2>
           <p className="text-aura-gold text-[10px] font-black uppercase tracking-widest">Portal do Guia</p>
@@ -453,7 +484,7 @@ const Guidance: React.FC = () => {
               </div>
 
               <button 
-                 onClick={() => setIsFasting(!isFasting)}
+                 onClick={toggleFasting}
                  className={`w-full py-5 rounded-[2.5rem] font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-2xl ${
                     isFasting ? 'bg-rose-950/50 text-rose-400 border border-rose-900' : 'bg-white text-nature-950 hover:scale-105 active:scale-95'
                  }`}
@@ -631,7 +662,7 @@ const Guidance: React.FC = () => {
 
       {/* MODAL DE ALTERNATIVAS DE RECEITAS */}
       {showOptionsModal && (
-        <div className="fixed inset-0 z-[100] bg-ethereal-950/90 backdrop-blur-xl flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="safe-overlay fixed inset-0 z-[100] bg-ethereal-950/90 backdrop-blur-xl flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
            <div className="bg-aura-deep border border-white/10 w-full max-w-lg rounded-[3rem] overflow-hidden max-h-[85vh] flex flex-col shadow-2xl">
               <header className="p-8 border-b border-white/5 flex justify-between items-center bg-white/5">
                  <div>

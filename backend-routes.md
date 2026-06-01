@@ -1,8 +1,31 @@
 # Backend Routes, Data Model & AI Services
 
-This application is completely "serverless" and client-side driven. It doesn't use a traditional backend server like Express.js or Node.js. Instead, the "backend" consists of direct integrations with Firebase (Firestore Database & Authentication) and the Google Gemini API, all managed securely from the client SDKs.
+This application supports two backend modes. Without `VITE_API_URL`, the client uses Firebase directly. With `VITE_API_URL` configured, compatible data is synchronized with the official FastAPI service cloned at `../reconexao-essencial-backend/backend_fastapi`.
+
+Firestore remains responsible for the complete React profile, daily-log and community models while the current FastAPI contract covers identity, consent, a compatible journal projection, journey progress and fasting sessions. Community feed and Gemini features continue to use their existing client-side integrations.
 
 Below is the comprehensive list of all routes, collections, data models, and services from the backend layer to the database.
+
+---
+
+## 0. FastAPI Integration (Implemented)
+
+*   **Health check:** `GET /health`
+*   **Identity sync:** `POST /api/v1/auth/sync-user`
+*   **Medical disclaimer consent:** `POST /api/v1/auth/consents`
+*   **Journal projection:** `POST /api/v1/journal/entries`
+*   **21-day journey progress:** `PUT /api/v1/progress/modules/jornada-21-dias`
+*   **Fasting start/end:** `POST /api/v1/fasting/sessions`, `PUT /api/v1/fasting/sessions/{id}`
+*   **Authentication:** Protected endpoints require `Authorization: Bearer <FIREBASE_ID_TOKEN>`.
+*   **Frontend client:** `services/apiClient.ts` sends the authenticated user's Firebase token when `VITE_API_URL` is defined.
+
+### Verified, But Not Yet Wired To Screens
+
+The official API also responds correctly for assessment submissions, autocura sessions and evolution snapshots. Their existing React screens still use local/Firebase-derived state and need field mapping before those endpoints can supplement the current flow.
+
+### Persistence Constraint
+
+The official FastAPI repository currently stores API records in Python in-memory repositories. These calls work locally, but API records are lost when the backend process restarts. Firestore remains the durable store for frontend data already saved there.
 
 ---
 
@@ -83,6 +106,10 @@ Replies and conversations embedded inside a specific post.
 
 ---
 
+### Community UI Status
+
+The visible Moments strip is populated only from real post documents containing a `video` field; demonstration videos and placeholder avatars were removed. Media upload, comments, share actions and persisted reports/follows are not implemented by the current screen.
+
 ## 3. Roles and Admin Access
 
 *   The system uses Role-Based Access Control (RBAC).
@@ -94,7 +121,7 @@ Replies and conversations embedded inside a specific post.
 
 ## 4. Artificial Intelligence Services (Gemini API)
 
-The backend logic for AI content generation acts dynamically through the **Google GenAI SDK** (located in `services/geminiService.ts`). It makes secure HTTP serverless calls to the Gemini models to compute data in real-time.
+AI content generation is invoked in the browser through the **Google GenAI SDK** (located in `services/geminiService.ts`) when `GEMINI_API_KEY` is configured. For production this should be proxied through a backend route so the API key is not shipped to clients. Without the key, AI content is unavailable and community moderation blocks new posts rather than approving content without verification.
 
 ### Text & JSON Generation (Model: `gemini-3-flash-preview` and `gemini-3-pro-preview`)
 *   **`generateDailyInsight()`**: Generates daily spiritual guidance, exercises (safe bioenergetics), and reflections (JSON response).

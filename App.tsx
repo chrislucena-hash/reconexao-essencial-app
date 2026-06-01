@@ -16,20 +16,92 @@ import Settings from './components/Settings';
 import { FirebaseProvider, useFirebase } from './components/FirebaseProvider';
 import { AppView, UserProfile, DailyLog } from './types';
 import { Compass, Sparkles, X, Flame, Loader2 } from 'lucide-react';
-import { doc, setDoc, collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import { db, auth } from './firebase';
+import { isBackendConfigured, saveBackendConsent, saveBackendJournalEntry, syncBackendUser } from './services/apiClient';
+
+const screenshotPreview = import.meta.env.DEV
+  && new URLSearchParams(window.location.search).get('preview') === 'screenshots';
+
+const screenshotView = (() => {
+  const requestedView = new URLSearchParams(window.location.search).get('screen') as AppView | null;
+  return requestedView && Object.values(AppView).includes(requestedView) ? requestedView : AppView.WELCOME;
+})();
+
+const screenshotProfile: UserProfile = {
+  name: 'Luna',
+  email: 'luna@reconexao.app',
+  startDate: '2026-05-12T10:00:00.000Z',
+  awakeningScore: 84,
+  hasSeenWarning: true,
+  hasAcceptedTerms: true,
+  isOnPath: true,
+  favoriteActivities: ['yoga', 'walk'],
+  role: 'client',
+};
+
+const createScreenshotLogs = (): DailyLog[] => {
+  const today = new Date();
+
+  return [0, 1, 2, 3, 4, 5, 6].map((daysAgo) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() - daysAgo);
+
+    return {
+      date: date.toISOString().split('T')[0],
+      spiritualPractices: {
+        morning: 'Respiracao consciente e intencao',
+        afternoon: 'Pausa de presenca',
+        evening: 'Gratidao e silencio',
+      },
+      reflection: 'Senti mais clareza e serenidade ao honrar meu ritmo hoje.',
+      synchronicities: 'Encontrei a mensagem certa no momento certo.',
+      shadowObservations: 'Observei a autocobranca com acolhimento.',
+      energyLevel: daysAgo >= 5 ? 3 : daysAgo >= 2 ? 4 : 5,
+      awarenessLevel: daysAgo >= 5 ? 3 : daysAgo >= 3 ? 4 : 5,
+      foodRecord: {
+        breakfast: 'Frutas e cha',
+        lunch: 'Vegetais e graos',
+        dinner: 'Sopa leve',
+        snacks: 'Castanhas',
+        waterGlasses: 8,
+        fastingHours: 12,
+      },
+      completedActions: {
+        purification: true,
+        nourishment: true,
+        movement: daysAgo !== 2,
+        nature: true,
+        presence: true,
+        shadowWork: daysAgo < 4,
+        study: true,
+        gratitude: true,
+        journaling: true,
+        journeyTask: daysAgo !== 3,
+        dailyChallenge: daysAgo < 5,
+        alignmentConfirmed: daysAgo !== 2,
+      },
+    };
+  });
+};
 
 const AppContent: React.FC = () => {
   const { user, userProfile: fbProfile, loading: fbLoading } = useFirebase();
-  const [currentView, setCurrentView] = useState<AppView>(AppView.WELCOME);
-  const [userProfile, setUserProfile] = useState<UserProfile>({
+  const [currentView, setCurrentView] = useState<AppView>(screenshotPreview ? screenshotView : AppView.WELCOME);
+  const [userProfile, setUserProfile] = useState<UserProfile>(screenshotPreview ? screenshotProfile : {
     name: 'Buscador',
     startDate: null,
     awakeningScore: 0,
     hasSeenWarning: false,
+    hasAcceptedTerms: false,
     isOnPath: false,
+    role: 'client',
   });
   const [logs, setLogs] = useState<DailyLog[]>(() => {
+    if (screenshotPreview) {
+      return createScreenshotLogs();
+    }
+
     try {
       const saved = localStorage.getItem('reconexao_daily_logs');
       return saved ? JSON.parse(saved) : [];
@@ -41,6 +113,10 @@ const AppContent: React.FC = () => {
 
   // Sync local profile with Firebase profile and handle initial routing
   useEffect(() => {
+    if (screenshotPreview) {
+      return;
+    }
+
     if (fbProfile) {
       setUserProfile(fbProfile);
       
@@ -56,6 +132,10 @@ const AppContent: React.FC = () => {
 
   // Enforce login gate - do not allow browsing inside the app if logged out
   useEffect(() => {
+    if (screenshotPreview) {
+      return;
+    }
+
     if (!fbLoading && !user) {
       if (currentView !== AppView.WELCOME && currentView !== AppView.DISCLAIMER) {
         setCurrentView(AppView.WELCOME);
@@ -65,6 +145,10 @@ const AppContent: React.FC = () => {
 
   // Sync logs from Firebase
   useEffect(() => {
+    if (screenshotPreview) {
+      return;
+    }
+
     if (user) {
       const logsRef = collection(db, 'users', user.uid, 'logs');
       const q = query(logsRef, orderBy('date', 'desc'), limit(30));
@@ -81,7 +165,7 @@ const AppContent: React.FC = () => {
 
   // Trigger nudge on view change
   useEffect(() => {
-    if (userProfile.isOnPath && currentView !== AppView.WELCOME && currentView !== AppView.DIAGNOSIS && currentView !== AppView.INSTRUCTIONS) {
+    if (!screenshotPreview && userProfile.isOnPath && currentView !== AppView.WELCOME && currentView !== AppView.DIAGNOSIS && currentView !== AppView.INSTRUCTIONS) {
       setShowNavNudge(true);
       const timer = setTimeout(() => {
         setShowNavNudge(false);
@@ -105,6 +189,9 @@ const AppContent: React.FC = () => {
     if (user) {
       try {
         await setDoc(doc(db, 'users', user.uid), { ...userProfile, ...updates }, { merge: true });
+        if (isBackendConfigured) {
+          await syncBackendUser({ ...userProfile, ...updates });
+        }
       } catch (err) {
         console.error("Error saving profile:", err);
       }
@@ -127,6 +214,9 @@ const AppContent: React.FC = () => {
     if (user) {
       try {
         await setDoc(doc(db, 'users', user.uid, 'logs', log.date), log);
+        if (isBackendConfigured) {
+          await saveBackendJournalEntry(log, userProfile);
+        }
       } catch (err) {
         console.error("Error saving log:", err);
       }
@@ -184,6 +274,9 @@ const AppContent: React.FC = () => {
     if (user) {
       try {
         await setDoc(doc(db, 'users', user.uid, 'logs', today), newLog);
+        if (isBackendConfigured) {
+          await saveBackendJournalEntry(newLog, userProfile);
+        }
       } catch (err) {
         console.error("Error toggling goal:", err);
       }
@@ -191,7 +284,49 @@ const AppContent: React.FC = () => {
   };
 
   const handleAcceptDisclaimer = async (email: string) => {
-    if (userProfile && userProfile.isOnPath) {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      return;
+    }
+
+    let acceptedProfile = userProfile;
+
+    const userDocRef = doc(db, 'users', currentUser.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+      acceptedProfile = {
+        name: 'Buscador',
+        email,
+        startDate: null,
+        awakeningScore: 0,
+        hasSeenWarning: true,
+        hasAcceptedTerms: true,
+        isOnPath: false,
+        role: 'client',
+      };
+      await setDoc(userDocRef, acceptedProfile);
+    } else {
+      const savedProfile = userDoc.data() as UserProfile;
+      acceptedProfile = { ...savedProfile, hasAcceptedTerms: true, role: savedProfile.role ?? 'client' };
+
+      if (!savedProfile.hasAcceptedTerms || !savedProfile.role) {
+        await setDoc(userDocRef, {
+          hasAcceptedTerms: true,
+          role: acceptedProfile.role,
+        }, { merge: true });
+      }
+    }
+
+    setUserProfile(acceptedProfile);
+
+    if (isBackendConfigured) {
+      await syncBackendUser(acceptedProfile, email);
+      await saveBackendConsent();
+    }
+
+    if (acceptedProfile.isOnPath) {
       setCurrentView(AppView.DASHBOARD);
     } else {
       setCurrentView(AppView.INSTRUCTIONS);
@@ -203,15 +338,18 @@ const AppContent: React.FC = () => {
     if (user) {
       try {
         await setDoc(doc(db, 'users', user.uid), updates, { merge: true });
+        if (isBackendConfigured) {
+          await syncBackendUser({ ...userProfile, ...updates });
+        }
       } catch (err) {
         console.error("Error updating profile:", err);
       }
     }
   };
 
-  if (fbLoading) {
+  if (fbLoading && !screenshotPreview) {
     return (
-      <div className="min-h-screen bg-ethereal-950 flex items-center justify-center">
+      <div className="app-shell bg-ethereal-950 flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 size={48} className="text-magic-gold animate-spin mx-auto" />
           <p className="text-magic-gold font-serif italic tracking-widest">Sincronizando com a Centelha...</p>
@@ -223,7 +361,7 @@ const AppContent: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case AppView.WELCOME:
-        return <WelcomeCover onStart={() => setCurrentView(AppView.DISCLAIMER)} />;
+        return <WelcomeCover onStart={() => setCurrentView(AppView.DISCLAIMER)} preview={screenshotPreview} />;
       case AppView.DISCLAIMER:
         return <DisclaimerScreen onAccept={handleAcceptDisclaimer} />;
       case AppView.INSTRUCTIONS:
@@ -231,17 +369,17 @@ const AppContent: React.FC = () => {
       case AppView.DIAGNOSIS:
         return <Diagnosis onComplete={handleDiagnosisComplete} userProfile={userProfile} />;
       case AppView.DASHBOARD:
-        return <Dashboard userProfile={userProfile} logs={logs} onToggleGoal={toggleDailyGoal} setView={setCurrentView} />;
+        return <Dashboard userProfile={userProfile} logs={logs} onToggleGoal={toggleDailyGoal} setView={setCurrentView} preview={screenshotPreview} />;
       case AppView.TRACKER:
         return <Tracker onSaveLog={handleSaveLog} logs={logs} />;
       case AppView.WELLNESS:
         return <Wellness />;
       case AppView.GUIDANCE:
-        return <Guidance />;
+        return <Guidance userProfile={userProfile} />;
       case AppView.COMMUNITY:
         return <Community />;
       case AppView.JOURNEY:
-        return <Journey />;
+        return <Journey userProfile={userProfile} preview={screenshotPreview} />;
       case AppView.EVOLUTION:
         return <EvolutionReport logs={logs} userProfile={userProfile} />;
       case AppView.SETTINGS:
@@ -252,14 +390,14 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-ethereal-950 text-gray-100 font-sans selection:bg-magic-gold/30">
-      <main className="mx-auto w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl bg-transparent min-h-screen shadow-2xl relative overflow-x-hidden px-2 sm:px-4 md:px-6">
+    <div className="app-shell bg-ethereal-950 text-gray-100 font-sans selection:bg-magic-gold/30">
+      <main className="mx-auto w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl bg-transparent min-h-screen shadow-2xl relative overflow-x-hidden px-2 sm:px-4 md:px-6">
         
-        <div className="relative z-10 pt-8">{renderView()}</div>
+        <div className="app-route relative z-10">{renderView()}</div>
         
         {/* Nudge Toast for Navigation */}
         {showNavNudge && currentView !== AppView.INSTRUCTIONS && (
-          <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 w-[85%] max-w-sm animate-in slide-up">
+          <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 w-[85%] max-w-sm animate-in slide-up" style={{ bottom: 'calc(7rem + env(safe-area-inset-bottom, 0px))' }}>
             <div className="glass-mystic p-4 rounded-2xl border border-magic-gold/20 flex items-center gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] bg-ethereal-950/80 backdrop-blur-xl">
                <div className="shrink-0 p-2 bg-magic-gold/10 rounded-lg text-magic-gold">
                   <Compass size={18} className="animate-spin-slow" />

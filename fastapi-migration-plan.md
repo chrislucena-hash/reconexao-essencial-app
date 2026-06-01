@@ -2,6 +2,10 @@
 
 Este documento descreve a arquitetura proposta e o contrato de dados para a migração do backend atual (Serverless/Firebase direto no front-end) para uma arquitetura RESTful baseada em **FastAPI** utilizando Python.
 
+## Status de implementação
+
+O backend oficial está em `../reconexao-essencial-backend/backend_fastapi`. Este frontend sincroniza identidade em `/api/v1/auth/sync-user`, aceite em `/api/v1/auth/consents` e a projeção compatível do diário em `/api/v1/journal/entries` quando `VITE_API_URL` estiver configurada. Os campos React que não existem no contrato da API continuam persistidos pelo Firebase atual.
+
 ## 1. Arquitetura Proposta
 
 *   **Framework Web:** FastAPI (Python 3.10+)
