@@ -1,0 +1,48 @@
+name: Generate P12 Certificate
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-p12:
+    name: Combine .cer + private key into .p12
+    runs-on: macos-latest
+
+    steps:
+      - name: Generate private key and combine with .cer
+        run: |
+          # Decode the .cer from secret
+          echo "${{ secrets.DISTRIBUTION_CER_BASE64 }}" | base64 --decode > distribution.cer
+
+          # Generate a new 2048-bit RSA private key
+          openssl genrsa -out private.key 2048
+
+          # Convert .cer (DER format from Apple) to PEM
+          openssl x509 -inform DER -in distribution.cer -out distribution.pem
+
+          # Show certificate info for confirmation
+          openssl x509 -in distribution.pem -noout -subject -issuer -dates
+
+          # Export .p12 combining private key + certificate
+          # Password is set to: reconexao (change via secret CERTIFICATE_PASSPHRASE if desired)
+          PASS="${{ secrets.CERTIFICATE_PASSPHRASE }}"
+          if [ -z "$PASS" ]; then
+            PASS="reconexao"
+          fi
+
+          openssl pkcs12 -export \
+            -inkey private.key \
+            -in distribution.pem \
+            -out certificate.p12 \
+            -passout "pass:$PASS"
+
+          echo "P12 generated successfully"
+          echo "Password used: $PASS"
+          ls -lh certificate.p12
+
+      - name: Upload P12 as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: certificate-p12
+          path: certificate.p12
+          retention-days: 1
