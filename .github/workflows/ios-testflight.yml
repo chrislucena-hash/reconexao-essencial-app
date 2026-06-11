@@ -56,7 +56,8 @@ jobs:
             -k build.keychain-db \
             -P "$CERTIFICATE_PASSPHRASE" \
             -T /usr/bin/codesign \
-            -T /usr/bin/security
+            -T /usr/bin/security \
+            -A
 
           security set-key-partition-list \
             -S apple-tool:,apple: \
