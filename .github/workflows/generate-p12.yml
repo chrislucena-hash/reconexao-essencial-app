@@ -19,7 +19,7 @@ jobs:
           openssl req -new \
             -key private.key \
             -out distribution.csr \
-            -subj "/C=BR/O=Anna Christina Teixeira de Lucena/OU=4Q4R9GF6YD/CN=Apple Distribution: Anna Christina Teixeira de Lucena (4Q4R9GF6YD)"
+            -subj "/C=BR/O=Reconexao Essencial/OU=4Q4R9GF6YD/CN=Apple Distribution"
 
           # Generate a self-signed certificate for testing (valid 365 days)
           openssl x509 -req \
