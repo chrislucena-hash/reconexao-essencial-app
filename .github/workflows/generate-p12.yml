@@ -5,26 +5,33 @@ on:
 
 jobs:
   generate-p12:
-    name: Combine .cer + private key into .p12
+    name: Generate CSR and self-signed certificate for P12
     runs-on: macos-latest
 
     steps:
-      - name: Generate private key and combine with .cer
+      - name: Generate private key and CSR
         run: |
-          # Decode the .cer from secret
-          echo "${{ secrets.DISTRIBUTION_CER_BASE64 }}" | base64 --decode > distribution.cer
-
           # Generate a new 2048-bit RSA private key
           openssl genrsa -out private.key 2048
 
-          # Convert .cer (DER format from Apple) to PEM
-          openssl x509 -inform DER -in distribution.cer -out distribution.pem
+          # Create a CSR (Certificate Signing Request)
+          # Submit this to Apple Developer Portal to get a real certificate
+          openssl req -new \
+            -key private.key \
+            -out distribution.csr \
+            -subj "/C=BR/O=Anna Christina Teixeira de Lucena/OU=4Q4R9GF6YD/CN=Apple Distribution: Anna Christina Teixeira de Lucena (4Q4R9GF6YD)"
 
-          # Show certificate info for confirmation
-          openssl x509 -in distribution.pem -noout -subject -issuer -dates
+          # Generate a self-signed certificate for testing (valid 365 days)
+          openssl x509 -req \
+            -in distribution.csr \
+            -signkey private.key \
+            -out distribution.crt \
+            -days 365
 
-          # Export .p12 combining private key + certificate
-          # Password is set to: reconexao (change via secret CERTIFICATE_PASSPHRASE if desired)
+          # Show certificate info
+          openssl x509 -in distribution.crt -noout -subject -issuer -dates
+
+          # Export .p12 combining private key + self-signed certificate
           PASS="${{ secrets.CERTIFICATE_PASSPHRASE }}"
           if [ -z "$PASS" ]; then
             PASS="reconexao"
@@ -32,17 +39,20 @@ jobs:
 
           openssl pkcs12 -export \
             -inkey private.key \
-            -in distribution.pem \
+            -in distribution.crt \
             -out certificate.p12 \
             -passout "pass:$PASS"
 
-          echo "P12 generated successfully"
+          echo "P12 generated successfully (with self-signed cert)"
           echo "Password used: $PASS"
           ls -lh certificate.p12
+          ls -lh distribution.csr
 
-      - name: Upload P12 as artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: certificate-p12
-          path: certificate.p12
-          retention-days: 1
+          name: p12-and-csr
+          path: |
+            certificate.p12
+            distribution.csr
+          retention-days: 7
