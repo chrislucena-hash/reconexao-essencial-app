@@ -17,6 +17,7 @@ jobs:
       APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
       APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM }}
       CERTIFICATE_PASSPHRASE: ${{ secrets.CERTIFICATE_PASSPHRASE }}
+      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
 
     steps:
       - name: Checkout repository
@@ -37,45 +38,65 @@ jobs:
         run: npx cap sync ios
 
       - name: Prepare signing files and keychain
+        shell: bash
         run: |
-          echo "${{ secrets.CERTIFICATE_P12 }}" | base64 --decode > cert.p12
-          echo "${{ secrets.PROVISIONING_PROFILE }}" | base64 --decode > profile.mobileprovision
+          printf "%s" "${{ secrets.CERTIFICATE_P12 }}" | base64 --decode > cert.p12
+          printf "%s" "${{ secrets.PROVISIONING_PROFILE }}" | base64 --decode > profile.mobileprovision
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
-          security create-keychain -p "" build.keychain-db
-          security import cert.p12 -k ~/Library/Keychains/build.keychain-db -P "$CERTIFICATE_PASSPHRASE" -T /usr/bin/codesign -T /usr/bin/security
-          security list-keychains -s ~/Library/Keychains/build.keychain-db
-          security default-keychain -s ~/Library/Keychains/build.keychain-db
-          security unlock-keychain -p "" ~/Library/Keychains/build.keychain-db
-          security set-keychain-settings -t 3600 -l ~/Library/Keychains/build.keychain-db
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain-db
+          security set-keychain-settings -lut 21600 build.keychain-db
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain-db
+          security list-keychains -d user -s build.keychain-db
+          security default-keychain -s build.keychain-db
 
-          PROFILE_NAME=$(security cms -D -i profile.mobileprovision 2>/dev/null | plutil -extract Name xml1 -o - - 2>/dev/null | xmllint --xpath 'string(//string)' -)
+          security import cert.p12 \
+            -k build.keychain-db \
+            -P "$CERTIFICATE_PASSPHRASE" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "$KEYCHAIN_PASSWORD" \
+            build.keychain-db
+
+          security find-identity -v -p codesigning build.keychain-db
+
+          PROFILE_NAME=$(security cms -D -i profile.mobileprovision 2>/dev/null | plutil -extract Name raw -o - -)
+          PROFILE_UUID=$(security cms -D -i profile.mobileprovision 2>/dev/null | plutil -extract UUID raw -o - -)
+
           if [ -z "$PROFILE_NAME" ]; then
             echo "Failed to read provisioning profile name"
             exit 1
           fi
+
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
-        shell: bash
+          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
 
       - name: Archive iOS app
+        shell: bash
         run: |
           mkdir -p build
+
           xcodebuild -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Release \
             -destination generic/platform=iOS \
             archive \
-            -archivePath $PWD/build/App.xcarchive \
-            DEVELOPMENT_TEAM=$APPLE_DEVELOPMENT_TEAM \
+            -archivePath "$PWD/build/App.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_DEVELOPMENT_TEAM" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME"
 
       - name: Export IPA
+        shell: bash
         run: |
-          cat > exportOptions.plist <<'EOF'
+          cat > exportOptions.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -97,12 +118,15 @@ jobs:
           </plist>
           EOF
 
+          cat exportOptions.plist
+
           xcodebuild -exportArchive \
-            -archivePath $PWD/build/App.xcarchive \
+            -archivePath "$PWD/build/App.xcarchive" \
             -exportOptionsPlist exportOptions.plist \
-            -exportPath $PWD/build
+            -exportPath "$PWD/build"
 
       - name: Upload IPA to App Store Connect
+        shell: bash
         run: |
           xcrun altool --upload-app \
             --type ios \
