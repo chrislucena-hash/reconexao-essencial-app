@@ -36,7 +36,7 @@ jobs:
       - name: Decode Android keystore
         shell: bash
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/upload-key.jks
+          printf "%s" "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/upload-key.jks
 
       - name: Configure signing
         shell: bash
