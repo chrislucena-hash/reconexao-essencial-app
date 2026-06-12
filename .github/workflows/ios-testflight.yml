@@ -128,12 +128,19 @@ jobs:
 
       - name: Upload IPA to App Store Connect
         shell: bash
+        env:
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+          APPSTORE_API_KEY_P8: ${{ secrets.APPSTORE_API_KEY_P8 }}
         run: |
+          mkdir -p ~/private_keys
+          printf "%s" "$APPSTORE_API_KEY_P8" | base64 --decode > ~/private_keys/AuthKey_${APPSTORE_API_KEY_ID}.p8
+
           xcrun altool --upload-app \
             --type ios \
             --file "$PWD/build/App.ipa" \
-            --username "$APPLE_ID" \
-            --password "$APP_SPECIFIC_PASSWORD" \
+            --apiKey "$APPSTORE_API_KEY_ID" \
+            --apiIssuer "$APPSTORE_API_ISSUER_ID" \
             --output-format xml
 
       - name: Upload IPA artifact
