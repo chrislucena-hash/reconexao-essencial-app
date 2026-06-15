@@ -14,13 +14,11 @@ if (!executablePath) {
 }
 
 const deviceGroups = [
-  { directory: 'ipad-13', viewport: { width: 1032, height: 1376 }, scale: 2, suffix: '2064x2752', isMobile: false },
-  { directory: 'iphone-6.9', viewport: { width: 440, height: 956 }, scale: 3, suffix: '1320x2868' },
-  { directory: 'iphone-6.5', viewport: { width: 428, height: 926 }, scale: 3, suffix: '1284x2778' },
-  { directory: 'iphone-5.5', viewport: { width: 414, height: 736 }, scale: 3, suffix: '1242x2208' },
+  { directory: 'phone', viewport: { width: 360, height: 640 }, scale: 3, suffix: '1080x1920', isMobile: true },
+  { directory: 'tablet-10', viewport: { width: 600, height: 960 }, scale: 2, suffix: '1200x1920', isMobile: false },
 ];
-const screens = ['welcome', 'disclaimer', 'dashboard', 'tracker', 'journey', 'evolution'];
-const outputRoot = path.resolve('app-store-screenshots');
+const screens = ['welcome', 'dashboard', 'tracker', 'journey', 'evolution', 'guidance'];
+const outputRoot = path.resolve('play-store-screenshots');
 
 const browser = await chromium.launch({
   executablePath,
@@ -35,7 +33,7 @@ try {
     const context = await browser.newContext({
       viewport: device.viewport,
       deviceScaleFactor: device.scale,
-      isMobile: device.isMobile ?? true,
+      isMobile: device.isMobile,
       hasTouch: true,
       colorScheme: 'dark',
     });

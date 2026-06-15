@@ -13,6 +13,7 @@
     "ios:sync": "npm run build && cap sync ios",
     "ios:open": "cap open ios",
     "screenshots:ios": "node scripts/capture-ios-screenshots.mjs",
+    "screenshots:play": "node scripts/capture-play-store-screenshots.mjs",
     "preview": "vite preview",
     "lint": "tsc --noEmit"
   },
