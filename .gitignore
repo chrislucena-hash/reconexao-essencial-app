@@ -6,7 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+credenciais.vps.md
 node_modules
 dist
 dist-ssr
@@ -48,3 +48,4 @@ ios/App/App/public/
 *.iml
 *.hprof
 *.orig
+.env.production
