@@ -132,18 +132,26 @@ jobs:
             -exportOptionsPlist exportOptions.plist \
             -exportPath "$PWD/build"
 
-      - name: Upload IPA to App Store Connect
+      - name: Decode App Store Connect API key
+        id: decode_key
         shell: bash
         env:
-          FASTLANE_USER: ${{ secrets.APPLE_ID }}
-          FASTLANE_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
-          FASTLANE_APPLE_APPLICATION_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
-          FASTLANE_SKIP_UPDATE_CHECK: "1"
+          APPSTORE_API_KEY_P8: ${{ secrets.APPSTORE_API_KEY_P8 }}
         run: |
-          fastlane pilot upload \
-            --apple_id "$FASTLANE_USER" \
-            --ipa "$PWD/build/App.ipa" \
-            --skip_waiting_for_build_processing true
+          DECODED=$(printf "%s" "$APPSTORE_API_KEY_P8" | base64 --decode)
+          {
+            echo "key<<KEYEOF"
+            echo "$DECODED"
+            echo "KEYEOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload IPA to App Store Connect
+        uses: apple-actions/upload-testflight-build@v1
+        with:
+          app-path: ${{ github.workspace }}/build/App.ipa
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          issuer-id: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+          api-private-key: ${{ steps.decode_key.outputs.key }}
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
