@@ -6,7 +6,6 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     androidScheme: 'https',
-    hostname: 'app.reconexaoessencial.com.br',
   },
   android: {
     allowMixedContent: false,
