@@ -135,22 +135,13 @@ jobs:
       - name: Upload IPA to App Store Connect
         shell: bash
         env:
-          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
-          APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
-          APPSTORE_API_KEY_P8: ${{ secrets.APPSTORE_API_KEY_P8 }}
+          FASTLANE_USER: ${{ secrets.APPLE_ID }}
+          FASTLANE_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          FASTLANE_APPLE_APPLICATION_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          FASTLANE_SKIP_UPDATE_CHECK: "1"
         run: |
-          mkdir -p ~/private_keys
-          printf "%s" "$APPSTORE_API_KEY_P8" | base64 --decode > ~/private_keys/AuthKey_${APPSTORE_API_KEY_ID}.p8
-
-          jq -n \
-            --arg key_id "$APPSTORE_API_KEY_ID" \
-            --arg issuer_id "$APPSTORE_API_ISSUER_ID" \
-            --rawfile key ~/private_keys/AuthKey_${APPSTORE_API_KEY_ID}.p8 \
-            '{key_id: $key_id, issuer_id: $issuer_id, key: $key, in_house: false}' \
-            > ~/private_keys/api_key.json
-
           fastlane pilot upload \
-            --api_key_path ~/private_keys/api_key.json \
+            --apple_id "$FASTLANE_USER" \
             --ipa "$PWD/build/App.ipa" \
             --skip_waiting_for_build_processing true
 
