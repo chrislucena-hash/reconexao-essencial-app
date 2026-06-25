@@ -142,12 +142,14 @@ jobs:
           mkdir -p ~/private_keys
           printf "%s" "$APPSTORE_API_KEY_P8" | base64 --decode > ~/private_keys/AuthKey_${APPSTORE_API_KEY_ID}.p8
 
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$PWD/build/App.ipa" \
-            --apiKey "$APPSTORE_API_KEY_ID" \
-            --apiIssuer "$APPSTORE_API_ISSUER_ID" \
-            --output-format xml
+          printf '{"key_id":"%s","issuer_id":"%s","key_filepath":"%s","in_house":false}' \
+            "$APPSTORE_API_KEY_ID" "$APPSTORE_API_ISSUER_ID" "$HOME/private_keys/AuthKey_${APPSTORE_API_KEY_ID}.p8" \
+            > ~/private_keys/api_key.json
+
+          fastlane pilot upload \
+            --api_key_path ~/private_keys/api_key.json \
+            --ipa "$PWD/build/App.ipa" \
+            --skip_waiting_for_build_processing true
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
