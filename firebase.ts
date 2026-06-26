@@ -1,6 +1,6 @@
 
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeAuth, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
 
@@ -10,7 +10,9 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firestore with the specific database ID if provided
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
-// Initialize Auth
-export const auth = getAuth(app);
+// Use localStorage-based persistence explicitly: the default auto-detection
+// opens IndexedDB, which can hang indefinitely inside the iOS WKWebView
+// (Capacitor), leaving auth calls stuck forever.
+export const auth = initializeAuth(app, { persistence: browserLocalPersistence });
 
 export default app;
