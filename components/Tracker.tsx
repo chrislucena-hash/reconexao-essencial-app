@@ -20,6 +20,9 @@ import {
   Droplets,
   Plus,
   Minus,
+  AlertTriangle,
+  CheckCircle2,
+  X
 } from 'lucide-react';
 import { DailyLog } from '../types';
 import { RITUALS } from '../constants';
@@ -38,6 +41,8 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs }) => {
   const [shadowObservations, setShadowObservations] = useState('');
   const [energyLevel, setEnergyLevel] = useState(3);
   const [awarenessLevel, setAwarenessLevel] = useState(3);
+  const [showConfirmSave, setShowConfirmSave] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
   
   // Food record state
   const [breakfast, setBreakfast] = useState('');
@@ -101,7 +106,7 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs }) => {
     }
   }, [date, logs]);
 
-  const handleSave = () => {
+  const executeSave = () => {
     onSaveLog({
       date,
       spiritualPractices: { morning: '', afternoon: '', evening: '' },
@@ -123,15 +128,44 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs }) => {
         journaling: true
       } as any
     });
-    alert(`Jornada atualizada e Alma ouvida! ✨`);
+    setShowSuccessToast(true);
+    setTimeout(() => {
+      setShowSuccessToast(false);
+    }, 4000);
+  };
+
+  const handleSave = () => {
+    const isMissingFields = 
+      !reflection.trim() || 
+      !breakfast.trim() || 
+      !lunch.trim() || 
+      !dinner.trim() || 
+      waterGlasses === 0;
+
+    if (isMissingFields) {
+      setShowConfirmSave(true);
+    } else {
+      executeSave();
+    }
   };
 
   return (
-    <div className="store-page navigated-screen p-4 pb-40 max-w-2xl mx-auto space-y-12 animate-in fade-in">
+    <div className="p-4 pt-safe pb-safe-nav max-w-2xl mx-auto space-y-12 animate-in fade-in">
       <header className="px-4 text-center">
         <h2 className="text-4xl font-serif text-white italic tracking-tighter">Livro de Espelhos</h2>
         <p className="text-magic-gold text-[10px] uppercase tracking-[0.4em] font-black mt-2">Portal do Diário</p>
       </header>
+
+      {/* Notice Banner */}
+      <div className="mx-2 p-6 rounded-[2.5rem] bg-amber-950/20 border border-amber-500/30 flex items-start gap-4 shadow-xl animate-in slide-in-from-top duration-500">
+        <AlertTriangle className="text-amber-400 shrink-0 mt-0.5 animate-pulse" size={22} />
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-black uppercase text-amber-400 tracking-[0.2em]">Aviso da Senda</p>
+          <p className="text-xs text-amber-200/90 italic leading-relaxed font-light">
+            No <strong className="text-white font-medium">Livro de Espelhos</strong>, o buscador deve preencher todos os quadros (Vibração, Presença, Recordatório Alimentar, Elixir da Água, Descanso e Emanações da Alma) para obter um reflexo íntegro, fiel e profundo de sua jornada de autocura.
+          </p>
+        </div>
+      </div>
 
       {/* Date Picker Card */}
       <div className="glass-mystic p-8 rounded-[3rem] border border-white/10 mx-2 flex justify-between items-center shadow-2xl relative overflow-hidden">
@@ -311,6 +345,20 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs }) => {
                 onChange={(e) => setSynchronicities(e.target.value)}
               />
            </div>
+
+           <div className="space-y-4">
+              <div className="flex items-center gap-2 ml-4">
+                <Moon size={14} className="text-aura-rose" />
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-aura-rose">Observações de Sombra</label>
+              </div>
+              <textarea 
+                className="w-full bg-white/5 border-2 border-white/5 rounded-[2.5rem] p-8 text-sm text-ethereal-100 focus:border-aura-rose/30 outline-none resize-none placeholder:text-ethereal-800 italic leading-relaxed shadow-inner transition-all focus:bg-white/[0.07]"
+                placeholder="Qual medo, incômodo ou padrão reativo emergiu hoje para ser acolhido e transmutado?"
+                rows={3}
+                value={shadowObservations}
+                onChange={(e) => setShadowObservations(e.target.value)}
+              />
+           </div>
         </section>
 
         <button 
@@ -321,6 +369,63 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs }) => {
            <Save size={20} className="relative z-10" /> <span className="relative z-10">Eternizar Registro no Akasha</span>
         </button>
       </div>
+
+      {/* Custom Confirmation Modal for Missing Fields */}
+      {showConfirmSave && (
+        <div className="fixed inset-0 z-[100] bg-ethereal-950/95 backdrop-blur-2xl flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="glass-mystic border border-white/10 w-full max-w-sm rounded-[2.5rem] p-8 flex flex-col items-center text-center space-y-6 shadow-2xl">
+            <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500 border border-amber-500/20">
+              <AlertTriangle size={32} />
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-xl font-serif text-white italic">Quadros Incompletos</h3>
+              <p className="text-xs text-ethereal-300 leading-relaxed">
+                Você possui quadros não preenchidos no seu <strong className="text-white">Livro de Espelhos</strong>. Para obter um reflexo completo e fiel da sua autocura, é altamente recomendável preencher todas as seções. Deseja salvar assim mesmo?
+              </p>
+            </div>
+
+            <div className="flex flex-col w-full gap-3">
+              <button 
+                onClick={() => {
+                  setShowConfirmSave(false);
+                  executeSave();
+                }}
+                className="w-full bg-magic-gold text-nature-950 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                Sim, Salvar Registro
+              </button>
+              <button 
+                onClick={() => setShowConfirmSave(false)}
+                className="w-full bg-white/5 text-white/60 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white/10 hover:text-white transition-colors"
+              >
+                Voltar e Preencher
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Success Toast */}
+      {showSuccessToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm animate-in slide-up duration-300">
+          <div className="glass-mystic p-5 rounded-3xl border border-aura-emerald/30 bg-aura-emerald/10 backdrop-blur-xl flex items-center gap-4 shadow-[0_15px_30px_rgba(0,0,0,0.5)]">
+            <div className="p-2 bg-aura-emerald/20 rounded-xl text-aura-emerald">
+              <CheckCircle2 size={20} className="animate-pulse" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-aura-emerald">Registro Selado</p>
+              <p className="text-xs text-ethereal-100 italic leading-snug">Jornada atualizada e Alma ouvida no Akasha! ✨</p>
+            </div>
+            <button 
+              onClick={() => setShowSuccessToast(false)}
+              className="text-ethereal-500 hover:text-white transition-colors p-1"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

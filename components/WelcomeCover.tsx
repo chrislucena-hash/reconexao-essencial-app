@@ -5,20 +5,14 @@ import { generateAppCover } from '../services/geminiService';
 
 interface WelcomeCoverProps {
   onStart: () => void;
-  preview?: boolean;
 }
 
-const WelcomeCover: React.FC<WelcomeCoverProps> = ({ onStart, preview = false }) => {
+const WelcomeCover: React.FC<WelcomeCoverProps> = ({ onStart }) => {
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showManifesto, setShowManifesto] = useState(false);
 
   useEffect(() => {
-    if (preview) {
-      setLoading(false);
-      return;
-    }
-
     const fetchCover = async () => {
       setLoading(true);
       const img = await generateAppCover();
@@ -26,12 +20,12 @@ const WelcomeCover: React.FC<WelcomeCoverProps> = ({ onStart, preview = false })
       setLoading(false);
     };
     fetchCover();
-  }, [preview]);
+  }, []);
 
   return (
-    <div className="safe-overlay fixed inset-0 z-[200] bg-aura-deep flex flex-col items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 z-[200] bg-aura-deep flex flex-col items-center justify-between overflow-y-auto pt-safe pb-safe px-4 sm:px-8">
       {/* Background Cinematográfico e Vibrante */}
-      <div className="absolute inset-0 transition-opacity duration-[3000ms]">
+      <div className="absolute inset-0 transition-opacity duration-[3000ms] pointer-events-none">
         {coverImage ? (
           <img 
             src={coverImage} 
@@ -63,7 +57,7 @@ const WelcomeCover: React.FC<WelcomeCoverProps> = ({ onStart, preview = false })
       </div>
 
       {/* Conteúdo Principal */}
-      <div className="relative z-10 flex flex-col items-center text-center px-10 max-w-lg w-full">
+      <div className="relative z-10 my-auto flex flex-col items-center text-center px-4 sm:px-10 max-w-lg w-full py-6">
         <header className="space-y-6 animate-in fade-in slide-up duration-1000">
           <div className="flex items-center justify-center gap-3">
             <div className="h-px w-10 bg-gradient-to-r from-transparent to-aura-gold/50" />
@@ -122,7 +116,7 @@ const WelcomeCover: React.FC<WelcomeCoverProps> = ({ onStart, preview = false })
 
       {/* Modal Manifesto - Magnético */}
       {showManifesto && (
-        <div className="safe-overlay fixed inset-0 z-[300] bg-aura-deep/95 backdrop-blur-3xl flex items-center justify-center p-8 animate-in fade-in duration-700">
+        <div className="fixed inset-0 z-[300] bg-aura-deep/95 backdrop-blur-3xl flex items-center justify-center p-8 animate-in fade-in duration-700">
           <div className="relative w-full max-w-sm glass-mystic p-12 rounded-[4rem] iridescent-border shadow-[0_0_100px_rgba(139,92,246,0.2)] text-center space-y-10 animate-in zoom-in duration-500 overflow-hidden">
             <button 
               onClick={() => setShowManifesto(false)}

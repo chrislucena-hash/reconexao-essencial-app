@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="60%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </radialGradient>
+    
+    <radialGradient id="auraGlow" cx="50%" cy="50%" r="40%">
+      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.8" />
+      <stop offset="50%" stop-color="#6366f1" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0" />
+    </radialGradient>
+
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+
+    <linearGradient id="petalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#818cf8" stop-opacity="0.6" />
+    </linearGradient>
+    
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Outer Aura Glow -->
+  <circle cx="256" cy="256" r="200" fill="url(#auraGlow)" />
+
+  <!-- Sacred Geometry Outer Ring -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#a855f7" stroke-width="1.5" stroke-opacity="0.3" stroke-dasharray="6 6" />
+  <circle cx="256" cy="256" r="150" fill="none" stroke="url(#goldGrad)" stroke-width="2" stroke-opacity="0.5" />
+  <circle cx="256" cy="256" r="120" fill="none" stroke="#2dd4bf" stroke-width="1" stroke-opacity="0.4" />
+
+  <!-- Sacred Star/Geometry Petals -->
+  <g transform="translate(256, 256)" filter="url(#glow)">
+    <!-- 8 Lotus Petals Background -->
+    <g opacity="0.8">
+      <path d="M0,-110 C25,-70 25,-30 0,0 C-25,-30 -25,-70 0,-110 Z" fill="url(#petalGrad)" />
+      <path d="M0,-110 C25,-70 25,-30 0,0 C-25,-30 -25,-70 0,-110 Z" fill="url(#petalGrad)" transform="rotate(45)" />
+      <path d="M0,-110 C25,-70 25,-30 0,0 C-25,-30 -25,-70 0,-110 Z" fill="url(#petalGrad)" transform="rotate(90)" />
+      <path d="M0,-110 C25,-70 25,-30 0,0 C-25,-30 -25,-70 0,-110 Z" fill="url(#petalGrad)" transform="rotate(135)" />
+      <path d="M0,-110 C25,-70 25,-30 0,0 C-25,-30 -25,-70 0,-110 Z" fill="url(#petalGrad)" transform="rotate(180)" />
+      <path d="M0,-110 C25,-70 25,-30 0,0 C-25,-30 -25,-70 0,-110 Z" fill="url(#petalGrad)" transform="rotate(225)" />
+      <path d="M0,-110 C25,-70 25,-30 0,0 C-25,-30 -25,-70 0,-110 Z" fill="url(#petalGrad)" transform="rotate(270)" />
+      <path d="M0,-110 C25,-70 25,-30 0,0 C-25,-30 -25,-70 0,-110 Z" fill="url(#petalGrad)" transform="rotate(315)" />
+    </g>
+
+    <!-- Inner Golden Flower of Life Petals -->
+    <g opacity="0.95">
+      <path d="M0,-80 C18,-50 18,-20 0,0 C-18,-20 -18,-50 0,-80 Z" fill="url(#goldGrad)" />
+      <path d="M0,-80 C18,-50 18,-20 0,0 C-18,-20 -18,-50 0,-80 Z" fill="url(#goldGrad)" transform="rotate(60)" />
+      <path d="M0,-80 C18,-50 18,-20 0,0 C-18,-20 -18,-50 0,-80 Z" fill="url(#goldGrad)" transform="rotate(120)" />
+      <path d="M0,-80 C18,-50 18,-20 0,0 C-18,-20 -18,-50 0,-80 Z" fill="url(#goldGrad)" transform="rotate(180)" />
+      <path d="M0,-80 C18,-50 18,-20 0,0 C-18,-20 -18,-50 0,-80 Z" fill="url(#goldGrad)" transform="rotate(240)" />
+      <path d="M0,-80 C18,-50 18,-20 0,0 C-18,-20 -18,-50 0,-80 Z" fill="url(#goldGrad)" transform="rotate(300)" />
+    </g>
+
+    <!-- Central Divine Spark Core -->
+    <circle cx="0" cy="0" r="24" fill="#ffffff" filter="url(#glow)" />
+    <circle cx="0" cy="0" r="16" fill="url(#goldGrad)" />
+    <circle cx="0" cy="0" r="8" fill="#ffffff" />
+  </g>
+</svg>

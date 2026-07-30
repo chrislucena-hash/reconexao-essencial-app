@@ -19,47 +19,20 @@ import {
   Heart,
   Eye,
   Stars,
-  Flower2
+  Flower2,
+  AlertTriangle
 } from 'lucide-react';
-import { JourneyProgress, UserProfile } from '../types';
+import { JourneyDay, JourneyProgress } from '../types';
 import { INITIAL_JOURNEY } from '../constants';
-import { isBackendConfigured, saveBackendProgress } from '../services/apiClient';
 
 interface JourneyProps {
-  userProfile: UserProfile;
-  preview?: boolean;
+  progress: JourneyProgress;
+  onUpdateProgress: (progress: JourneyProgress) => void;
+  onResetJourney: () => void;
 }
 
-const Journey: React.FC<JourneyProps> = ({ userProfile, preview = false }) => {
-  const [progress, setProgress] = useState<JourneyProgress>(() => {
-    if (preview) {
-      const days = INITIAL_JOURNEY.map((day, index) => ({ ...day, completed: index < 6 }));
-      return { currentDay: 7, days, lastCompletedDate: '2026-05-25' };
-    }
-
-    const saved = localStorage.getItem('soul_journey_progress');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return { currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null };
-      }
-    }
-    return { currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null };
-  });
-
-  useEffect(() => {
-    if (!preview) {
-      localStorage.setItem('soul_journey_progress', JSON.stringify(progress));
-    }
-    if (!preview && isBackendConfigured) {
-      const completedCount = progress.days.filter(day => day.completed).length;
-      const progressPercent = Math.round((completedCount / progress.days.length) * 100);
-      saveBackendProgress('jornada-21-dias', progressPercent, userProfile).catch(error => {
-        console.error('Error syncing journey progress:', error);
-      });
-    }
-  }, [progress, userProfile, preview]);
+const Journey: React.FC<JourneyProps> = ({ progress, onUpdateProgress, onResetJourney }) => {
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const toggleDay = (dayNum: number) => {
     const today = new Date().toISOString().split('T')[0];
@@ -73,7 +46,7 @@ const Journey: React.FC<JourneyProps> = ({ userProfile, preview = false }) => {
     
     const firstUncompleted = updatedDays.find(d => !d.completed)?.day || 21;
     
-    setProgress({
+    onUpdateProgress({
       ...progress,
       days: updatedDays,
       currentDay: firstUncompleted,
@@ -82,9 +55,12 @@ const Journey: React.FC<JourneyProps> = ({ userProfile, preview = false }) => {
   };
 
   const resetJourney = () => {
-    if (window.confirm("Deseja realmente reiniciar sua jornada de 21 dias? Todo o progresso será perdido.")) {
-      setProgress({ currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null });
-    }
+    setShowResetConfirm(true);
+  };
+
+  const confirmReset = () => {
+    setShowResetConfirm(false);
+    onResetJourney();
   };
 
   const currentDayData = progress.days.find(d => d.day === progress.currentDay) || progress.days[0];
@@ -92,7 +68,7 @@ const Journey: React.FC<JourneyProps> = ({ userProfile, preview = false }) => {
   const progressPercent = Math.round((completedCount / 21) * 100);
 
   return (
-    <div className="store-page navigated-screen p-4 pb-32 max-w-2xl mx-auto space-y-8 animate-in fade-in">
+    <div className="p-4 pt-safe pb-safe-nav max-w-2xl mx-auto space-y-8 animate-in fade-in">
       <header className="text-center space-y-4">
         <div className="flex items-center justify-center gap-2 text-magic-gold">
           <Compass size={20} className="animate-spin-slow" />
@@ -212,6 +188,39 @@ const Journey: React.FC<JourneyProps> = ({ userProfile, preview = false }) => {
           Reiniciar Jornada de 21 Dias
         </button>
       </div>
+
+      {/* Custom Reset Journey Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-[100] bg-ethereal-950/95 backdrop-blur-2xl flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="glass-mystic border border-rose-500/20 w-full max-w-sm rounded-[2.5rem] p-8 flex flex-col items-center text-center space-y-6 shadow-2xl">
+            <div className="w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center text-rose-500 border border-rose-500/20">
+              <AlertTriangle size={32} />
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-xl font-serif text-white italic">Reiniciar Senda de 21 Dias?</h3>
+              <p className="text-xs text-ethereal-300 leading-relaxed">
+                Tem certeza de que deseja reiniciar sua senda? Todo o progresso obtido até agora e as práticas marcadas nesta jornada de 21 dias serão apagados permanentemente.
+              </p>
+            </div>
+
+            <div className="flex flex-col w-full gap-3">
+              <button 
+                onClick={confirmReset}
+                className="w-full bg-rose-500 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-rose-600 transition-colors"
+              >
+                Sim, Reiniciar Senda
+              </button>
+              <button 
+                onClick={() => setShowResetConfirm(false)}
+                className="w-full bg-white/5 text-white/60 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white/10 hover:text-white transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

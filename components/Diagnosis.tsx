@@ -18,7 +18,8 @@ import {
   Scale,
   Stethoscope,
   Droplets,
-  Wind as WindIcon
+  Wind as WindIcon,
+  ArrowRight
 } from 'lucide-react';
 import { SpiritualInventoryItem, UserProfile } from '../types';
 
@@ -81,34 +82,46 @@ const SPIRITUAL_SIGNALS: SpiritualInventoryItem[] = [
   { id: 's6', name: 'Ego Rígido: Inflexibilidade mental diante de novas ideias', category: 'sombra', weight: 2 },
 ];
 
-const LIGHT_ACTIVITIES = [
-  { id: 'walk', name: 'Caminhada na Natureza', icon: Compass },
-  { id: 'yoga', name: 'Yoga Suave', icon: Sparkles },
-  { id: 'stretch', name: 'Alongamento Consciente', icon: Activity },
-  { id: 'dance', name: 'Dança Livre', icon: Flame },
-  { id: 'taichi', name: 'Tai Chi / Qi Gong', icon: WindIcon },
-  { id: 'swim', name: 'Natação Leve', icon: Droplets },
-  { id: 'garden', name: 'Jardinagem', icon: Heart },
-  { id: 'bike', name: 'Ciclismo Lento', icon: Zap },
-];
-
 interface DiagnosisProps {
-  onComplete: (score: number, name: string, favoriteActivities: string[]) => void;
+  onComplete: (
+    score: number,
+    name: string,
+    favoriteActivities: string[],
+    details?: {
+      glutenCount: number;
+      caseinCount: number;
+      lactoseCount: number;
+      spiritualCount: number;
+    }
+  ) => void;
   userProfile: UserProfile;
+  onBack?: () => void;
 }
 
-const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
+const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack }) => {
   const [selectedGluten, setSelectedGluten] = useState<string[]>([]);
   const [selectedCasein, setSelectedCasein] = useState<string[]>([]);
   const [selectedLactose, setSelectedLactose] = useState<string[]>([]);
   const [selectedSpiritual, setSelectedSpiritual] = useState<string[]>([]);
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
-  const [step, setStep] = useState<'intro' | 'symptoms' | 'spiritual' | 'result' | 'movement'>('intro');
-  const [userName, setUserName] = useState('');
+  const [step, setStep] = useState<'intro' | 'symptoms' | 'spiritual' | 'result'>('intro');
+  const [userName, setUserName] = useState(userProfile.name && userProfile.name !== 'Buscador' ? userProfile.name : '');
+
+  const calculateVitalityScore = () => {
+    const totalSignals = GLUTEN_SIGNALS.length + CASEIN_SIGNALS.length + LACTOSE_SIGNALS.length + SPIRITUAL_SIGNALS.length;
+    const markedCount = selectedGluten.length + selectedCasein.length + selectedLactose.length + selectedSpiritual.length;
+    const unmarkedCount = totalSignals - markedCount;
+    return Math.round((unmarkedCount / totalSignals) * 100);
+  };
 
   const handleComplete = () => {
-    const score = Math.max(0, 100 - (selectedGluten.length + selectedCasein.length + selectedLactose.length + selectedSpiritual.length) * 5);
-    onComplete(score, userName.trim() || 'Buscador', selectedActivities);
+    const score = calculateVitalityScore();
+    onComplete(score, userName.trim() || 'Buscador', selectedActivities, {
+      glutenCount: selectedGluten.length,
+      caseinCount: selectedCasein.length,
+      lactoseCount: selectedLactose.length,
+      spiritualCount: selectedSpiritual.length
+    });
   };
 
   const toggleItem = (id: string, list: string[], setList: (l: string[]) => void) => {
@@ -121,26 +134,39 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
 
   if (step === 'intro') {
     return (
-      <div className="safe-screen p-4 sm:p-8 flex flex-col justify-center items-center text-center animate-in fade-in">
+      <div className="p-8 pt-safe pb-safe min-h-screen flex flex-col justify-center items-center text-center animate-in fade-in">
         <div className="glass-mystic p-10 rounded-[3rem] space-y-8 max-w-sm border-magic-gold/20 shadow-[0_0_50px_rgba(212,175,55,0.1)]">
           <div className="w-20 h-20 bg-magic-gold/20 rounded-full flex items-center justify-center mx-auto border border-magic-gold/30">
             <Flame size={36} className="text-magic-gold" />
           </div>
           <div className="space-y-4">
             <h2 className="text-3xl font-serif text-white italic">O Templo e a Luz</h2>
+            <p className="text-magic-gold text-[10px] font-black uppercase tracking-widest leading-relaxed">
+              Ciclo de 21 Dias Recomendado
+            </p>
             <p className="text-ethereal-300 text-sm leading-relaxed">
-              Mapear onde sua centelha divina encontra resistência no templo físico é o primeiro passo da sua autocura. Vamos ouvir o que sua essência tem a dizer através dos sinais do corpo.
+              Mapear onde sua centelha divina encontra resistência no templo físico é o primeiro passo da sua autocura. É altamente recomendável refazer este teste <strong className="text-white">a cada 21 dias</strong> para medir com precisão a evolução da sua vitalidade e clareza de alma.
             </p>
             <p className="text-[10px] text-ethereal-400 italic leading-snug pt-4 border-t border-white/5">
               As práticas aqui são espirituais e de desenvolvimento pessoal. Elas <strong className="text-white">não substituem</strong> tratamento médico, nutricional ou psicológico. Se você suspeita de Doença Celíaca, é aconselhável que faça os testes sanguíneos para a desordem antes de iniciar a dieta sem glúten.
             </p>
           </div>
-          <button
-            onClick={() => setStep('symptoms')}
-            className="w-full bg-white text-nature-950 py-5 rounded-3xl font-bold text-lg hover:scale-105 transition-all shadow-xl"
-          >
-            Escutar a Essência
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => setStep('symptoms')}
+              className="w-full bg-white text-nature-950 py-5 rounded-3xl font-bold text-lg hover:scale-105 transition-all shadow-xl"
+            >
+              Escutar a Essência
+            </button>
+            {userProfile.isOnPath && onBack && (
+              <button
+                onClick={onBack}
+                className="w-full bg-white/5 text-white/60 hover:text-white py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-colors border border-white/10"
+              >
+                Voltar ao Portal
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -148,10 +174,10 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
 
   if (step === 'symptoms') {
     return (
-      <div className="store-page navigated-screen p-4 pt-12 pb-32 space-y-8 animate-in fade-in">
+      <div className="p-4 pt-safe pb-safe-nav space-y-8 animate-in fade-in">
         <header className="px-4 text-center space-y-2">
-          <h2 className="text-3xl font-serif text-white tracking-tight italic">Exame do Templo</h2>
-          <p className="text-[10px] font-black text-magic-gold uppercase tracking-[0.3em]">Passo 1: Sensibilidades e Inflamação</p>
+          <h2 className="text-3xl font-serif text-white tracking-tight italic">Teste do Corpo</h2>
+          <p className="text-[10px] font-black text-magic-gold uppercase tracking-[0.3em]">Passo 1: Sensibilidades e Inflamação do Templo</p>
         </header>
 
         <div className="space-y-4 px-2 animate-in slide-up">
@@ -240,14 +266,24 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
               ))}
             </div>
           </div>
+
+          {/* Botão no final dos sintomas do corpo */}
+          <div className="pt-8 pb-6 px-2">
+            <button
+              onClick={() => setStep('spiritual')}
+              className="w-full bg-gradient-to-r from-magic-gold via-yellow-500 to-magic-gold text-nature-950 py-5 rounded-[2.5rem] font-black text-xs uppercase tracking-widest shadow-[0_0_30px_rgba(212,175,55,0.25)] hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              Finalizar Sinais do Corpo e Ir para Teste da Alma <ArrowRight size={16} />
+            </button>
+          </div>
         </div>
 
-        <div className="safe-action-bar fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-6 md:px-8 py-8 bg-gradient-to-t from-ethereal-950 via-ethereal-950 to-transparent z-50">
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-6 md:px-8 py-8 pb-safe-nav bg-gradient-to-t from-ethereal-950 via-ethereal-950 to-transparent z-50">
           <button 
             onClick={() => setStep('spiritual')}
-            className="w-full bg-white text-nature-950 py-6 rounded-[2.5rem] font-bold shadow-2xl transition-all active:scale-95"
+            className="w-full bg-white text-nature-950 py-6 rounded-[2.5rem] font-bold shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
           >
-            Prosseguir para o Espírito
+            Finalizar Teste do Corpo e Ir para Teste da Alma <ArrowRight size={18} />
           </button>
         </div>
       </div>
@@ -256,10 +292,10 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
 
   if (step === 'spiritual') {
     return (
-      <div className="store-page navigated-screen p-4 pt-12 pb-32 space-y-8 animate-in fade-in">
+      <div className="p-4 pt-safe pb-safe-nav space-y-8 animate-in fade-in">
         <header className="px-4 text-center space-y-2">
-          <h2 className="text-3xl font-serif text-white tracking-tight italic">Exame do Espírito</h2>
-          <p className="text-[10px] font-black text-aura-indigo uppercase tracking-[0.3em]">Passo 2: A Senda da Alma</p>
+          <h2 className="text-3xl font-serif text-white tracking-tight italic">Teste da Alma</h2>
+          <p className="text-[10px] font-black text-aura-indigo uppercase tracking-[0.3em]">Passo 2: Alinhamento e Senda da Alma</p>
         </header>
 
         <div className="space-y-4 px-2 animate-in slide-up">
@@ -289,9 +325,19 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
               </button>
             ))}
           </div>
+
+          {/* Botão no final do teste da alma */}
+          <div className="pt-8 pb-6 px-2">
+            <button
+              onClick={() => setStep('result')}
+              className="w-full bg-gradient-to-r from-indigo-500 via-aura-violet to-indigo-500 text-white py-5 rounded-[2.5rem] font-black text-xs uppercase tracking-widest shadow-[0_0_30px_rgba(139,92,246,0.25)] hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              Finalizar Teste da Alma e Ver Resultado <Sparkles size={16} />
+            </button>
+          </div>
         </div>
 
-        <div className="safe-action-bar fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-6 md:px-8 py-8 bg-gradient-to-t from-ethereal-950 via-ethereal-950 to-transparent z-50 flex gap-3">
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-6 md:px-8 py-8 pb-safe-nav bg-gradient-to-t from-ethereal-950 via-ethereal-950 to-transparent z-50 flex gap-3">
           <button 
             onClick={() => setStep('symptoms')}
             className="flex-1 bg-white/5 text-white py-6 rounded-[2.5rem] font-bold border border-white/10 transition-all active:scale-95"
@@ -300,9 +346,9 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
           </button>
           <button 
             onClick={() => setStep('result')}
-            className="flex-[2] bg-white text-nature-950 py-6 rounded-[2.5rem] font-bold shadow-2xl transition-all active:scale-95"
+            className="flex-[2] bg-white text-nature-950 py-6 rounded-[2.5rem] font-bold shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
           >
-            Consolidar Sinais
+            Finalizar Teste da Alma <ArrowRight size={18} />
           </button>
         </div>
       </div>
@@ -311,22 +357,64 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
 
   if (step === 'result') {
     return (
-      <div className="safe-screen p-4 sm:p-8 flex flex-col items-center justify-center animate-in zoom-in">
-        <div className="text-center space-y-12 w-full max-w-sm">
-          <div className="relative w-48 h-48 mx-auto">
+      <div className="p-4 pt-safe pb-safe-nav flex flex-col items-center justify-center min-h-screen animate-in zoom-in overflow-y-auto">
+        <div className="text-center space-y-8 w-full max-w-md px-2">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-serif text-white italic">O Veredicto do Templo</h2>
+            <p className="text-[10px] font-black text-magic-gold uppercase tracking-[0.3em]">Seu Estado Vibracional e Alinhamento</p>
+          </div>
+
+          <div className="relative w-44 h-44 mx-auto">
             <div className="absolute inset-0 bg-magic-gold/10 blur-[50px] rounded-full animate-pulse" />
             <div className="relative w-full h-full glass-mystic rounded-full flex items-center justify-center border border-magic-gold/20 shadow-[0_0_30px_rgba(212,175,55,0.15)]">
                <div className="flex flex-col items-center">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-magic-gold mb-1">Caminho de Autocura</span>
-                  <h3 className="text-7xl font-serif font-bold text-white">
-                    {Math.max(0, 100 - (selectedGluten.length + selectedCasein.length + selectedLactose.length + selectedSpiritual.length) * 5)}%
+                  <span className="text-[9px] font-black uppercase tracking-widest text-magic-gold mb-1">Vitalidade Geral</span>
+                  <h3 className="text-6xl font-serif font-bold text-white">
+                    {calculateVitalityScore()}%
                   </h3>
                </div>
             </div>
           </div>
 
+          {/* Detailed Breakdown */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+            <div className="glass-mystic p-5 rounded-3xl border border-magic-gold/10 space-y-3">
+              <span className="text-[9px] font-black text-magic-gold uppercase tracking-widest flex items-center gap-1.5">
+                <Activity size={12} /> O Corpo (Físico)
+              </span>
+              <div className="space-y-1.5 pt-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-ethereal-300">Glúten:</span>
+                  <span className={`font-bold ${selectedGluten.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>{selectedGluten.length} sinais</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-ethereal-300">Caseína:</span>
+                  <span className={`font-bold ${selectedCasein.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>{selectedCasein.length} sinais</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-ethereal-300">Lactose:</span>
+                  <span className={`font-bold ${selectedLactose.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>{selectedLactose.length} sinais</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="glass-mystic p-5 rounded-3xl border border-indigo-400/10 flex flex-col justify-between">
+              <div className="space-y-3">
+                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Eye size={12} /> A Alma (Sutil)
+                </span>
+                <p className="text-xs text-ethereal-200 italic leading-relaxed pt-1">
+                  {selectedSpiritual.length === 0 
+                    ? 'Alinhamento cristalino e harmonia plena alcançada com o Todo.' 
+                    : `Identificadas ${selectedSpiritual.length} resistência(s) que impedem o fluxo da sua luz original.`}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-4">
-            <h2 className="text-3xl font-serif text-white italic">Como sua Centelha se chama?</h2>
+            <h2 className="text-2xl font-serif text-white italic">Como sua Centelha se chama?</h2>
+            <p className="text-[10px] text-ethereal-400 leading-snug">Insira um nome místico ou use o seu próprio nome para selar este ciclo de teste.</p>
             <input
               type="text"
               placeholder="Nome místico da essência"
@@ -337,71 +425,16 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile }) => {
           </div>
 
           <button 
-            onClick={() => setStep('movement')}
+            onClick={handleComplete}
             disabled={!userName.trim()}
             className="w-full bg-magic-gold text-nature-950 py-6 rounded-3xl font-bold shadow-lg flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
           >
-            Confirmar Essência <Sparkles size={22} />
+            Confirmar Essência e Iniciar Jornada <Sparkles size={22} />
           </button>
 
           <p className="text-[9px] text-ethereal-500 text-center leading-relaxed italic px-2 opacity-60">
             As práticas aqui são espirituais e de desenvolvimento pessoal. Elas não substituem tratamento médico, nutricional ou psicológico. Se você suspeita de Doença Celíaca, é aconselhável que faça os testes sanguíneos para a desordem antes de iniciar a dieta sem glúten.
           </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'movement') {
-    return (
-      <div className="store-page navigated-screen p-4 pt-12 pb-32 space-y-8 animate-in fade-in">
-        <header className="px-4 text-center space-y-2">
-          <h2 className="text-3xl font-serif text-white tracking-tight italic">Movimento Amado</h2>
-          <p className="text-[10px] font-black text-aura-teal uppercase tracking-[0.3em]">Passo Final: O Prazer de Habitar o Corpo</p>
-        </header>
-
-        <div className="space-y-4 px-2 animate-in slide-up">
-          <div className="p-6 bg-aura-teal/5 border border-aura-teal/10 rounded-3xl space-y-3 text-center">
-            <div className="w-12 h-12 bg-aura-teal/10 rounded-full flex items-center justify-center mx-auto mb-2">
-              <Activity size={24} className="text-aura-teal" />
-            </div>
-            <span className="text-[10px] font-black text-aura-teal uppercase tracking-widest">Movimento Consciente</span>
-            <p className="text-[11px] text-ethereal-100 leading-relaxed italic">
-              Olá, {userName}! Quais atividades físicas leves fazem seu coração vibrar? Escolha as que você genuinamente ama praticar para nutrir seu templo, sempre observando cada ato e praticando a presença.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {LIGHT_ACTIVITIES.map(activity => (
-              <button
-                key={activity.id}
-                onClick={() => toggleItem(activity.id, selectedActivities, setSelectedActivities)}
-                className={`p-6 rounded-[2.5rem] border transition-all text-center flex flex-col items-center gap-4 ${
-                  selectedActivities.includes(activity.id) ? 'bg-aura-teal/20 border-aura-teal shadow-lg' : 'glass-mystic border-white/5'
-                }`}
-              >
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${selectedActivities.includes(activity.id) ? 'bg-aura-teal text-nature-950' : 'bg-white/5 text-white/40'}`}>
-                  <activity.icon size={24} />
-                </div>
-                <span className="text-[10px] font-bold text-white/90 uppercase tracking-wider leading-tight">{activity.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="safe-action-bar fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-6 md:px-8 py-8 bg-gradient-to-t from-ethereal-950 via-ethereal-950 to-transparent z-50 flex gap-3">
-          <button 
-            onClick={() => setStep('result')}
-            className="flex-1 bg-white/5 text-white py-6 rounded-[2.5rem] font-bold border border-white/10 transition-all active:scale-95"
-          >
-            Voltar
-          </button>
-          <button 
-            onClick={handleComplete}
-            className="flex-[2] bg-white text-nature-950 py-6 rounded-[2.5rem] font-bold shadow-2xl transition-all active:scale-95"
-          >
-            Entrar na Senda Sagrada
-          </button>
         </div>
       </div>
     );

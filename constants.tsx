@@ -28,6 +28,7 @@ export interface Ritual {
 export const RITUALS: Ritual[] = [
   { id: 'purification', label: 'Purificação e Hidratação', icon: Droplets, desc: 'Corte 2 a 3 lâminas finas de alho e tome com água em jejum (como comprimidos) + 3L de água solarizada.', color: 'text-aura-teal', bg: 'bg-aura-teal/10' },
   { id: 'nourishment', label: 'Nutrição Consciente', icon: Apple, desc: 'Alimentar o templo com vida e pureza.', color: 'text-aura-gold', bg: 'bg-aura-gold/10' },
+  { id: 'movement', label: 'Movimento Amado', icon: Activity, desc: 'Movimentar o corpo com amor e leveza, observando cada ato e praticando a presença.', color: 'text-aura-teal', bg: 'bg-aura-teal/10' },
   { id: 'nature', label: 'Conexão com a Natureza', icon: Sun, desc: 'Sol e pés na terra para ancorar sua luz.', color: 'text-aura-emerald', bg: 'bg-aura-emerald/10' },
   { id: 'presence', label: 'Presença e Quietude', icon: Eye, desc: 'Silêncio e meditação no aqui e agora.', color: 'text-aura-indigo', bg: 'bg-aura-indigo/10' },
   { id: 'shadowWork', label: 'Integração da Sombra', icon: CloudLightning, desc: 'Observar gatilhos e emoções densas.', color: 'text-aura-rose', bg: 'bg-aura-rose/10' },

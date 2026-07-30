@@ -12,7 +12,9 @@ import {
   ArrowLeft,
   Info,
   LogOut,
-  CheckCircle2
+  CheckCircle2,
+  AlertTriangle,
+  Flame
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,10 +22,13 @@ interface SettingsProps {
   userProfile: UserProfile;
   onUpdateProfile: (profile: Partial<UserProfile>) => void;
   setView: (view: AppView) => void;
+  onResetJourney: () => void;
 }
 
-const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setView }) => {
+const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setView, onResetJourney }) => {
   const [showAbout, setShowAbout] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [tempProfile, setTempProfile] = useState({
     name: userProfile.name,
@@ -37,25 +42,30 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
   };
 
   const handleReset = () => {
-    if (window.confirm('Tem certeza que deseja reiniciar sua jornada? Todos os dados serão perdidos.')) {
-      localStorage.clear();
-      window.location.reload();
-    }
+    setShowResetConfirm(true);
   };
 
-  const handleLogout = async () => {
-    if (window.confirm('Tem certeza que deseja sair de sua conta?')) {
-      try {
-        await signOut(auth);
-        setView(AppView.WELCOME);
-      } catch (err) {
-        console.error("Erro ao deslogar:", err);
-      }
+  const confirmReset = () => {
+    setShowResetConfirm(false);
+    onResetJourney();
+  };
+
+  const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = async () => {
+    setShowLogoutConfirm(false);
+    try {
+      await signOut(auth);
+      setView(AppView.WELCOME);
+    } catch (err) {
+      console.error("Erro ao deslogar:", err);
     }
   };
 
   return (
-    <div className="store-page navigated-screen min-h-screen pb-40 p-4 sm:p-6 space-y-8 animate-in fade-in duration-500">
+    <div className="min-h-screen pt-safe pb-safe-nav p-6 space-y-8 animate-in fade-in duration-500">
       <header className="flex items-center gap-4">
         <button 
           onClick={() => setView(AppView.DASHBOARD)}
@@ -145,6 +155,22 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
 
         <div className="space-y-3">
           <button 
+            onClick={() => setView(AppView.DIAGNOSIS)}
+            className="w-full glass-mystic p-5 rounded-3xl border border-white/5 flex items-center justify-between group hover:border-magic-gold/30 transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-magic-gold/10 rounded-xl flex items-center justify-center text-magic-gold">
+                <Flame size={20} />
+              </div>
+              <div className="text-left">
+                <h4 className="text-sm font-bold text-white">Mapeamento de Corpo e Alma</h4>
+                <p className="text-[9px] text-white/40 uppercase tracking-widest">Identificar sensibilidades e sintomas do templo</p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="text-white/20 group-hover:text-white transition-all animate-pulse" />
+          </button>
+
+          <button 
             onClick={() => setShowAbout(true)}
             className="w-full glass-mystic p-5 rounded-3xl border border-white/5 flex items-center justify-between group hover:border-white/20 transition-all"
           >
@@ -200,7 +226,7 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="safe-overlay fixed inset-0 z-[100] bg-ethereal-950/95 backdrop-blur-2xl flex items-center justify-center p-6"
+            className="fixed inset-0 z-[100] bg-ethereal-950/95 backdrop-blur-2xl flex items-center justify-center p-6"
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -268,6 +294,90 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
               >
                 Fechar
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {showResetConfirm && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-ethereal-950/95 backdrop-blur-2xl flex items-center justify-center p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="glass-mystic border border-rose-500/20 w-full max-w-sm rounded-[2.5rem] p-8 flex flex-col items-center text-center space-y-6 shadow-2xl"
+            >
+              <div className="w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center text-rose-500 border border-rose-500/20">
+                <AlertTriangle size={32} />
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-xl font-serif text-white italic">Reiniciar Senda?</h3>
+                <p className="text-xs text-ethereal-300 leading-relaxed">
+                  Tem certeza de que deseja reiniciar sua jornada de reconexão? Todos os seus dados, históricos de testes e logs diários serão apagados permanentemente.
+                </p>
+              </div>
+
+              <div className="flex flex-col w-full gap-3">
+                <button 
+                  onClick={confirmReset}
+                  className="w-full bg-rose-500 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-rose-600 transition-colors"
+                >
+                  Sim, Reiniciar
+                </button>
+                <button 
+                  onClick={() => setShowResetConfirm(false)}
+                  className="w-full bg-white/5 text-white/60 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {showLogoutConfirm && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-ethereal-950/95 backdrop-blur-2xl flex items-center justify-center p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="glass-mystic border border-white/10 w-full max-w-sm rounded-[2.5rem] p-8 flex flex-col items-center text-center space-y-6 shadow-2xl"
+            >
+              <div className="w-16 h-16 bg-magic-gold/10 rounded-full flex items-center justify-center text-magic-gold border border-magic-gold/20">
+                <LogOut size={32} />
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-xl font-serif text-white italic">Sair da Conta?</h3>
+                <p className="text-xs text-ethereal-300 leading-relaxed">
+                  Deseja realmente encerrar sua sessão atual? Seu progresso continuará salvo com segurança em sua conta.
+                </p>
+              </div>
+
+              <div className="flex flex-col w-full gap-3">
+                <button 
+                  onClick={confirmLogout}
+                  className="w-full bg-magic-gold text-nature-950 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  Sim, Sair
+                </button>
+                <button 
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="w-full bg-white/5 text-white/60 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  Voltar
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

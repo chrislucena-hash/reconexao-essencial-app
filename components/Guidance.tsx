@@ -29,12 +29,16 @@ import {
   Skull,
   Compass,
   Volume2,
+  VolumeX,
+  Play,
+  Pause,
   Wand2,
   Timer,
   X,
   RotateCcw,
   ChevronRight,
-  Share2
+  Share2,
+  CheckCircle2
 } from 'lucide-react';
 import React, { useEffect, useState, useRef } from 'react';
 import { 
@@ -47,23 +51,94 @@ import {
   generatePurificationTips
 } from '../services/geminiService';
 import { DailyInsight, DailyContent, Recipe } from '../types';
-import { UserProfile } from '../types';
-import { endBackendFastingSession, isBackendConfigured, startBackendFastingSession } from '../services/apiClient';
+
+const DEFAULT_DAILY_INSIGHT: DailyInsight = {
+  oracleMessage: "Olhe para dentro. Nas profundezas do seu silêncio habita a verdade imutável do seu ser.",
+  dailyExercise: "Pressione suavemente a ponta da língua no palato e respire pelo nariz de forma lenta por cinco ciclos.",
+  dailyRitual: {
+    type: "Meditação",
+    title: "Ritual do Alvorecer Cósmico",
+    elements: ["Copo de água morna", "Espaço silencioso"],
+    process: [
+      "Ao acordar, sente-se ereto em silêncio.",
+      "Beba o copo de água morna agradecendo por mais um dia no templo.",
+      "Respire fundo por 5 minutos visualizando uma luz dourada no peito."
+    ],
+    purpose: "Ancorar a presença e a paz no início do dia."
+  },
+  shadowPrompt: "Qual medo ou sombra do passado estou permitindo que controle minhas escolhas de hoje?"
+};
+
+const DEFAULT_DAILY_CONTENT: DailyContent = {
+  motivation: "Sua saúde é o seu altar. Trate o seu templo físico com a reverência que ele merece hoje.",
+  dailyChallenge: "Mastigue cada garfada pelo menos 30 vezes e coma em absoluto silêncio.",
+  menu: [
+    {
+      title: "Creme de Abacate Ancestral",
+      type: "Desjejum",
+      ingredients: ["1/2 abacate maduro", "Suco de 1/2 limão", "1 colher de sopa de mel silvestre", "Sementes de girassol torradas"],
+      instructions: [
+        "Amasse o abacate com um garfo até ficar homogêneo.",
+        "Misture o suco de limão e o mel incorporando levemente.",
+        "Finalize com sementes de girassol por cima para dar textura e energia."
+      ],
+      prepTime: "5 min"
+    },
+    {
+      title: "Escondidinho de Mandioca com Frango Desfiado",
+      type: "Almoço",
+      ingredients: ["300g de mandioca cozida", "150g de peito de frango cozido e desfiado", "Cebola, alho, cúrcuma e sal marinho", "Azeite de oliva extra virgem"],
+      instructions: [
+        "Amasse a mandioca cozida com um pouco da água do cozimento até formar um purê macio.",
+        "Refogue o frango desfiado com cebola, alho, cúrcuma e sal no azeite.",
+        "Em um refratário, coloque o frango refogado e cubra com o purê de mandioca.",
+        "Leve ao forno por 15 minutos para dourar levemente."
+      ],
+      prepTime: "25 min"
+    },
+    {
+      title: "Sopa de Abóbora com Gengibre Regeneradora",
+      type: "Jantar",
+      ingredients: ["400g de abóbora cabotiá picada", "1 pedaço pequeno de gengibre fresco ralado", "1 cebola picada", "Sal marinho e azeite de oliva"],
+      instructions: [
+        "Refogue a cebola e o gengibre ralado com azeite em uma panela média.",
+        "Adicione a abóbora picada, cubra com água filtrada e cozinhe até ficar bem macia.",
+        "Bata tudo no liquidificador até obter um creme sedoso.",
+        "Sirva quente com um fio de azeite extra virgem."
+      ],
+      prepTime: "20 min"
+    }
+  ]
+};
 
 const FASTING_WINDOWS = [12, 14, 16, 18, 24];
 
-interface GuidanceProps {
-  userProfile: UserProfile;
-}
-
-const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'jornada' | 'autocura' | 'alquimista' | 'saude-intestinal'>('jornada');
+const Guidance: React.FC = () => {
+  const [activeSubTab, setActiveSubTab] = useState<'jornada' | 'autocura' | 'saude-intestinal'>('jornada');
   const [content, setContent] = useState<DailyContent | null>(null);
   const [insight, setInsight] = useState<DailyInsight | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [ingredientsInput, setIngredientsInput] = useState('');
-  const [alchemistRecipe, setAlchemistRecipe] = useState<any | null>(null);
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  const [ingredientsInput, setIngredientsInput] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("reconexao_alchemist_input") || "";
+    }
+    return "";
+  });
+  const [alchemistRecipe, setAlchemistRecipe] = useState<any | null>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("reconexao_alchemist_recipe");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Error parsing cached alchemist recipe:", e);
+        }
+      }
+    }
+    return null;
+  });
   const [loadingAlchemist, setLoadingAlchemist] = useState(false);
   
   // New States
@@ -76,9 +151,10 @@ const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
   const [loadingExtras, setLoadingExtras] = useState(false);
   const [fastingWindow, setFastingWindow] = useState<number>(16);
   const [isFasting, setIsFasting] = useState(false);
-  const [fastingSession, setFastingSession] = useState<Awaited<ReturnType<typeof startBackendFastingSession>> | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCacheRef = useRef<Record<string, string>>({});
+  const [loadingAudioText, setLoadingAudioText] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -90,12 +166,60 @@ const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
           generateFermentationRecipe(),
           generatePurificationTips()
         ]);
-        setInsight(insightData);
-        setContent(dailyContent);
-        setFermentationRecipe(ferment);
-        setPurificationTips(tips);
+        setInsight(insightData || DEFAULT_DAILY_INSIGHT);
+        setContent(dailyContent || DEFAULT_DAILY_CONTENT);
+        
+        // Robust recipe check to prevent rendering crashes if the API returns non-recipe objects
+        if (ferment && typeof ferment === 'object' && ferment.title && Array.isArray(ferment.ingredients) && Array.isArray(ferment.instructions)) {
+          setFermentationRecipe(ferment);
+        } else {
+          setFermentationRecipe({
+            title: "Kefir de Água do Templo",
+            type: "Fermentação Probiótica",
+            ingredients: ["500ml de água filtrada", "2 colheres de sopa de açúcar mascavo integral", "2 colheres de grãos de kefir de água"],
+            instructions: [
+              "Dissolva o açúcar mascavo na água em um pote de vidro.",
+              "Adicione os grãos de kefir e cubra com um pano limpo preso por elástico.",
+              "Deixe fermentar em local escuro por 24 a 48 horas.",
+              "Coe os grãos e consuma a bebida probiótica refrescante."
+            ]
+          });
+        }
+
+        // Robust array check to prevent rendering crashes if API returns objects or strings
+        if (Array.isArray(tips) && tips.length > 0) {
+          setPurificationTips(tips);
+        } else {
+          setPurificationTips([
+            "Beba um copo de água morna com limão pela manhã para despertar o sistema digestivo.",
+            "Mastigue sementes de mamão frescas pela manhã para liberação de emulsinas e enzimas purificadoras.",
+            "Mantenha jejum noturno de 12 a 16 horas para permitir a regeneração celular.",
+            "Evite ingerir líquidos frios durante as refeições principais para preservar as enzimas digestivas.",
+            "Consuma chás amargos (como dente-de-leão ou alcachofra) antes das principais refeições."
+          ]);
+        }
       } catch (error) {
         console.error("Error loading guidance:", error);
+        setInsight(DEFAULT_DAILY_INSIGHT);
+        setContent(DEFAULT_DAILY_CONTENT);
+        setFermentationRecipe({
+          title: "Kefir de Água do Templo",
+          type: "Fermentação Probiótica",
+          ingredients: ["500ml de água filtrada", "2 colheres de sopa de açúcar mascavo integral", "2 colheres de grãos de kefir de água"],
+          instructions: [
+            "Dissolva o açúcar mascavo na água em um pote de vidro.",
+            "Adicione os grãos de kefir e cubra com um pano limpo preso por elástico.",
+            "Deixe fermentar em local escuro por 24 a 48 horas.",
+            "Coe os grãos e consuma a bebida probiótica refrescante."
+          ]
+        });
+        setPurificationTips([
+          "Beba um copo de água morna com limão pela manhã para despertar o sistema digestivo.",
+          "Mastigue sementes de mamão frescas pela manhã para liberação de emulsinas e enzimas purificadoras.",
+          "Mantenha jejum noturno de 12 a 16 horas para permitir a regeneração celular.",
+          "Evite ingerir líquidos frios durante as refeições principais para preservar as enzimas digestivas.",
+          "Consuma chás amargos (como dente-de-leão ou alcachofra) antes das principais refeições."
+        ]);
       } finally {
         setLoading(false);
       }
@@ -103,26 +227,182 @@ const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
     load();
   }, []);
 
-  const playGuidance = async (text: string) => {
-    if (isPlaying) return;
-    setIsPlaying(true);
-    const audioBase64 = await generateSpeech(text);
-    if (audioBase64) {
-      const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
-      audioRef.current = audio;
-      audio.onended = () => setIsPlaying(false);
-      audio.play();
+  const fallbackSpeech = (textToSpeak: string) => {
+    setLoadingAudioText(null);
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 0.8; // Cadência serena, calma e pausada
+      utterance.pitch = 1.0; // Tom feminino natural e acolhedor
+
+      const setVoice = () => {
+        const voices = window.speechSynthesis.getVoices();
+        const ptVoices = voices.filter(v => v.lang.startsWith('pt'));
+        const femaleVoice = ptVoices.find(v => 
+          /luciana|helena|fernanda|francisca|vitoria|marcia|joana|female|feminina|google português/i.test(v.name)
+        ) || ptVoices.find(v => !/male|masculino|felipe|daniel|ricardo/i.test(v.name)) || ptVoices[0];
+
+        if (femaleVoice) {
+          utterance.voice = femaleVoice;
+        }
+      };
+
+      setVoice();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = setVoice;
+      }
+
+      utterance.onend = () => setIsPlaying(false);
+      utterance.onerror = () => setIsPlaying(false);
+      window.speechSynthesis.speak(utterance);
     } else {
       setIsPlaying(false);
     }
   };
 
+  const playBase64AudioCtx = async (base64: string): Promise<boolean> => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return false;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') await ctx.resume();
+
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      // Wrap PCM in WAV header for native decoding across all mobile devices
+      let wavBuffer: ArrayBuffer;
+      if (bytes.length >= 44 && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+        wavBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+      } else {
+        const header = new ArrayBuffer(44);
+        const view = new DataView(header);
+        view.setUint32(0, 0x52494646, false); // "RIFF"
+        view.setUint32(4, 36 + bytes.length, true);
+        view.setUint32(8, 0x57415645, false); // "WAVE"
+        view.setUint32(12, 0x666d7420, false); // "fmt "
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true); // PCM
+        view.setUint16(22, 1, true); // Mono
+        view.setUint32(24, 24000, true); // Sample rate
+        view.setUint32(28, 24000 * 2, true); // Byte rate
+        view.setUint16(32, 2, true); // Block align
+        view.setUint16(34, 16, true); // Bits per sample
+        view.setUint32(36, 0x64617461, false); // "data"
+        view.setUint32(40, bytes.length, true);
+
+        const combined = new Uint8Array(44 + bytes.length);
+        combined.set(new Uint8Array(header), 0);
+        combined.set(bytes, 44);
+        wavBuffer = combined.buffer;
+      }
+
+      let audioBuffer: AudioBuffer | null = await new Promise((resolve) => {
+        let done = false;
+        try {
+          ctx.decodeAudioData(
+            wavBuffer.slice(0),
+            (buf) => { if (!done) { done = true; resolve(buf); } },
+            () => { if (!done) { done = true; resolve(null); } }
+          ).catch(() => { if (!done) { done = true; resolve(null); } });
+        } catch (e) {
+          if (!done) { done = true; resolve(null); }
+        }
+      });
+
+      if (!audioBuffer) {
+        const rawBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+        const dataInt16 = new Int16Array(rawBuffer);
+        const frameCount = dataInt16.length;
+        if (frameCount > 0) {
+          audioBuffer = ctx.createBuffer(1, frameCount, 24000);
+          const channelData = audioBuffer.getChannelData(0);
+          for (let i = 0; i < frameCount; i++) {
+            channelData[i] = dataInt16[i] / 32768.0;
+          }
+        }
+      }
+
+      if (!audioBuffer) return false;
+
+      return new Promise((resolve) => {
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(ctx.destination);
+        source.onended = () => resolve(true);
+        source.start(0);
+      });
+    } catch (e) {
+      console.warn("playBase64AudioCtx error:", e);
+      return false;
+    }
+  };
+
+  const playGuidance = async (text: string, customInstruction?: string) => {
+    if (isPlaying || loadingAudioText) {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsPlaying(false);
+      setLoadingAudioText(null);
+      return;
+    }
+
+    setIsPlaying(true);
+
+    // Instant playback if audio is preloaded in cache
+    const cached = audioCacheRef.current[text];
+    if (cached) {
+      const success = await playBase64AudioCtx(cached);
+      if (success) {
+        setIsPlaying(false);
+        return;
+      }
+    }
+
+    // Fetch audio on demand with loading indicator
+    setLoadingAudioText(text);
+    try {
+      const prompt = customInstruction || "Você é uma pessoa real falando em português do Brasil de forma fluida, natural, expressiva e acolhedora. Fale com tom humano caloroso e ritmo espontâneo de conversa.";
+      const audioBase64 = await generateSpeech(text, prompt);
+      setLoadingAudioText(null);
+      if (audioBase64) {
+        audioCacheRef.current[text] = audioBase64;
+        const success = await playBase64AudioCtx(audioBase64);
+        if (success) {
+          setIsPlaying(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Speech generation error, falling back to browser speech:", e);
+      setLoadingAudioText(null);
+    }
+
+    fallbackSpeech(text);
+  };
+
   const handleAlchemistSearch = async () => {
     if (!ingredientsInput.trim()) return;
     setLoadingAlchemist(true);
-    const recipe = await generateAlchemistRecipe(ingredientsInput);
-    setAlchemistRecipe(recipe);
-    setLoadingAlchemist(false);
+    try {
+      localStorage.setItem("reconexao_alchemist_input", ingredientsInput);
+      const recipe = await generateAlchemistRecipe(ingredientsInput);
+      setAlchemistRecipe(recipe);
+      if (recipe) {
+        localStorage.setItem("reconexao_alchemist_recipe", JSON.stringify(recipe));
+      } else {
+        localStorage.removeItem("reconexao_alchemist_recipe");
+      }
+    } catch (error) {
+      console.error("Error transmuting ingredients:", error);
+    } finally {
+      setLoadingAlchemist(false);
+    }
   };
 
   const handleOpenRefresh = async (index: number, mealType: string) => {
@@ -145,32 +425,15 @@ const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
 
   const handleRefreshFerment = async () => {
     setLoadingExtras(true);
-    const ferment = await generateFermentationRecipe();
-    setFermentationRecipe(ferment);
-    setLoadingExtras(false);
-  };
-
-  const toggleFasting = async () => {
-    if (!isFasting) {
-      setIsFasting(true);
-      if (isBackendConfigured) {
-        try {
-          setFastingSession(await startBackendFastingSession(fastingWindow, userProfile));
-        } catch (error) {
-          console.error('Error starting fasting session:', error);
-        }
+    try {
+      const ferment = await generateFermentationRecipe();
+      if (ferment && typeof ferment === 'object' && ferment.title && Array.isArray(ferment.ingredients) && Array.isArray(ferment.instructions)) {
+        setFermentationRecipe(ferment);
       }
-      return;
-    }
-
-    setIsFasting(false);
-    if (isBackendConfigured && fastingSession) {
-      try {
-        await endBackendFastingSession(fastingSession);
-        setFastingSession(null);
-      } catch (error) {
-        console.error('Error ending fasting session:', error);
-      }
+    } catch (e) {
+      console.warn("Failed to refresh fermentation recipe:", e);
+    } finally {
+      setLoadingExtras(false);
     }
   };
 
@@ -180,7 +443,8 @@ const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
       navigator.share({ title: 'ReViva Alquimia', text: shareText, url: window.location.href }).catch(() => {});
     } else {
       navigator.clipboard.writeText(shareText);
-      alert('Link copiado para sua egrégora! ✨');
+      setShowCopyToast(true);
+      setTimeout(() => setShowCopyToast(false), 3000);
     }
   };
 
@@ -194,7 +458,7 @@ const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
   }
 
   return (
-    <div className="store-page navigated-screen p-4 pb-28 max-w-2xl mx-auto space-y-8 animate-in fade-in">
+    <div className="p-4 pt-safe pb-safe-nav max-w-2xl mx-auto space-y-8 animate-in fade-in">
        <header className="space-y-1 text-center">
           <h2 className="text-4xl font-serif text-white italic">Bússola da Alma</h2>
           <p className="text-aura-gold text-[10px] font-black uppercase tracking-widest">Portal do Guia</p>
@@ -203,31 +467,44 @@ const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
        <div className="flex glass-mystic p-1 rounded-2xl gap-1 mx-2 shadow-2xl overflow-x-auto no-scrollbar">
           <button onClick={() => setActiveSubTab('jornada')} className={`flex-1 min-w-[80px] py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSubTab === 'jornada' ? 'bg-aura-violet text-white shadow-[0_0_20px_rgba(139,92,246,0.4)]' : 'text-ethereal-500'}`}>Jornada</button>
           <button onClick={() => setActiveSubTab('autocura')} className={`flex-1 min-w-[80px] py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSubTab === 'autocura' ? 'bg-aura-violet text-white shadow-[0_0_20px_rgba(139,92,246,0.4)]' : 'text-ethereal-500'}`}>Autocura</button>
-          <button onClick={() => setActiveSubTab('alquimista')} className={`flex-1 min-w-[80px] py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSubTab === 'alquimista' ? 'bg-aura-violet text-white shadow-[0_0_20px_rgba(139,92,246,0.4)]' : 'text-ethereal-500'}`}>Alquimista</button>
           <button onClick={() => setActiveSubTab('saude-intestinal')} className={`flex-1 min-w-[80px] py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSubTab === 'saude-intestinal' ? 'bg-aura-violet text-white shadow-[0_0_20px_rgba(139,92,246,0.4)]' : 'text-ethereal-500'}`}>Saúde Intestinal</button>
        </div>
 
       {activeSubTab === 'jornada' && content && (
         <div className="space-y-8 animate-in fade-in">
           {/* Mensagem do Dia */}
-          <section className="relative p-10 glass-mystic rounded-[4rem] border border-aura-violet/30 bg-aura-violet/5 text-center space-y-6 shadow-2xl overflow-hidden group">
+          <section className="relative p-8 sm:p-10 glass-mystic rounded-[4rem] border border-aura-violet/30 bg-aura-violet/5 text-center space-y-6 shadow-2xl overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-aura-violet/10 blur-3xl pointer-events-none group-hover:scale-150 transition-transform duration-1000" />
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 p-3 bg-aura-deep border border-aura-violet/30 rounded-full text-aura-violet shadow-[0_0_20px_rgba(139,92,246,0.3)]">
                <Sparkles size={24} className="animate-pulse" />
             </div>
-            <div className="space-y-4">
-              <p className="text-xl font-serif text-white leading-relaxed italic px-2">
-                "{content.motivation}"
+
+            <div className="space-y-4 pt-2">
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-aura-gold">Mensagem do Oráculo</span>
+              <p className="text-lg sm:text-xl font-serif text-white leading-relaxed italic px-2">
+                "{insight?.oracleMessage || content.motivation}"
               </p>
-              <button 
-                onClick={() => playGuidance(content.motivation)}
-                disabled={isPlaying}
-                className="mx-auto flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-aura-violet hover:text-white transition-colors disabled:opacity-50"
-              >
-                <Volume2 size={14} /> Ouvir Oráculo
-              </button>
             </div>
           </section>
+
+          {/* Exercício Bioenergético Diário */}
+          {insight?.dailyExercise && (
+            <section className="p-8 glass-mystic rounded-[3rem] border border-aura-gold/30 bg-aura-gold/5 space-y-4 shadow-xl">
+              <div className="flex items-center gap-3 text-aura-gold">
+                <Zap size={22} className="animate-pulse" />
+                <h4 className="text-[10px] font-black uppercase tracking-[0.3em]">Exercício de Prana Diário</h4>
+              </div>
+              <p className="text-xs text-ethereal-100 leading-relaxed italic font-light">
+                {insight.dailyExercise}
+              </p>
+              <button
+                onClick={() => playGuidance(`Exercício bioenergético do dia: ${insight.dailyExercise}`)}
+                className="mt-2 text-[9px] font-black text-aura-gold uppercase tracking-widest flex items-center gap-2 hover:underline"
+              >
+                <Volume2 size={14} /> Ouvir Instruções do Exercício
+              </button>
+            </section>
+          )}
 
           {/* Desafio de Presença */}
           <section className="p-8 glass-mystic rounded-[3rem] border border-aura-emerald/20 bg-aura-emerald/5 flex gap-6 items-center shadow-xl group">
@@ -336,102 +613,6 @@ const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
         </div>
       )}
 
-      {activeSubTab === 'alquimista' && (
-        <div className="space-y-8 animate-in slide-up">
-           <section className="p-8 glass-mystic rounded-[3rem] border border-magic-gold/20 bg-magic-gold/5 text-center space-y-6 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-magic-gold/10 blur-3xl pointer-events-none" />
-              <div className="flex flex-col items-center gap-3">
-                 <div className="p-3 bg-magic-gold/20 rounded-2xl text-magic-gold">
-                    <Wand2 size={28} className="animate-pulse" />
-                 </div>
-                 <h3 className="text-2xl font-serif text-white italic">O Alquimista de Suporte</h3>
-                 <p className="text-[10px] text-magic-gold font-black uppercase tracking-widest">Transmutação de Ingredientes</p>
-              </div>
-              
-              <div className="space-y-4">
-                 <p className="text-xs text-ethereal-300 italic leading-relaxed">
-                   Diga-me, buscador, quais elementos você possui em seu templo (cozinha)? Eu criarei uma alquimia sagrada para você.
-                 </p>
-                 <div className="relative">
-                    <input 
-                      type="text"
-                      value={ingredientsInput}
-                      onChange={(e) => setIngredientsInput(e.target.value)}
-                      placeholder="Ex: abacate, sementes, limão..."
-                      className="w-full p-5 glass-mystic rounded-2xl text-white outline-none border border-white/10 focus:border-magic-gold transition-all shadow-inner text-sm italic"
-                    />
-                    <button 
-                      onClick={handleAlchemistSearch}
-                      disabled={loadingAlchemist || !ingredientsInput.trim()}
-                      className="absolute right-2 top-2 bottom-2 px-6 bg-magic-gold text-nature-950 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg disabled:opacity-50 transition-all active:scale-95"
-                    >
-                      {loadingAlchemist ? <Loader2 size={16} className="animate-spin" /> : "Transmutar"}
-                    </button>
-                 </div>
-              </div>
-           </section>
-
-           {alchemistRecipe && (
-             <div className="animate-in zoom-in">
-                <div className="p-8 glass-mystic rounded-[3rem] border border-magic-gold/40 bg-magic-gold/5 space-y-8 shadow-2xl relative overflow-hidden">
-                   <div className="absolute top-0 left-0 p-6 opacity-10">
-                      <Sparkles size={80} className="text-magic-gold" />
-                   </div>
-                   
-                   <div className="space-y-2 relative z-10">
-                      <div className="flex items-center gap-2 mb-2">
-                         <span className="flex items-center gap-1 bg-aura-emerald/20 px-2 py-0.5 rounded-md border border-aura-emerald/30 text-[8px] font-black text-aura-emerald uppercase tracking-widest">
-                            <ShieldCheck size={10} /> Testada e Aprovada
-                         </span>
-                      </div>
-                      <h4 className="text-2xl font-serif text-white italic tracking-tight">{alchemistRecipe.name}</h4>
-                      <p className="text-xs text-ethereal-300 italic leading-relaxed">{alchemistRecipe.desc}</p>
-                   </div>
-
-                   <div className="h-px bg-gradient-to-r from-transparent via-magic-gold/20 to-transparent" />
-
-                   <div className="grid grid-cols-1 gap-8 relative z-10">
-                      <div className="space-y-4">
-                         <h6 className="text-[9px] font-black uppercase tracking-widest text-magic-gold flex items-center gap-2">
-                           <Droplets size={12} /> Elementos da Alquimia
-                         </h6>
-                         <ul className="space-y-2">
-                           {alchemistRecipe.ingredients.map((ing: string, i: number) => (
-                             <li key={i} className="text-[11px] text-ethereal-200 flex items-start gap-2 italic">
-                               <span className="text-magic-gold mt-1">•</span> {ing}
-                             </li>
-                           ))}
-                         </ul>
-                      </div>
-
-                      <div className="space-y-4">
-                         <h6 className="text-[9px] font-black uppercase tracking-widest text-magic-gold flex items-center gap-2">
-                           <Zap size={12} /> Processo de Transmutação
-                         </h6>
-                         <div className="space-y-4">
-                           {alchemistRecipe.instructions.map((step: string, i: number) => (
-                             <div key={i} className="flex gap-3">
-                               <span className="text-[10px] font-serif italic text-magic-gold shrink-0">{i + 1}.</span>
-                               <p className="text-[11px] text-ethereal-300 leading-relaxed italic border-l border-white/5 pl-3">
-                                 {step}
-                               </p>
-                             </div>
-                           ))}
-                         </div>
-                      </div>
-                   </div>
-
-                   <div className="p-6 bg-white/5 rounded-[2rem] border border-white/5 text-center space-y-3">
-                      <Sparkles className="text-magic-gold mx-auto" size={16} />
-                      <p className="text-[10px] text-ethereal-400 italic leading-relaxed px-4">
-                        {alchemistRecipe.spiritualNote}
-                      </p>
-                   </div>
-                </div>
-             </div>
-           )}
-        </div>
-      )}
 
       {activeSubTab === 'saude-intestinal' && (
         <div className="space-y-10 animate-in slide-up">
@@ -484,7 +665,7 @@ const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
               </div>
 
               <button 
-                 onClick={toggleFasting}
+                 onClick={() => setIsFasting(!isFasting)}
                  className={`w-full py-5 rounded-[2.5rem] font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-2xl ${
                     isFasting ? 'bg-rose-950/50 text-rose-400 border border-rose-900' : 'bg-white text-nature-950 hover:scale-105 active:scale-95'
                  }`}
@@ -505,8 +686,66 @@ const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
                  </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-6">
-                 {/* SHOT DE PURIFICAÇÃO REMOVED BY USER REQUEST */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 {/* O RITUAL DO ALHO */}
+                 <div className="glass-mystic p-6 rounded-[2.5rem] border border-aura-teal/10 bg-gradient-to-br from-aura-teal/5 to-transparent space-y-4 shadow-xl flex flex-col justify-between hover:border-aura-teal/30 transition-all duration-300">
+                    <div className="space-y-3">
+                       <div className="flex items-center gap-2 text-aura-teal">
+                          <div className="p-2 bg-aura-teal/10 rounded-xl">
+                             <ShieldCheck size={18} />
+                          </div>
+                          <h4 className="font-serif text-lg text-white">Ritual do Alho</h4>
+                       </div>
+                       <p className="text-[9px] font-black text-aura-teal/80 uppercase tracking-widest">Desparasitação Natural</p>
+                       <p className="text-xs text-ethereal-300 leading-relaxed italic">
+                         "Corte 2 a 3 lâminas finas de alho fresco e tome-as com água pura como se fossem comprimidos. Isso evita o sabor residual e limpa o templo profundamente de parasitas e inflamações."
+                       </p>
+                    </div>
+                    <div className="pt-2 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-ethereal-500 uppercase tracking-widest">
+                       <span>Frequência: Diário</span>
+                       <span className="text-aura-teal">Ativo</span>
+                    </div>
+                 </div>
+
+                 {/* SHOT FOGO DIGESTIVO */}
+                 <div className="glass-mystic p-6 rounded-[2.5rem] border border-magic-gold/15 bg-gradient-to-br from-magic-gold/5 to-transparent space-y-4 shadow-xl flex flex-col justify-between hover:border-magic-gold/30 transition-all duration-300">
+                    <div className="space-y-3">
+                       <div className="flex items-center gap-2 text-magic-gold">
+                          <div className="p-2 bg-magic-gold/10 rounded-xl">
+                             <Flame size={18} />
+                          </div>
+                          <h4 className="font-serif text-lg text-white">Fogo Digestivo</h4>
+                        </div>
+                        <p className="text-[9px] font-black text-magic-gold/80 uppercase tracking-widest">Ativação & Imunidade</p>
+                        <p className="text-xs text-ethereal-300 leading-relaxed italic">
+                          "Suco de 1/2 limão, 1 colher de café de cúrcuma pura, uma pitada de pimenta preta e raspas de gengibre em 50ml de água morna. Acende seu fogo interno (Agni) e desinflama a mucosa."
+                        </p>
+                     </div>
+                     <div className="pt-2 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-ethereal-500 uppercase tracking-widest">
+                        <span>Frequência: Manhã</span>
+                        <span className="text-magic-gold">Ativo</span>
+                     </div>
+                  </div>
+
+                  {/* SHOT pH DO TEMPLO */}
+                  <div className="glass-mystic p-6 rounded-[2.5rem] border border-aura-violet/15 bg-gradient-to-br from-aura-violet/5 to-transparent space-y-4 shadow-xl flex flex-col justify-between hover:border-aura-violet/30 transition-all duration-300">
+                     <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-aura-violet">
+                           <div className="p-2 bg-aura-violet/10 rounded-xl">
+                              <Droplets size={18} />
+                           </div>
+                           <h4 className="font-serif text-lg text-white">Equilíbrio do Templo</h4>
+                        </div>
+                        <p className="text-[9px] font-black text-aura-violet/80 uppercase tracking-widest">pH & Glicemia</p>
+                        <p className="text-xs text-ethereal-300 leading-relaxed italic">
+                          "1 colher de sopa de vinagre de maçã orgânico diluída em 50ml de água morna antes da primeira refeição. Prepara o estômago com acidez ideal e melhora a sensibilidade insulínica."
+                        </p>
+                     </div>
+                     <div className="pt-2 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-ethereal-500 uppercase tracking-widest">
+                        <span>Frequência: Pré-refeição</span>
+                        <span className="text-aura-violet">Ativo</span>
+                     </div>
+                  </div>
               </div>
            </section>
 
@@ -662,7 +901,7 @@ const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
 
       {/* MODAL DE ALTERNATIVAS DE RECEITAS */}
       {showOptionsModal && (
-        <div className="safe-overlay fixed inset-0 z-[100] bg-ethereal-950/90 backdrop-blur-xl flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] bg-ethereal-950/90 backdrop-blur-xl flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
            <div className="bg-aura-deep border border-white/10 w-full max-w-lg rounded-[3rem] overflow-hidden max-h-[85vh] flex flex-col shadow-2xl">
               <header className="p-8 border-b border-white/5 flex justify-between items-center bg-white/5">
                  <div>
@@ -701,6 +940,27 @@ const Guidance: React.FC<GuidanceProps> = ({ userProfile }) => {
                  <p className="text-[10px] text-ethereal-600 italic">Cada opção utiliza uma base de ingredientes distinta para sua evolução.</p>
               </footer>
            </div>
+        </div>
+      )}
+
+      {/* Beautiful Copy Link Toast */}
+      {showCopyToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm animate-in slide-up duration-300">
+          <div className="glass-mystic p-5 rounded-3xl border border-magic-gold/30 bg-magic-gold/10 backdrop-blur-xl flex items-center gap-4 shadow-[0_15px_30px_rgba(0,0,0,0.5)]">
+            <div className="p-2 bg-magic-gold/20 rounded-xl text-magic-gold">
+              <CheckCircle2 size={20} className="animate-pulse" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-magic-gold">Frequência Compartilhada</p>
+              <p className="text-xs text-ethereal-100 italic leading-snug">Link copiado para sua egrégora! ✨</p>
+            </div>
+            <button 
+              onClick={() => setShowCopyToast(false)}
+              className="text-ethereal-500 hover:text-white transition-colors p-1"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
       )}
     </div>

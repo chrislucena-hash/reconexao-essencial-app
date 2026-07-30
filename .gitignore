@@ -6,29 +6,11 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-credenciais.vps.md
+
 node_modules
 dist
 dist-ssr
-.tools/
 *.local
-.env
-CREDENCIAIS*.md
-__pycache__/
-*.py[cod]
-.venv/
-backend/*service-account*.json
-android/.gradle/
-android/local.properties
-android/key.properties
-android/*.jks
-android/*.keystore
-android/*.pem
-android/*.base64.txt
-android/*.credentials.txt
-android/app/*.jks
-android/app/*.keystore
-ios/App/App/public/
 
 # Editor directories and files
 .vscode/*
@@ -40,12 +22,3 @@ ios/App/App/public/
 *.njsproj
 *.sln
 *.sw?
-.env.production
-.env.development
-.env.test
-.env.local
-.env.*.local
-*.iml
-*.hprof
-*.orig
-.env.production

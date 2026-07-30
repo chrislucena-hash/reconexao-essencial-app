@@ -1,21 +1,47 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { Wind, Heart, Sparkles, Zap, Flame, Moon, Compass, Eye, Activity, Flower2, ShieldCheck, Stars, Volume2, Loader2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Wind, Heart, Sparkles, Zap, Flame, Moon, Eye, Activity, Stars, Volume2, Loader2, Headphones } from 'lucide-react';
 import { generateSpeech } from '../services/geminiService';
 
-const HEALING_PORTALS = [
+export interface HealingPortal {
+  id: string;
+  category: 'breathing' | 'meditation' | 'hypnosis';
+  hasVoice: boolean;
+  title: string;
+  badge: string;
+  desc: string;
+  icon: any;
+  color: string;
+  steps: {
+    instruction: string;
+    breathing: string;
+    feeling: string;
+    affirming: string;
+    checking: string;
+  };
+  durations: {
+    breathing: number;
+    feeling: number;
+    affirming: number;
+    checking: number;
+  };
+}
+
+const HEALING_PORTALS: HealingPortal[] = [
   {
     id: 'conscious-breath',
-    title: 'Respiração de Autocura',
-    desc: 'Permita que a centelha divina use o prana para expandir sua consciência corporal.',
+    category: 'breathing',
+    hasVoice: false,
+    title: 'Respiração de Autocura (4-4-8)',
+    badge: 'Respiração Guiada por Sinos',
+    desc: 'Pranayama rítmico acompanhado por sinos tibetanos e orbe de luz. Isento de voz falada para silenciar a mente.',
     icon: Wind,
     color: 'text-magic-gold',
     steps: {
-      instruction: "Neste exercício de respiração rítmica, você irá inalar por quatro tempos, reter por quatro e soltar por oito. Prepare-se para sincronizar sua biologia com o ritmo do universo.",
-      breathing: "Inale suavemente, permitindo que a luz divina preencha seu ser.",
-      feeling: "Retenha o ar, sentindo a centelha vibrar em seu centro de força.",
-      affirming: "Solte lentamente, liberando tudo o que não serve mais ao seu propósito.",
-      checking: "Sinta a paz profunda que se instala. Sua luz interior agora brilha com clareza cristalina no seu templo físico."
+      instruction: "Sintonize o ritmo sagrado da sua respiração. Acompanhe a expansão do orbe visual e os sinos sutis.",
+      breathing: "Inale a luz divina (4 tempos)...",
+      feeling: "Retenha a energia no seu centro de força (4 tempos)...",
+      affirming: "Solte suavemente, liberando tensões (8 tempos)...",
+      checking: "Permaneça na quietude. Seu ritmo respiratório restaurou o equilíbrio da sua energia vital."
     },
     durations: {
       breathing: 4,
@@ -25,88 +51,146 @@ const HEALING_PORTALS = [
     }
   },
   {
+    id: 'pranayama-balance',
+    category: 'breathing',
+    hasVoice: false,
+    title: 'Pranayama do Equilíbrio Vital',
+    badge: 'Respiração Rítmica',
+    desc: 'Respiração quadrada harmônica em 5 tempos para acalmar o sistema nervoso e estabilizar batimentos.',
+    icon: Activity,
+    color: 'text-emerald-400',
+    steps: {
+      instruction: "Sente-se confortavelmente com a coluna ereta. Prepare-se para a respiração de equilíbrio prânico.",
+      breathing: "Inale vitalidade e serenidade...",
+      feeling: "Retenha o ar com leveza no peito...",
+      affirming: "Exale e dissipe toda ansiedade...",
+      checking: "Sinta a desaceleração benéfica do seu corpo. Sinta o fluxo da paz interior."
+    },
+    durations: {
+      breathing: 5,
+      feeling: 5,
+      affirming: 5,
+      checking: 10
+    }
+  },
+  {
     id: 'emotional-healing',
-    title: 'Portal de Reintegração',
-    desc: 'Meditação guiada para que sua luz interior dissolva sombras emocionais.',
+    category: 'meditation',
+    hasVoice: true,
+    title: 'Meditação: Reintegração Emocional',
+    badge: 'Meditação Guiada por Voz',
+    desc: 'Condução meditativa por voz calma e amorosa para dissolver ansiedade, medos e mágoas no abraço da luz.',
     icon: Heart,
     color: 'text-rose-400',
     steps: {
-      instruction: "Nesta meditação de reintegração, acolheremos suas emoções com amor incondicional. Siga o ritmo da respiração e permita a cura.",
-      breathing: "Inale amor, ancorando sua mente na presença da sua centelha divina.",
-      feeling: "Retenha a luz, acolhendo suas sombras com compaixão absoluta.",
-      affirming: "Solte o passado, decretando: 'Eu sou livre, eu sou luz, eu sou amado'.",
-      checking: "Sinta o abraço da sua própria alma. Você está em casa, seguro e em completa paz. Agradeça por este momento de cura."
+      instruction: "Acolha este momento com profunda serenidade. Feche os olhos, solte os ombros e permita que esta voz calma conduza sua alma a um estado de amor incondicional.",
+      breathing: "Inale suavemente uma luz dourada e amorosa. Permita que ela envolva seu peito e ilumine cada batimento do seu coração.",
+      feeling: "Retenha essa luz com doçura. Acolha qualquer preocupação com compaixão, sentindo-se protegido no abraço do divino.",
+      affirming: "Ao exalar lentamente, liberte o passado. Decrete em seu coração: 'Eu sou paz, eu sou luz, eu acolho minha cura'.",
+      checking: "Sinta a harmonia profunda restabelecida em seu ser. Suas emoções agora repousam em serena quietude."
     },
     durations: {
-      breathing: 4,
-      feeling: 4,
+      breathing: 5,
+      feeling: 5,
       affirming: 8,
-      checking: 15
+      checking: 12
     }
   },
   {
     id: 'body-scan',
-    title: 'Presença da Centelha',
-    desc: 'Escaneamento do Templo para localizar onde sua luz divina precisa atuar agora.',
-    icon: Activity,
+    category: 'meditation',
+    hasVoice: true,
+    title: 'Meditação: Presença da Centelha',
+    badge: 'Escaneamento do Templo',
+    desc: 'Escaneamento meditativo por voz doce e serena para purificar o campo físico e revitalizar suas células.',
+    icon: Sparkles,
     color: 'text-indigo-400',
     steps: {
-      instruction: "Realizaremos agora um escaneamento consciente do seu templo físico. Siga o ritmo sagrado da respiração enquanto a luz percorre suas células.",
-      breathing: "Inale a luz violeta, transmutando as densidades do seu templo físico.",
-      feeling: "Retenha a presença, sentindo a centelha percorrer cada órgão e célula.",
-      affirming: "Solte a harmonia, afirmando: 'Eu habito este corpo sagrado com glória'.",
-      checking: "Perceba-se radiante e purificado. Sua biologia agora ressoa em harmonia perfeita com sua luz primordial. Você é um ser de luz."
+      instruction: "Realizaremos um escaneamento meditado do seu templo físico. Permita que a voz amorosa guie a energia cristalina por todo o seu corpo.",
+      breathing: "Inale uma luz violeta e purificadora. Sinta-a relaxar sua mente, pescoço e coluna, dissolvendo tensões.",
+      feeling: "Mantenha a atenção amorosa em seus órgãos e células, sentindo a centelha divina regenerar seu organismo.",
+      affirming: "Exale a rigidez e o cansaço. Afirme com ternura: 'Habito este corpo com saúde plena, paz e glória'.",
+      checking: "Perceba seu templo físico radiante, leve e reenergizado. Sua biologia ressoa na frequência perfeita do amor."
     },
     durations: {
-      breathing: 4,
-      feeling: 4,
+      breathing: 5,
+      feeling: 5,
       affirming: 8,
-      checking: 15
-    }
-  },
-  {
-    id: 'self-hypnosis',
-    title: 'Autohipnose de Autocura',
-    desc: 'Acesse o subconsciente para reprogramar sua biologia com comandos de cura profunda.',
-    icon: Moon,
-    color: 'text-purple-400',
-    steps: {
-      instruction: "Nesta sessão de autohipnose, acessaremos seu subconsciente. Relaxe no ritmo da respiração e permita a nova realidade biológica.",
-      breathing: "Inale o relaxamento, descendo ao santuário profundo do seu ser.",
-      feeling: "Retenha a paz, visualizando a luz dourada regenerando cada músculo.",
-      affirming: "Solte a ordem: 'Minhas células se regeneram agora. Eu sou cura total'.",
-      checking: "Sinta a nova programação se instalando. Você desperta agora sentindo-se renovado, forte e profundamente curado."
-    },
-    durations: {
-      breathing: 4,
-      feeling: 4,
-      affirming: 8,
-      checking: 15
+      checking: 12
     }
   },
   {
     id: 'vibration-raise',
-    title: 'Frequência Divina',
-    desc: 'Elevação vibracional para alinhar o corpo físico com a pureza da alma.',
+    category: 'meditation',
+    hasVoice: true,
+    title: 'Meditação: Frequência da Alma',
+    badge: 'Elevação Vibracional',
+    desc: 'Prática de elevação da energia espiritual acompanhada por instrução amorosa para blindar seu campo em luz.',
     icon: Zap,
-    color: 'text-orange-400',
+    color: 'text-amber-400',
     steps: {
-      instruction: "Vamos elevar sua frequência vibracional agora. Sincronize seu prana com o ritmo universal para dissolver toda densidade.",
-      breathing: "Inale a frequência do amor, a base sagrada de toda a sua autocura.",
-      feeling: "Retenha o fogo solar, brilhando como um pilar de luz invencível.",
-      affirming: "Solte a expansão: 'Minha centelha divina é meu escudo. Eu sou luz'.",
-      checking: "Sinta-se blindado e profundamente iluminado. Nada além da luz pode habitar este santuário sagrado que é você. Sinta a força."
+      instruction: "Vamos elevar sua frequência vibracional. Respire fundo e conecte-se com a voz serena da sua centelha divina.",
+      breathing: "Inale o fogo sagrado da compaixão. Sinta sua energia se elevar, iluminando sua aura e expandindo sua consciência.",
+      feeling: "Retenha essa alta frequência, sentindo-se um pilar inabalável de luz, sabedoria e amor incondicional.",
+      affirming: "Exale radiância para o universo, declarando: 'Minha luz é minha proteção. Eu ressoo em paz e gratidão'.",
+      checking: "Seu campo magnético está fortalecido e cristalino. Nada além da paz divina habita você agora."
     },
     durations: {
-      breathing: 4,
-      feeling: 4,
+      breathing: 5,
+      feeling: 5,
+      affirming: 8,
+      checking: 12
+    }
+  },
+  {
+    id: 'self-hypnosis',
+    category: 'hypnosis',
+    hasVoice: true,
+    title: 'Autohipnose: Reprogramação da Biologia',
+    badge: 'Autohipnose Guiada',
+    desc: 'Indução profunda conduzida por voz serena e afetuosa para reprogramar o subconsciente com comandos de cura.',
+    icon: Moon,
+    color: 'text-purple-400',
+    steps: {
+      instruction: "Relaxe profundamente. Deixe minha voz conduzir suavemente sua mente consciente até um estado de transe sereno e acolhedor.",
+      breathing: "A cada respiração, você afunda o dobro em um estado de paz absoluta... soltando o controle e permitindo que seu subconsciente atue.",
+      feeling: "Em transe profundo, observe a luz da autocura reescrevendo memórias e restaurando a perfeita harmonia do seu ser.",
+      affirming: "Instale o comando hipnótico: 'Minhas células se regeneram agora. Eu aceito minha saúde e vitalidade plenamente'.",
+      checking: "O comando de autocura está gravado em seu subconsciente. Você desperta sentindo-se renovado, forte e profundamente em paz."
+    },
+    durations: {
+      breathing: 6,
+      feeling: 6,
+      affirming: 8,
+      checking: 14
+    }
+  },
+  {
+    id: 'self-hypnosis-sleep',
+    category: 'hypnosis',
+    hasVoice: true,
+    title: 'Autohipnose: Indução ao Sono Profundo',
+    badge: 'Autohipnose Guiada',
+    desc: 'Sessão de hipnose tranquila por voz calma para desacelerar a mente, eliminar estresse e induzir um sono reparador.',
+    icon: Flame,
+    color: 'text-orange-400',
+    steps: {
+      instruction: "Desligue-se das preocupações do dia. Permita que esta voz amorosa descanse seus pensamentos e conduza seu ser ao sono sagrado.",
+      breathing: "Inale o silêncio da noite. A cada expiração, suas pálpebras ficam mais pesadas e seu corpo relaxa profundamente.",
+      feeling: "Sua mente desacelera... os pensamentos se desfazem suavemente no ar, deixando apenas a paz acolhedora do ambiente.",
+      affirming: "Grave em seu subconsciente: 'Eu me entrego ao descanso. Meu sono restaura meu corpo, minha alma e minha mente'.",
+      checking: "Mergulhe no sono reparador. Seu corpo se cura enquanto você descansa na segurança do universo."
+    },
+    durations: {
+      breathing: 6,
+      feeling: 6,
       affirming: 8,
       checking: 15
     }
   }
 ];
 
-// Helper functions for audio decoding as per guidelines
+// Helper functions for audio decoding
 function decodeBase64(base64: string) {
   const binaryString = atob(base64);
   const len = binaryString.length;
@@ -117,23 +201,83 @@ function decodeBase64(base64: string) {
   return bytes;
 }
 
+function pcmToWavBuffer(pcmBytes: Uint8Array, sampleRate = 24000, numChannels = 1): ArrayBuffer {
+  if (pcmBytes.length >= 44 &&
+      pcmBytes[0] === 0x52 && pcmBytes[1] === 0x49 &&
+      pcmBytes[2] === 0x46 && pcmBytes[3] === 0x46) {
+    return pcmBytes.buffer.slice(pcmBytes.byteOffset, pcmBytes.byteOffset + pcmBytes.byteLength);
+  }
+
+  const wavHeader = new ArrayBuffer(44);
+  const view = new DataView(wavHeader);
+
+  view.setUint32(0, 0x52494646, false); // "RIFF"
+  view.setUint32(4, 36 + pcmBytes.length, true);
+  view.setUint32(8, 0x57415645, false); // "WAVE"
+  view.setUint32(12, 0x666d7420, false); // "fmt "
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * numChannels * 2, true);
+  view.setUint16(32, numChannels * 2, true);
+  view.setUint16(34, 16, true);
+  view.setUint32(36, 0x64617461, false); // "data"
+  view.setUint32(40, pcmBytes.length, true);
+
+  const combined = new Uint8Array(44 + pcmBytes.length);
+  combined.set(new Uint8Array(wavHeader), 0);
+  combined.set(pcmBytes, 44);
+  return combined.buffer;
+}
+
 async function decodeAudioData(
   data: Uint8Array,
   ctx: AudioContext,
-  sampleRate: number,
-  numChannels: number,
+  sampleRate = 24000,
+  numChannels = 1,
 ): Promise<AudioBuffer> {
-  const dataInt16 = new Int16Array(data.buffer);
-  const frameCount = dataInt16.length / numChannels;
-  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+  const wavBuffer = pcmToWavBuffer(data, sampleRate, numChannels);
 
-  for (let channel = 0; channel < numChannels; channel++) {
-    const channelData = buffer.getChannelData(channel);
-    for (let i = 0; i < frameCount; i++) {
-      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+  const nativeBuffer = await new Promise<AudioBuffer | null>((resolve) => {
+    let done = false;
+    try {
+      const res = ctx.decodeAudioData(
+        wavBuffer.slice(0),
+        (buf) => { if (!done) { done = true; resolve(buf); } },
+        () => { if (!done) { done = true; resolve(null); } }
+      );
+      if (res && typeof (res as any).then === 'function') {
+        (res as any).then((buf: AudioBuffer) => {
+          if (!done) { done = true; resolve(buf); }
+        }).catch(() => {
+          if (!done) { done = true; resolve(null); }
+        });
+      }
+    } catch (e) {
+      if (!done) resolve(null);
     }
+  });
+
+  if (nativeBuffer) return nativeBuffer;
+
+  try {
+    const rawBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+    const dataInt16 = new Int16Array(rawBuffer);
+    const frameCount = Math.floor(dataInt16.length / numChannels);
+    if (frameCount <= 0) throw new Error("Invalid length");
+    const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+
+    for (let channel = 0; channel < numChannels; channel++) {
+      const channelData = buffer.getChannelData(channel);
+      for (let i = 0; i < frameCount; i++) {
+        channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+      }
+    }
+    return buffer;
+  } catch (e) {
+    return ctx.createBuffer(numChannels, ctx.sampleRate, ctx.sampleRate);
   }
-  return buffer;
 }
 
 const AudioWave: React.FC = () => (
@@ -152,12 +296,14 @@ const AudioWave: React.FC = () => (
 );
 
 const Wellness: React.FC = () => {
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'breathing' | 'meditation' | 'hypnosis'>('all');
   const [loading, setLoading] = useState(false);
   const [ritualStep, setRitualStep] = useState<'idle' | 'preparing' | 'instruction' | 'breathing' | 'feeling' | 'affirming' | 'checking' | 'completed'>('idle');
   const [currentCycle, setCurrentCycle] = useState(0);
-  const [activePortal, setActivePortal] = useState<typeof HEALING_PORTALS[0] | null>(null);
+  const [activePortal, setActivePortal] = useState<HealingPortal | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [breathingPhase, setBreathingPhase] = useState<string>("");
   const ritualActiveRef = useRef(false);
   
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -165,38 +311,158 @@ const Wellness: React.FC = () => {
   const preloadedAudioRef = useRef<Record<string, string>>({});
 
   const initAudioContext = () => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+    try {
+      if (!audioContextRef.current) {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          audioContextRef.current = new AudioCtx();
+        }
+      }
+    } catch (e) {
+      console.warn("AudioContext not supported or blocked:", e);
+    }
+  };
+
+  const unlockAudioContext = () => {
+    try {
+      initAudioContext();
+      const ctx = audioContextRef.current;
+      if (ctx) {
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(e => console.warn("Error resuming AudioContext:", e));
+        }
+        try {
+          const buffer = ctx.createBuffer(1, 1, 22050);
+          const source = ctx.createBufferSource();
+          source.buffer = buffer;
+          source.connect(ctx.destination);
+          source.start(0);
+        } catch (e) {}
+      }
+    } catch (e) {
+      console.warn("Could not unlock AudioContext:", e);
     }
   };
 
   const playAudio = async (base64: string) => {
-    initAudioContext();
-    const ctx = audioContextRef.current!;
-    if (ctx.state === 'suspended') await ctx.resume();
+    if (!base64) return;
+    try {
+      initAudioContext();
+      const ctx = audioContextRef.current;
+      if (!ctx) return;
+      if (ctx.state === 'suspended') {
+        try {
+          await ctx.resume();
+        } catch (e) {}
+      }
 
-    const bytes = decodeBase64(base64);
-    const audioBuffer = await decodeAudioData(bytes, ctx, 24000, 1);
-    
+      const bytes = decodeBase64(base64);
+      const audioBuffer = await decodeAudioData(bytes, ctx, 24000, 1);
+      
+      return new Promise<void>((resolve) => {
+        const source = ctx.createBufferSource();
+        currentSourceRef.current = source;
+        source.buffer = audioBuffer;
+        source.connect(ctx.destination);
+        source.onended = () => {
+          setIsPlayingAudio(false);
+          currentSourceRef.current = null;
+          resolve();
+        };
+        setIsPlayingAudio(true);
+        source.start();
+      });
+    } catch (err) {
+      console.warn("Failed playing audio buffer:", err);
+      setIsPlayingAudio(false);
+    }
+  };
+
+  const speakTextFallback = (text: string): Promise<void> => {
     return new Promise<void>((resolve) => {
-      const source = ctx.createBufferSource();
-      currentSourceRef.current = source;
-      source.buffer = audioBuffer;
-      source.connect(ctx.destination);
-      source.onended = () => {
-        setIsPlayingAudio(false);
-        currentSourceRef.current = null;
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
         resolve();
-      };
-      setIsPlayingAudio(true);
-      source.start();
+        return;
+      }
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+
+        const setVoice = () => {
+          const voices = window.speechSynthesis.getVoices();
+          const ptVoices = voices.filter(v => v.lang.startsWith('pt'));
+          const femaleVoice = ptVoices.find(v => 
+            /google português|natural|luciana|helena|fernanda|francisca|vitoria|marcia|joana|female|feminina/i.test(v.name)
+          ) || ptVoices.find(v => !/male|masculino|felipe|daniel|ricardo/i.test(v.name)) || ptVoices[0];
+
+          if (femaleVoice) {
+            utterance.voice = femaleVoice;
+          }
+        };
+
+        setVoice();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+          window.speechSynthesis.onvoiceschanged = setVoice;
+        }
+
+        utterance.onend = () => {
+          setIsPlayingAudio(false);
+          resolve();
+        };
+        utterance.onerror = () => {
+          setIsPlayingAudio(false);
+          resolve();
+        };
+
+        setIsPlayingAudio(true);
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        setIsPlayingAudio(false);
+        resolve();
+      }
     });
+  };
+
+  const playVoicePassage = async (base64: string, textToSpeak: string) => {
+    if (!ritualActiveRef.current) return;
+    let audioData = base64;
+    
+    // If preloaded audio was missing or failed, try on-demand AI speech generation
+    if (!audioData) {
+      try {
+        const prompt = "Você é uma pessoa real falando em português do Brasil de forma fluida, natural, expressiva e acolhedora. Fale com tom humano caloroso, pronúncia perfeita e ritmo espontâneo de conversa.";
+        const freshAudio = await generateSpeech(textToSpeak, prompt);
+        if (freshAudio) audioData = freshAudio;
+      } catch (e) {
+        console.warn("On-demand AI speech generation failed:", e);
+      }
+    }
+
+    if (audioData) {
+      try {
+        await playAudio(audioData);
+        return;
+      } catch (e) {
+        console.warn("Audio buffer playback failed, trying fallback", e);
+      }
+    }
+    await speakTextFallback(textToSpeak);
   };
 
   const stopRitual = () => {
     ritualActiveRef.current = false;
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
     if (currentSourceRef.current) {
-      currentSourceRef.current.stop();
+      try {
+        currentSourceRef.current.stop();
+      } catch (e) {
+        console.warn("Failed to stop current audio source:", e);
+      }
       currentSourceRef.current = null;
     }
     setRitualStep('idle');
@@ -204,60 +470,66 @@ const Wellness: React.FC = () => {
     setCountdown(null);
     setBreathingPhase("");
     setIsPlayingAudio(false);
+    setLoading(false);
   };
 
   const playBell = (isTick = false) => {
-    initAudioContext();
-    const ctx = audioContextRef.current!;
-    if (ctx.state === 'suspended') ctx.resume();
+    try {
+      initAudioContext();
+      const ctx = audioContextRef.current;
+      if (!ctx) return;
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
 
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
 
-    if (isTick) {
-      // High-pitched "ting" like a small meditation bell
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1200, ctx.currentTime);
-      gain.gain.setValueAtTime(0.03, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.3);
-    } else {
-      // Richer, deeper Tibetan bell sound
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(440, ctx.currentTime); // A4
-      
-      const osc2 = ctx.createOscillator();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(880, ctx.currentTime); // A5
-      
-      const osc3 = ctx.createOscillator();
-      osc3.type = 'sine';
-      osc3.frequency.setValueAtTime(1320, ctx.currentTime); // Harmonic
-      
-      const bellGain = ctx.createGain();
-      bellGain.gain.setValueAtTime(0.1, ctx.currentTime);
-      bellGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3.0);
+      if (isTick) {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, ctx.currentTime);
+        gain.gain.setValueAtTime(0.03, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+      } else {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880, ctx.currentTime);
+        
+        const osc3 = ctx.createOscillator();
+        osc3.type = 'sine';
+        osc3.frequency.setValueAtTime(1320, ctx.currentTime);
+        
+        const bellGain = ctx.createGain();
+        bellGain.gain.setValueAtTime(0.1, ctx.currentTime);
+        bellGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3.0);
 
-      osc.connect(bellGain);
-      osc2.connect(bellGain);
-      osc3.connect(bellGain);
-      bellGain.connect(ctx.destination);
+        osc.connect(bellGain);
+        osc2.connect(bellGain);
+        osc3.connect(bellGain);
+        bellGain.connect(ctx.destination);
 
-      osc.start();
-      osc2.start();
-      osc3.start();
-      osc.stop(ctx.currentTime + 3.0);
-      osc2.stop(ctx.currentTime + 3.0);
-      osc3.stop(ctx.currentTime + 3.0);
+        osc.start();
+        osc2.start();
+        osc3.start();
+        osc.stop(ctx.currentTime + 3.0);
+        osc2.stop(ctx.currentTime + 3.0);
+        osc3.stop(ctx.currentTime + 3.0);
+      }
+    } catch (e) {
+      console.warn("Could not play bell audio:", e);
     }
   };
 
-  const [breathingPhase, setBreathingPhase] = useState<string>("");
-
   const startRitual = async (portalId: string) => {
+    unlockAudioContext();
+
     const portal = HEALING_PORTALS.find(p => p.id === portalId);
     if (!portal) return;
 
@@ -268,111 +540,166 @@ const Wellness: React.FC = () => {
     setCountdown(null);
     setBreathingPhase("");
     setCurrentCycle(0);
-    
+
     try {
-      // Pre-generate short commands and numbers for fluidity
-      const fastInstruction = "Diga apenas a palavra, de forma curta, rápida e objetiva, sem entonação excessiva.";
-      const [inhaleAudio, holdAudio, exhaleAudio, ...numberAudios] = await Promise.all([
-        generateSpeech("Inale", fastInstruction),
-        generateSpeech("Retenha", fastInstruction),
-        generateSpeech("Exale", fastInstruction),
-        ...[1, 2, 3, 4, 5, 6, 7, 8].map(n => generateSpeech(n.toString(), fastInstruction))
-      ]);
+      if (portal.hasVoice) {
+        // MEDITAÇÕES & AUTOHIPNOSES:
+        // Pre-generate audio passages sequentially during 'preparing' screen to prevent rate limits!
+        const calmLovingPrompt = "Você é uma pessoa real falando português do Brasil de forma fluida, acolhedora, humana e expressiva. Fale com voz natural, tom caloroso e cadência espontânea de conversa, sem arrastar as palavras e sem pausas artificiais.";
 
-      preloadedAudioRef.current = {
-        inhale: inhaleAudio || "",
-        hold: holdAudio || "",
-        exhale: exhaleAudio || "",
-        ...Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n, i) => [n.toString(), numberAudios[i] || ""]))
-      };
-
-      // Phase 1: Instruction
-      const instructionText = (portal.steps as any).instruction;
-      if (instructionText) {
-        setRitualStep('instruction');
-        const instructionAudio = await generateSpeech(instructionText + " Prepare-se para começar.");
-        if (instructionAudio && ritualActiveRef.current) {
-          await playAudio(instructionAudio);
-        }
-      }
-
-      if (!ritualActiveRef.current) return;
-
-      // Loop for 5 cycles
-      for (let cycle = 1; cycle <= 5; cycle++) {
-        if (!ritualActiveRef.current) return;
-        setCurrentCycle(cycle);
-
-        // Announce new cycle if not the first one
-        if (cycle > 1) {
-          const cycleAudio = await generateSpeech(`Iniciando ciclo ${cycle}.`);
-          if (cycleAudio && ritualActiveRef.current) {
-            await playAudio(cycleAudio);
-          }
-        } else {
-          const startAudio = await generateSpeech("Começando agora.");
-          if (startAudio && ritualActiveRef.current) {
-            await playAudio(startAudio);
-          }
-        }
+        const instructionAudio = await generateSpeech(portal.steps.instruction, calmLovingPrompt);
+        const breathingAudio = await generateSpeech(portal.steps.breathing, calmLovingPrompt);
+        const feelingAudio = await generateSpeech(portal.steps.feeling, calmLovingPrompt);
+        const affirmingAudio = await generateSpeech(portal.steps.affirming, calmLovingPrompt);
+        const checkingAudio = await generateSpeech(portal.steps.checking, calmLovingPrompt);
 
         if (!ritualActiveRef.current) return;
 
-        // Phase 2: Bell and Transition
-        playBell();
-        await new Promise(r => setTimeout(r, 1000));
-
-        if (!ritualActiveRef.current) return;
-
-        const runCycle = async (label: string, count: number, stepName: 'breathing' | 'feeling' | 'affirming', audioKey: string) => {
-          if (!ritualActiveRef.current) return;
-          setRitualStep(stepName);
-          setBreathingPhase(label);
-          
-          // Play the command (Inale/Retenha/Exale)
-          const commandAudio = preloadedAudioRef.current[audioKey];
-          if (commandAudio) playAudio(commandAudio);
-          
-          playBell(); // Main bell at start of phase
-          
-          for (let i = 1; i <= count; i++) {
-            if (!ritualActiveRef.current) return;
-            setCountdown(i);
-            
-            // Play number audio and tick bell for seconds after the first one
-            if (i > 1) {
-              const numAudio = preloadedAudioRef.current[i.toString()];
-              if (numAudio) playAudio(numAudio);
-              playBell(true); // Tick for each second except the first one
-            }
-            
-            await new Promise(r => setTimeout(r, 1000));
-          }
+        preloadedAudioRef.current = {
+          instruction: instructionAudio || "",
+          breathing: breathingAudio || "",
+          feeling: feelingAudio || "",
+          affirming: affirmingAudio || "",
+          checking: checkingAudio || "",
         };
 
-        // 4-4-8 Cycle for ALL portals
-        await runCycle("Inale", 4, 'breathing', 'inhale');
-        await runCycle("Retenha", 4, 'feeling', 'hold');
-        await runCycle("Exale", 8, 'affirming', 'exhale');
-      }
+        setLoading(false);
 
-      // Final Check (only once after all cycles)
-      if (!ritualActiveRef.current) return;
-      setBreathingPhase("");
-      setCountdown(null);
-      setRitualStep('checking');
-      const finalAudio = await generateSpeech(portal.steps.checking);
-      if (finalAudio && ritualActiveRef.current) {
-        const duration = (portal as any).durations?.checking || 10;
-        playAudio(finalAudio);
-        for (let i = duration; i >= 1; i--) {
+        // Phase 1: Instruction
+        setRitualStep('instruction');
+        playBell();
+        if (ritualActiveRef.current) {
+          await playVoicePassage(preloadedAudioRef.current.instruction, portal.steps.instruction);
+        }
+        await new Promise(r => setTimeout(r, 1000));
+
+        // Phase 2: Guided Meditation Cycles
+        const totalCycles = portal.category === 'hypnosis' ? 1 : 2;
+        for (let cycle = 1; cycle <= totalCycles; cycle++) {
+          if (!ritualActiveRef.current) return;
+          setCurrentCycle(cycle);
+
+          // Sub-step: Inale / Acolhimento
+          setRitualStep('breathing');
+          setBreathingPhase("Acolhimento");
+          playBell();
+          if (ritualActiveRef.current) {
+            playVoicePassage(preloadedAudioRef.current.breathing, portal.steps.breathing);
+          }
+          for (let i = portal.durations.breathing; i >= 1; i--) {
+            if (!ritualActiveRef.current) return;
+            setCountdown(i);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+
+          // Sub-step: Retenha / Integração
+          setRitualStep('feeling');
+          setBreathingPhase("Integração");
+          playBell();
+          if (ritualActiveRef.current) {
+            playVoicePassage(preloadedAudioRef.current.feeling, portal.steps.feeling);
+          }
+          for (let i = portal.durations.feeling; i >= 1; i--) {
+            if (!ritualActiveRef.current) return;
+            setCountdown(i);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+
+          // Sub-step: Exale / Afirmação
+          setRitualStep('affirming');
+          setBreathingPhase("Afirmação & Cura");
+          playBell();
+          if (ritualActiveRef.current) {
+            playVoicePassage(preloadedAudioRef.current.affirming, portal.steps.affirming);
+          }
+          for (let i = portal.durations.affirming; i >= 1; i--) {
+            if (!ritualActiveRef.current) return;
+            setCountdown(i);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+
+        // Phase 3: Closing / Retorno
+        if (!ritualActiveRef.current) return;
+        setRitualStep('checking');
+        setBreathingPhase("Selo de Cura");
+        setCountdown(null);
+        playBell();
+        if (ritualActiveRef.current) {
+          playVoicePassage(preloadedAudioRef.current.checking, portal.steps.checking);
+        }
+        for (let i = portal.durations.checking; i >= 1; i--) {
           if (!ritualActiveRef.current) return;
           setCountdown(i);
           await new Promise(r => setTimeout(r, 1000));
         }
-      }
 
-      if (ritualActiveRef.current) setRitualStep('completed');
+        if (ritualActiveRef.current) setRitualStep('completed');
+
+      } else {
+        // RESPIRAÇÕES:
+        // No spoken voice! Pure Tibetan bells, timer and visual breathing rhythm.
+        setLoading(false);
+
+        setRitualStep('instruction');
+        playBell();
+        await new Promise(r => setTimeout(r, 3500));
+
+        if (!ritualActiveRef.current) return;
+
+        // 4 Cycles of Pure Breathing
+        for (let cycle = 1; cycle <= 4; cycle++) {
+          if (!ritualActiveRef.current) return;
+          setCurrentCycle(cycle);
+
+          // Inale
+          setRitualStep('breathing');
+          setBreathingPhase("Inale");
+          playBell();
+          for (let i = 1; i <= portal.durations.breathing; i++) {
+            if (!ritualActiveRef.current) return;
+            setCountdown(i);
+            if (i > 1) playBell(true);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+
+          // Retenha
+          setRitualStep('feeling');
+          setBreathingPhase("Retenha");
+          playBell();
+          for (let i = 1; i <= portal.durations.feeling; i++) {
+            if (!ritualActiveRef.current) return;
+            setCountdown(i);
+            if (i > 1) playBell(true);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+
+          // Exale
+          setRitualStep('affirming');
+          setBreathingPhase("Exale");
+          playBell();
+          for (let i = 1; i <= portal.durations.affirming; i++) {
+            if (!ritualActiveRef.current) return;
+            setCountdown(i);
+            if (i > 1) playBell(true);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+
+        // Closing
+        if (!ritualActiveRef.current) return;
+        setRitualStep('checking');
+        setBreathingPhase("Paz Profunda");
+        setCountdown(null);
+        playBell();
+        for (let i = portal.durations.checking; i >= 1; i--) {
+          if (!ritualActiveRef.current) return;
+          setCountdown(i);
+          await new Promise(r => setTimeout(r, 1000));
+        }
+
+        if (ritualActiveRef.current) setRitualStep('completed');
+      }
     } catch (e) {
       console.error("Audio ritual failed:", e);
       if (ritualActiveRef.current) setRitualStep('idle');
@@ -381,12 +708,17 @@ const Wellness: React.FC = () => {
     }
   };
 
+  const filteredPortals = HEALING_PORTALS.filter(portal => {
+    if (selectedCategory === 'all') return true;
+    return portal.category === selectedCategory;
+  });
+
   return (
-    <div className="store-page navigated-screen p-4 pb-32 max-w-2xl mx-auto space-y-12 animate-in fade-in">
+    <div className="p-4 pt-safe pb-safe-nav max-w-2xl mx-auto space-y-10 animate-in fade-in">
       <header className="px-4 text-center space-y-3">
         <div className="flex items-center justify-center gap-2 text-magic-gold">
           <Stars size={16} />
-          <p className="text-[10px] font-black uppercase tracking-[0.5em]">Portal da Autocura</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.5em]">Portal de Cura & Meditação</p>
           <Stars size={16} />
         </div>
         <h2 className="text-4xl font-serif text-white tracking-tighter italic leading-none">Santuário de Autocura</h2>
@@ -394,116 +726,162 @@ const Wellness: React.FC = () => {
 
       <div className="px-4 space-y-8">
         {ritualStep === 'idle' ? (
-           <div className="grid grid-cols-1 gap-8 animate-in fade-in">
-             <div className="p-10 glass-mystic border border-magic-gold/20 rounded-[3rem] text-center relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-magic-gold/5 blur-[50px] pointer-events-none" />
-                <p className="text-xs text-ethereal-100 italic leading-relaxed relative z-10 font-light">
-                  "Lembre-se, peregrino: a cura não é algo que você recebe, é algo que você <span className="text-magic-gold font-bold">permite</span>."
-                </p>
-             </div>
+          <div className="space-y-8 animate-in fade-in">
+            {/* Mensagem Inspiradora */}
+            <div className="p-8 glass-mystic border border-magic-gold/20 rounded-[2.5rem] text-center relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-magic-gold/5 blur-[50px] pointer-events-none" />
+              <p className="text-xs text-ethereal-100 italic leading-relaxed relative z-10 font-light">
+                "A cura não é algo que você busca fora, mas a paz que você <span className="text-magic-gold font-bold">permite</span> despertar em sua própria alma."
+              </p>
+            </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               {HEALING_PORTALS.map(portal => (
-                 <div key={portal.id} className="glass-mystic p-8 rounded-[3.5rem] border border-white/10 space-y-5 hover:border-magic-gold/50 transition-all group shadow-2xl relative overflow-hidden bg-gradient-to-br from-white/[0.02] to-transparent">
-                    <div className={`absolute -top-10 -left-10 w-40 h-40 ${portal.color.replace('text-', 'bg-')}/10 blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
-                    
-                    <div className="flex items-center gap-5">
-                       <div className={`p-5 rounded-[2rem] bg-white/5 ${portal.color} group-hover:scale-110 transition-transform duration-700 shadow-inner border border-white/15 relative`}>
-                          <div className={`absolute inset-0 blur-xl opacity-20 group-hover:opacity-40 transition-opacity ${portal.color.replace('text-', 'bg-')}`} />
-                          <portal.icon size={32} className="relative z-10" />
-                       </div>
-                       <div>
-                          <h4 className="text-2xl font-serif text-white font-bold tracking-tight drop-shadow-md">{portal.title}</h4>
-                          <p className="text-[9px] text-magic-gold/60 font-black uppercase tracking-widest mt-1 flex items-center gap-2">
-                            <Volume2 size={12} className="animate-pulse" /> Ativação Sonora
-                          </p>
-                       </div>
+            {/* Filtros de Categoria */}
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              {[
+                { id: 'all', label: 'Todas as Práticas' },
+                { id: 'meditation', label: 'Meditações Guiadas' },
+                { id: 'hypnosis', label: 'Autohipnoses' },
+                { id: 'breathing', label: 'Respirações' },
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id as any)}
+                  className={`px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                    selectedCategory === cat.id
+                      ? 'bg-magic-gold text-nature-950 shadow-[0_0_20px_rgba(212,175,55,0.4)] scale-105'
+                      : 'bg-white/5 text-ethereal-300 hover:bg-white/10 hover:text-white border border-white/10'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Grid de Portais */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredPortals.map(portal => (
+                <div key={portal.id} className="glass-mystic p-7 rounded-[3rem] border border-white/10 space-y-5 hover:border-magic-gold/50 transition-all group shadow-2xl relative overflow-hidden bg-gradient-to-br from-white/[0.02] to-transparent flex flex-col justify-between">
+                  <div className={`absolute -top-10 -left-10 w-40 h-40 ${portal.color.replace('text-', 'bg-')}/10 blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-4 rounded-[1.8rem] bg-white/5 ${portal.color} group-hover:scale-110 transition-transform duration-700 shadow-inner border border-white/15 relative`}>
+                        <portal.icon size={28} className="relative z-10" />
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-magic-gold/80 block">
+                          {portal.badge}
+                        </span>
+                        <h4 className="text-xl font-serif text-white font-bold tracking-tight drop-shadow-md">{portal.title}</h4>
+                      </div>
                     </div>
                     
                     <p className="text-[11px] text-ethereal-300 italic leading-relaxed px-1">{portal.desc}</p>
-                    
+                  </div>
+
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between text-[9px] text-ethereal-300 px-1 font-semibold">
+                      {portal.hasVoice ? (
+                        <span className="flex items-center gap-1.5 text-magic-gold">
+                          <Headphones size={12} className="animate-pulse" /> Voz Calma & Amorosa (Sem Delay)
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5 text-emerald-400">
+                          <Wind size={12} /> Somente Sinos Sagrados (Sem Voz)
+                        </span>
+                      )}
+                    </div>
+
                     <button 
                       onClick={() => startRitual(portal.id)} 
                       disabled={loading}
-                      className="w-full py-5 bg-white text-nature-950 rounded-[2.5rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3 group-hover:bg-magic-gold group-hover:text-white disabled:opacity-50"
+                      className="w-full py-4 bg-white text-nature-950 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.25em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 group-hover:bg-magic-gold group-hover:text-white disabled:opacity-50"
                     >
-                      {loading ? <Loader2 size={16} className="animate-spin" /> : <>ABRIR PORTAL <Volume2 size={16} className="animate-pulse" /></>}
-                    </button>
-                 </div>
-               ))}
-             </div>
-           </div>
-        ) : (
-          <div className="glass-mystic p-12 rounded-[5rem] text-center space-y-12 flex flex-col items-center justify-center min-h-[600px] animate-in zoom-in border border-magic-gold/30 relative overflow-hidden shadow-[0_0_120px_rgba(212,175,55,0.15)] bg-gradient-to-b from-white/[0.02] to-transparent">
-             <div className="absolute inset-0 bg-magic-gold/5 blur-3xl pointer-events-none" />
-             <div className="absolute top-0 left-0 w-64 h-64 bg-aura-violet/5 blur-[100px] pointer-events-none" />
-             <div className="absolute bottom-0 right-0 w-64 h-64 bg-aura-teal/5 blur-[100px] pointer-events-none" />
-             
-             {/* Oráculo Visual */}
-             <div className="relative">
-                <div className="absolute inset-0 bg-magic-gold/20 blur-[80px] rounded-full animate-pulse" />
-                <div className="absolute inset-0 bg-aura-violet/10 blur-[100px] rounded-full animate-pulse" style={{ animationDelay: '-2s' }} />
-                <div className="relative w-64 h-64 rounded-full border-2 border-magic-gold/10 flex items-center justify-center">
-                   <div className="animate-breath relative">
-                      {ritualStep === 'breathing' && <Wind size={90} className="text-magic-gold" />}
-                      {ritualStep === 'feeling' && <Eye size={90} className="text-indigo-400" />}
-                      {ritualStep === 'affirming' && <Flame size={90} className="text-orange-400" />}
-                      {ritualStep === 'checking' && <Heart size={90} className="text-rose-400" />}
-                      {ritualStep === 'completed' && <Sparkles size={90} className="text-magic-gold" />}
-                      {ritualStep === 'preparing' && <Loader2 size={90} className="text-aura-violet animate-spin" />}
-                      
-                      {countdown !== null && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.6)]">{countdown}</span>
-                        </div>
+                      {loading && activePortal?.id === portal.id ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          <span>Sintonizando Voz...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Iniciar Prática</span>
+                          {portal.hasVoice ? <Volume2 size={15} /> : <Wind size={15} />}
+                        </>
                       )}
-                   </div>
+                    </button>
+                  </div>
                 </div>
-                {/* Halo Rotativo */}
-                <div className="absolute inset-[-20px] border-t border-magic-gold/30 rounded-full animate-spin-slow" />
-             </div>
-             
-             <div className="space-y-6 relative z-10 max-w-xs">
-                <div className="space-y-2">
-                   <p className="text-[10px] font-black text-magic-gold uppercase tracking-[0.4em]">Guia pela Voz da Alma</p>
-                   <h3 className="text-4xl font-serif text-white italic tracking-tight">
-                    {ritualStep === 'preparing' && "Sintonizando..."}
-                    {ritualStep === 'instruction' && "Ouça a Instrução"}
-                    {ritualStep === 'breathing' && (currentCycle > 0 ? `Ciclo ${currentCycle}: Inale` : "Inale a Luz")}
-                    {ritualStep === 'feeling' && (currentCycle > 0 ? `Ciclo ${currentCycle}: Retenha` : "Retenha a Essência")}
-                    {ritualStep === 'affirming' && (currentCycle > 0 ? `Ciclo ${currentCycle}: Solte` : "Solte a Cura")}
-                    {ritualStep === 'checking' && "Integre o Ser"}
-                    {ritualStep === 'completed' && "Cura Consolidada"}
-                  </h3>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* Tela da Prática em Execução */
+          <div className="glass-mystic p-10 sm:p-12 rounded-[4rem] text-center space-y-10 flex flex-col items-center justify-center min-h-[580px] animate-in zoom-in border border-magic-gold/30 relative overflow-hidden shadow-[0_0_120px_rgba(212,175,55,0.15)] bg-gradient-to-b from-white/[0.02] to-transparent">
+            <div className="absolute inset-0 bg-magic-gold/5 blur-3xl pointer-events-none" />
+            
+            {/* Oráculo Visual Animado */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-magic-gold/20 blur-[80px] rounded-full animate-pulse" />
+              <div className="relative w-56 h-56 sm:w-64 sm:h-64 rounded-full border-2 border-magic-gold/10 flex items-center justify-center">
+                <div className="animate-breath relative">
+                  {ritualStep === 'breathing' && <Wind size={80} className="text-magic-gold" />}
+                  {ritualStep === 'feeling' && <Eye size={80} className="text-indigo-400" />}
+                  {ritualStep === 'affirming' && <Flame size={80} className="text-orange-400" />}
+                  {ritualStep === 'checking' && <Heart size={80} className="text-rose-400" />}
+                  {ritualStep === 'completed' && <Sparkles size={80} className="text-magic-gold" />}
+                  {ritualStep === 'preparing' && <Loader2 size={80} className="text-aura-violet animate-spin" />}
+                  
+                  {countdown !== null && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.6)]">{countdown}</span>
+                    </div>
+                  )}
                 </div>
-                
-                <div className="min-h-[120px] flex flex-col items-center justify-center">
-                  <p className="text-sm text-ethereal-100 italic leading-relaxed font-light mb-4 text-center">
-                    {breathingPhase && <span className="text-2xl font-serif text-magic-gold block mb-2 not-italic font-bold tracking-widest uppercase">{breathingPhase}</span>}
-                    {activePortal && ritualStep !== 'completed' && ritualStep !== 'preparing' && ritualStep !== 'instruction' && !breathingPhase && activePortal.steps[ritualStep as keyof typeof activePortal.steps]}
-                    {activePortal && ritualStep === 'instruction' && (activePortal.steps as any).instruction}
-                    {ritualStep === 'preparing' && "Respire fundo enquanto sintonizamos a frequência da sua centelha divina..."}
-                    {ritualStep === 'completed' && "Seu templo físico e sua alma agora ressoam em uma oitava superior. Siga em paz e luz."}
-                  </p>
-                  {isPlayingAudio && <AudioWave />}
-                </div>
-             </div>
+              </div>
+              <div className="absolute inset-[-16px] border-t border-magic-gold/30 rounded-full animate-spin-slow" />
+            </div>
+            
+            <div className="space-y-6 relative z-10 max-w-sm">
+              <div className="space-y-2">
+                <p className="text-[10px] font-black text-magic-gold uppercase tracking-[0.4em]">
+                  {activePortal?.hasVoice ? "Voz Guiada de Luz" : "Ritmo Sagrado da Respiração"}
+                </p>
+                <h3 className="text-3xl font-serif text-white italic tracking-tight">
+                  {ritualStep === 'preparing' && "Sintonizando Voz..."}
+                  {ritualStep === 'instruction' && "Ouça a Condução"}
+                  {ritualStep === 'breathing' && (currentCycle > 0 ? `Ciclo ${currentCycle}: ${breathingPhase}` : "Inale a Luz")}
+                  {ritualStep === 'feeling' && (currentCycle > 0 ? `Ciclo ${currentCycle}: ${breathingPhase}` : "Integre a Paz")}
+                  {ritualStep === 'affirming' && (currentCycle > 0 ? `Ciclo ${currentCycle}: ${breathingPhase}` : "Afirme a Cura")}
+                  {ritualStep === 'checking' && "Integração Final"}
+                  {ritualStep === 'completed' && "Cura Consolidada"}
+                </h3>
+              </div>
+              
+              <div className="min-h-[110px] flex flex-col items-center justify-center px-2">
+                <p className="text-sm text-ethereal-100 italic leading-relaxed font-light mb-3 text-center">
+                  {ritualStep === 'preparing' && "Sintonizando a voz calma e amorosa do guia espiritual. Aguarde apenas um instante..."}
+                  {activePortal && ritualStep !== 'completed' && ritualStep !== 'preparing' && activePortal.steps[ritualStep as keyof typeof activePortal.steps]}
+                  {ritualStep === 'completed' && "Sua alma e seu templo físico agora ressoam em perfeita sintonia e paz. Vá em luz."}
+                </p>
+                {isPlayingAudio && <AudioWave />}
+              </div>
+            </div>
 
-             {ritualStep === 'completed' ? (
-               <button 
+            {ritualStep === 'completed' ? (
+              <button 
                 onClick={() => {setRitualStep('idle'); setActivePortal(null);}} 
-                className="relative z-10 px-12 py-6 bg-white text-nature-950 rounded-full font-black text-[10px] uppercase tracking-[0.4em] hover:scale-105 active:scale-95 shadow-2xl transition-all border border-magic-gold/20"
-               >
-                  Selar Alquimia
-               </button>
-             ) : (
-               <button 
+                className="relative z-10 px-10 py-5 bg-white text-nature-950 rounded-full font-black text-[10px] uppercase tracking-[0.3em] hover:scale-105 active:scale-95 shadow-2xl transition-all border border-magic-gold/20"
+              >
+                Concluir Prática
+              </button>
+            ) : (
+              <button 
                 onClick={stopRitual} 
-                className="relative z-10 px-8 py-4 bg-white/5 text-white/40 hover:text-white hover:bg-white/10 rounded-full font-black text-[8px] uppercase tracking-[0.3em] transition-all border border-white/10"
-               >
-                  Interromper Ritual
-               </button>
-             )}
+                className="relative z-10 px-8 py-3.5 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 rounded-full font-black text-[9px] uppercase tracking-[0.3em] transition-all border border-white/10"
+              >
+                Encerrar Prática
+              </button>
+            )}
           </div>
         )}
       </div>

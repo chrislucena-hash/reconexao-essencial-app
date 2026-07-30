@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { analyzeSoulJourney, generateDailyContent } from '../services/geminiService';
-import { DailyLog, UserProfile, AppView, DailyContent } from '../types';
+import { DailyLog, UserProfile, AppView, DailyContent, JourneyProgress } from '../types';
 import { RITUALS, INITIAL_JOURNEY } from '../constants.tsx';
 import { 
   Sparkles as SparklesIcon, 
@@ -19,10 +19,10 @@ interface DashboardProps {
   logs: DailyLog[];
   onToggleGoal: (goalKey: keyof DailyLog['completedActions']) => void;
   setView: (view: AppView) => void;
-  preview?: boolean;
+  journeyProgress: JourneyProgress;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, setView, preview = false }) => {
+const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, setView, journeyProgress }) => {
   const [insight, setInsight] = useState<string | null>(null);
   const [loadingInsight, setLoadingInsight] = useState(false);
   const [dailyContent, setDailyContent] = useState<DailyContent | null>(null);
@@ -37,45 +37,23 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
     return hasToday ? logs.length : logs.length + 1;
   }, [logs, todayStr]);
 
-  const [journeyDay, setJourneyDay] = useState(1);
-  const [journeyPercent, setJourneyPercent] = useState(0);
-  const [journeyTitle, setJourneyTitle] = useState("");
-  const [journeyTask, setJourneyTask] = useState("");
+  const journeyDay = journeyProgress.currentDay;
+  const journeyPercent = useMemo(() => {
+    const completed = journeyProgress.days.filter((d: any) => d.completed).length;
+    return Math.round((completed / 21) * 100);
+  }, [journeyProgress]);
+
+  const journeyTitle = useMemo(() => {
+    const currentDayData = INITIAL_JOURNEY.find(d => d.day === journeyProgress.currentDay);
+    return currentDayData ? currentDayData.title : INITIAL_JOURNEY[0].title;
+  }, [journeyProgress]);
+
+  const journeyTask = useMemo(() => {
+    const currentDayData = INITIAL_JOURNEY.find(d => d.day === journeyProgress.currentDay);
+    return currentDayData ? currentDayData.task : INITIAL_JOURNEY[0].task;
+  }, [journeyProgress]);
 
   useEffect(() => {
-    if (preview) {
-      setJourneyDay(7);
-      setJourneyPercent(29);
-      setJourneyTitle(INITIAL_JOURNEY[6].title);
-      setJourneyTask(INITIAL_JOURNEY[6].task);
-      return;
-    }
-
-    const saved = localStorage.getItem('soul_journey_progress');
-    if (saved) {
-      try {
-        const progress = JSON.parse(saved);
-        setJourneyDay(progress.currentDay);
-        const completed = progress.days.filter((d: any) => d.completed).length;
-        setJourneyPercent(Math.round((completed / 21) * 100));
-        
-        const currentDayData = INITIAL_JOURNEY.find(d => d.day === progress.currentDay);
-        if (currentDayData) {
-          setJourneyTitle(currentDayData.title);
-          setJourneyTask(currentDayData.task);
-        }
-      } catch (e) {}
-    } else {
-      setJourneyTitle(INITIAL_JOURNEY[0].title);
-      setJourneyTask(INITIAL_JOURNEY[0].task);
-    }
-  }, [preview]);
-
-  useEffect(() => {
-    if (preview) {
-      return;
-    }
-
     const fetchContent = async () => {
       setLoadingContent(true);
       const content = await generateDailyContent();
@@ -83,36 +61,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
       setLoadingContent(false);
     };
     fetchContent();
-  }, [preview]);
+  }, []);
 
   const todaysGoals = useMemo(() => {
-    const activityMap: Record<string, string> = {
-      walk: 'Caminhada',
-      yoga: 'Yoga',
-      stretch: 'Alongamento',
-      dance: 'Dança',
-      taichi: 'Tai Chi',
-      swim: 'Natação',
-      garden: 'Jardinagem',
-      bike: 'Ciclismo'
-    };
-
-    const favoriteNames = userProfile.favoriteActivities
-      ?.map(id => activityMap[id])
-      .filter(Boolean)
-      .join(', ');
-
-    const movementDesc = favoriteNames 
-      ? `Praticar: ${favoriteNames}. Observando cada ato, praticando a presença.` 
-      : 'Movimentar o corpo com amor e leveza, observando cada ato e praticando a presença.';
-
-    return RITUALS.map(ritual => {
-      if (ritual.id === 'movement') {
-        return { ...ritual, desc: movementDesc };
-      }
-      return ritual;
-    });
-  }, [userProfile.favoriteActivities]);
+    return RITUALS;
+  }, []);
 
   const totalGoals = todaysGoals.length + 2; // 8 Rituals + 1 Journey Task + 1 Daily Challenge = 10
   const completedCount = todaysGoals.filter(g => todayLog?.completedActions[g.id as keyof DailyLog['completedActions']]).length 
@@ -123,10 +76,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
   const allTasksDone = completedCount >= totalGoals;
 
   useEffect(() => {
-    if (preview) {
-      return;
-    }
-
     const fetchInsight = async () => {
       if (logs.length >= 2 && !insight) {
         setLoadingInsight(true);
@@ -136,14 +85,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
       }
     };
     fetchInsight();
-  }, [logs, insight, preview]);
+  }, [logs]);
 
   return (
-    <div className="store-page navigated-screen p-4 sm:p-6 pb-40 max-w-2xl mx-auto space-y-12 animate-in fade-in relative">
-      <header className="flex justify-between items-end">
-        <div className="space-y-2">
-          <p className="text-aura-gold font-black text-[10px] uppercase tracking-[0.5em] animate-pulse">Portal do Início</p>
-          <h2 className="text-5xl font-serif text-white leading-none italic font-black">Olá, {userProfile.name}</h2>
+    <div className="p-2 sm:p-6 pb-24 sm:pb-32 max-w-2xl mx-auto space-y-8 sm:space-y-12 animate-in fade-in relative w-full">
+      <header className="flex justify-between items-end gap-2">
+        <div className="space-y-1 sm:space-y-2">
+          <p className="text-aura-gold font-black text-[9px] sm:text-[10px] uppercase tracking-[0.4em] sm:tracking-[0.5em] animate-pulse">Portal do Início</p>
+          <h2 className="text-3xl sm:text-5xl font-serif text-white leading-tight italic font-black">Olá, {userProfile.name}</h2>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -181,6 +130,32 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
             </div>
           </div>
           <ChevronRight size={16} className="text-white/20 group-hover:text-white transition-colors" />
+        </div>
+      </section>
+
+      {/* Teste do Corpo e da Alma */}
+      <section 
+        onClick={() => setView(AppView.DIAGNOSIS)}
+        className="glass-mystic p-6 rounded-[2.5rem] border border-aura-rose/30 bg-gradient-to-r from-aura-rose/10 via-transparent to-transparent flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer hover:border-aura-rose/50 transition-all group shadow-[0_10px_40px_rgba(244,63,94,0.1)] gap-4"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-aura-rose/10 rounded-2xl flex items-center justify-center text-aura-rose border border-aura-rose/20 shrink-0">
+            <SparklesIcon size={24} className="group-hover:animate-pulse" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-[9px] font-black text-aura-rose uppercase tracking-widest flex items-center gap-1.5">
+              <span>Autoexame Sagrado</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-aura-rose animate-ping" />
+            </p>
+            <h4 className="text-white font-serif text-lg italic leading-tight">Teste do Corpo e da Alma</h4>
+            <p className="text-[11px] text-ethereal-300 italic leading-relaxed">
+              Altamente recomendável realizar este teste <strong className="text-white">a cada 21 dias</strong> para medir com precisão a evolução da sua vitalidade e expansão de consciência.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-end sm:justify-start gap-1 text-xs font-black text-white/40 group-hover:text-white transition-colors uppercase tracking-widest shrink-0">
+          <span>Iniciar</span>
+          <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
         </div>
       </section>
 
@@ -486,7 +461,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
 
       {/* Modal de Confirmação de Alinhamento */}
       {showConfirmation && (
-        <div className="safe-overlay fixed inset-0 z-[100] bg-ethereal-950/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[100] bg-ethereal-950/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-500">
           <div className="glass-mystic border border-white/10 w-full max-w-md rounded-[3rem] p-10 flex flex-col items-center text-center space-y-8 shadow-2xl animate-in zoom-in duration-500">
             <div className="w-20 h-20 bg-aura-violet/20 rounded-full flex items-center justify-center text-aura-violet shadow-[0_0_30px_rgba(139,92,246,0.2)]">
               <StarIcon size={36} className="animate-spin-slow" />

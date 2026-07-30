@@ -21,17 +21,29 @@ export interface SpiritualInventoryItem {
   weight: number;
 }
 
+export interface DiagnosisResult {
+  date: string;
+  score: number;
+  glutenCount: number;
+  caseinCount: number;
+  lactoseCount: number;
+  spiritualCount: number;
+  favoriteActivities: string[];
+}
+
 export interface UserProfile {
   name: string;
   email?: string;
   phone?: string;
+  photoURL?: string;
   startDate: string | null;
   awakeningScore: number;
   hasSeenWarning: boolean;
-  hasAcceptedTerms: boolean;
+  hasAcceptedTerms?: boolean;
   isOnPath: boolean;
   favoriteActivities?: string[];
-  role?: 'admin' | 'client';
+  diagnosisHistory?: DiagnosisResult[];
+  role?: 'client' | 'admin';
 }
 
 export interface DailyLog {
@@ -73,7 +85,7 @@ export interface DailyLog {
 export interface Comment {
   id: string;
   author: string;
-  authorId: string;
+  authorId?: string;
   avatar: string;
   text: string;
   timestamp: number;
@@ -82,7 +94,6 @@ export interface Comment {
 export interface CommunityPost {
   id: string;
   author: string;
-  authorId: string;
   avatar: string;
   content: string;
   image?: string;

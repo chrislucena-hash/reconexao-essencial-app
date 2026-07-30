@@ -5,10 +5,11 @@ import { auth } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
 interface DisclaimerScreenProps {
-  onAccept: (email: string) => void | Promise<void>;
+  onAccept: (email: string) => void;
+  isLoggedIn?: boolean;
 }
 
-const DisclaimerScreen: React.FC<DisclaimerScreenProps> = ({ onAccept }) => {
+const DisclaimerScreen: React.FC<DisclaimerScreenProps> = ({ onAccept, isLoggedIn }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -33,7 +34,7 @@ const DisclaimerScreen: React.FC<DisclaimerScreenProps> = ({ onAccept }) => {
     try {
       // Sign In only
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      await onAccept(email.trim());
+      onAccept(email.trim());
     } catch (err: any) {
       console.error("Auth error:", err);
       let errMsg = 'Erro ao processar autenticação.';
@@ -51,7 +52,7 @@ const DisclaimerScreen: React.FC<DisclaimerScreenProps> = ({ onAccept }) => {
   };
 
   return (
-    <div className="safe-screen p-4 sm:p-6 flex flex-col items-center justify-center bg-ethereal-950 text-white animate-in fade-in duration-700">
+    <div className="min-h-[100dvh] px-4 sm:px-6 py-6 pt-safe pb-safe flex flex-col items-center justify-center bg-ethereal-950 text-white animate-in fade-in duration-700 w-full overflow-y-auto">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -79,58 +80,92 @@ const DisclaimerScreen: React.FC<DisclaimerScreenProps> = ({ onAccept }) => {
         </div>
 
         <div className="space-y-4">
-          <div className="space-y-3">
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-magic-gold/50" size={18} />
-              <input 
-                type="email" 
-                placeholder="Seu e-mail cadastrado"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm outline-none focus:border-magic-gold/50 transition-all text-white placeholder-white/30"
-                disabled={loading}
-              />
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-magic-gold/50" size={18} />
-              <input 
-                type={showPassword ? "text" : "password"} 
-                placeholder="Sua senha de acesso"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-sm outline-none focus:border-magic-gold/50 transition-all text-white placeholder-white/30"
-                disabled={loading}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-magic-gold/50 hover:text-white transition-colors"
-                disabled={loading}
+          {isLoggedIn ? (
+            <div className="space-y-6">
+              <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-center space-y-1">
+                <p className="text-[10px] text-ethereal-400 uppercase tracking-widest">Sua Conexão Ativa</p>
+                <p className="text-sm font-semibold text-magic-gold">{auth.currentUser?.email}</p>
+              </div>
+
+              <p className="text-[11px] text-center text-ethereal-300 italic leading-relaxed">
+                Você já está autenticado nesta centelha divina. Deseja iniciar sua jornada com esta conta?
+              </p>
+
+              <button 
+                onClick={() => onAccept(auth.currentUser?.email || '')}
+                className="w-full bg-white text-nature-950 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-3 shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                Aceitar e Prosseguir <ArrowRight size={18} />
+              </button>
+
+              <button 
+                type="button"
+                onClick={async () => {
+                  const { signOut } = await import('firebase/auth');
+                  await signOut(auth);
+                  window.location.reload();
+                }}
+                className="w-full text-center text-ethereal-400 hover:text-rose-400 text-[10px] font-black uppercase tracking-widest transition-colors py-2"
+              >
+                Entrar com outra conta
               </button>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="space-y-3">
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-magic-gold/50" size={18} />
+                  <input 
+                    type="email" 
+                    placeholder="Seu e-mail cadastrado"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm outline-none focus:border-magic-gold/50 transition-all text-white placeholder-white/30"
+                    disabled={loading}
+                  />
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-magic-gold/50" size={18} />
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="Sua senha de acesso"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-sm outline-none focus:border-magic-gold/50 transition-all text-white placeholder-white/30"
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-magic-gold/50 hover:text-white transition-colors"
+                    disabled={loading}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
 
-          <p className="text-[10px] text-center text-ethereal-400 italic">
-            Utilize as credenciais de acesso fornecidas para iniciar sua jornada.
-          </p>
+              <p className="text-[10px] text-center text-ethereal-400 italic">
+                Utilize as credenciais de acesso fornecidas para iniciar sua jornada.
+              </p>
 
-          {error && <p className="text-rose-400 text-[10px] text-center font-bold uppercase tracking-widest animate-pulse">{error}</p>}
+              {error && <p className="text-rose-400 text-[10px] text-center font-bold uppercase tracking-widest animate-pulse">{error}</p>}
 
-          <button 
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full bg-white text-nature-950 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-3 shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
-          >
-            {loading ? (
-              <Loader2 size={18} className="animate-spin text-nature-950" />
-            ) : (
-              <>
-                Entrar na Jornada <ArrowRight size={18} />
-              </>
-            )}
-          </button>
+              <button 
+                onClick={handleSubmit}
+                disabled={loading}
+                className="w-full bg-white text-nature-950 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-3 shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+              >
+                {loading ? (
+                  <Loader2 size={18} className="animate-spin text-nature-950" />
+                ) : (
+                  <>
+                    Entrar na Jornada <ArrowRight size={18} />
+                  </>
+                )}
+              </button>
+            </>
+          )}
         </div>
       </motion.div>
     </div>

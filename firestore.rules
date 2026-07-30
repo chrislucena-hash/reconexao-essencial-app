@@ -18,7 +18,7 @@ service cloud.firestore {
     //   - hasSeenWarning: bool (required)
     //   - hasAcceptedTerms: bool (required)
     //   - isOnPath: bool (optional)
-    //   - role: string (required, default 'client')
+    //   - role: string (optional, default 'client')
     //
     // Collection: users/{userId}/logs
     // Document ID: logId (date string YYYY-MM-DD)
@@ -76,7 +76,8 @@ service cloud.firestore {
              data.hasSeenWarning is bool &&
              data.hasAcceptedTerms is bool &&
              (!('email' in data) || isValidEmail(data.email)) &&
-             data.role in ['admin', 'client'];
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() < 2000000)) &&
+             (!('role' in data) || data.role in ['admin', 'client']);
     }
 
     function isValidPost(data) {
@@ -102,9 +103,7 @@ service cloud.firestore {
       allow create: if isOwner(userId) && isValidUser(request.resource.data) && 
                       (request.resource.data.role == 'client' || isAdmin());
       allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
-                      (request.resource.data.role == resource.data.role ||
-                       (!('role' in resource.data) && request.resource.data.role == 'client') ||
-                       isAdmin());
+                      (request.resource.data.role == resource.data.role || isAdmin());
       
       match /logs/{logId} {
         allow read, write: if isOwner(userId) || isAdmin();
@@ -120,7 +119,9 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidPost(request.resource.data);
       allow update: if isAuthenticated() && (
         (request.auth.uid == resource.data.authorId && isValidPost(request.resource.data)) ||
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) // Simplified like update
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments'])) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'comments']))
       );
       allow delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || isAdmin());
       

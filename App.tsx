@@ -14,94 +14,23 @@ import InstructionPortal from './components/InstructionPortal';
 import DisclaimerScreen from './components/DisclaimerScreen';
 import Settings from './components/Settings';
 import { FirebaseProvider, useFirebase } from './components/FirebaseProvider';
-import { AppView, UserProfile, DailyLog } from './types';
+import { AppView, UserProfile, DailyLog, JourneyProgress } from './types';
+import { INITIAL_JOURNEY } from './constants';
 import { Compass, Sparkles, X, Flame, Loader2 } from 'lucide-react';
-import { doc, setDoc, getDoc, collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { doc, setDoc, collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import { db, auth } from './firebase';
-import { isBackendConfigured, saveBackendConsent, saveBackendJournalEntry, syncBackendUser } from './services/apiClient';
-
-const screenshotPreview = import.meta.env.DEV
-  && new URLSearchParams(window.location.search).get('preview') === 'screenshots';
-
-const screenshotView = (() => {
-  const requestedView = new URLSearchParams(window.location.search).get('screen') as AppView | null;
-  return requestedView && Object.values(AppView).includes(requestedView) ? requestedView : AppView.WELCOME;
-})();
-
-const screenshotProfile: UserProfile = {
-  name: 'Luna',
-  email: 'luna@reconexao.app',
-  startDate: '2026-05-12T10:00:00.000Z',
-  awakeningScore: 84,
-  hasSeenWarning: true,
-  hasAcceptedTerms: true,
-  isOnPath: true,
-  favoriteActivities: ['yoga', 'walk'],
-  role: 'client',
-};
-
-const createScreenshotLogs = (): DailyLog[] => {
-  const today = new Date();
-
-  return [0, 1, 2, 3, 4, 5, 6].map((daysAgo) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() - daysAgo);
-
-    return {
-      date: date.toISOString().split('T')[0],
-      spiritualPractices: {
-        morning: 'Respiracao consciente e intencao',
-        afternoon: 'Pausa de presenca',
-        evening: 'Gratidao e silencio',
-      },
-      reflection: 'Senti mais clareza e serenidade ao honrar meu ritmo hoje.',
-      synchronicities: 'Encontrei a mensagem certa no momento certo.',
-      shadowObservations: 'Observei a autocobranca com acolhimento.',
-      energyLevel: daysAgo >= 5 ? 3 : daysAgo >= 2 ? 4 : 5,
-      awarenessLevel: daysAgo >= 5 ? 3 : daysAgo >= 3 ? 4 : 5,
-      foodRecord: {
-        breakfast: 'Frutas e cha',
-        lunch: 'Vegetais e graos',
-        dinner: 'Sopa leve',
-        snacks: 'Castanhas',
-        waterGlasses: 8,
-        fastingHours: 12,
-      },
-      completedActions: {
-        purification: true,
-        nourishment: true,
-        movement: daysAgo !== 2,
-        nature: true,
-        presence: true,
-        shadowWork: daysAgo < 4,
-        study: true,
-        gratitude: true,
-        journaling: true,
-        journeyTask: daysAgo !== 3,
-        dailyChallenge: daysAgo < 5,
-        alignmentConfirmed: daysAgo !== 2,
-      },
-    };
-  });
-};
 
 const AppContent: React.FC = () => {
   const { user, userProfile: fbProfile, loading: fbLoading } = useFirebase();
-  const [currentView, setCurrentView] = useState<AppView>(screenshotPreview ? screenshotView : AppView.WELCOME);
-  const [userProfile, setUserProfile] = useState<UserProfile>(screenshotPreview ? screenshotProfile : {
+  const [currentView, setCurrentView] = useState<AppView>(AppView.WELCOME);
+  const [userProfile, setUserProfile] = useState<UserProfile>({
     name: 'Buscador',
     startDate: null,
     awakeningScore: 0,
     hasSeenWarning: false,
-    hasAcceptedTerms: false,
     isOnPath: false,
-    role: 'client',
   });
   const [logs, setLogs] = useState<DailyLog[]>(() => {
-    if (screenshotPreview) {
-      return createScreenshotLogs();
-    }
-
     try {
       const saved = localStorage.getItem('reconexao_daily_logs');
       return saved ? JSON.parse(saved) : [];
@@ -109,33 +38,32 @@ const AppContent: React.FC = () => {
       return [];
     }
   });
+  const [journeyProgress, setJourneyProgress] = useState<JourneyProgress>(() => {
+    try {
+      const saved = localStorage.getItem('soul_journey_progress');
+      return saved ? JSON.parse(saved) : { currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null };
+    } catch {
+      return { currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null };
+    }
+  });
   const [showNavNudge, setShowNavNudge] = useState(false);
 
   // Sync local profile with Firebase profile and handle initial routing
   useEffect(() => {
-    if (screenshotPreview) {
-      return;
-    }
-
     if (fbProfile) {
       setUserProfile(fbProfile);
       
       if (currentView === AppView.WELCOME || currentView === AppView.DISCLAIMER) {
         if (fbProfile.isOnPath) {
           setCurrentView(AppView.DASHBOARD);
-        } else {
-          setCurrentView(AppView.INSTRUCTIONS);
         }
+        // Let the user stay on WELCOME or DISCLAIMER if they are not on the path, so they can manually go through the start/acceptance flow!
       }
     }
   }, [fbProfile]);
 
   // Enforce login gate - do not allow browsing inside the app if logged out
   useEffect(() => {
-    if (screenshotPreview) {
-      return;
-    }
-
     if (!fbLoading && !user) {
       if (currentView !== AppView.WELCOME && currentView !== AppView.DISCLAIMER) {
         setCurrentView(AppView.WELCOME);
@@ -145,10 +73,6 @@ const AppContent: React.FC = () => {
 
   // Sync logs from Firebase
   useEffect(() => {
-    if (screenshotPreview) {
-      return;
-    }
-
     if (user) {
       const logsRef = collection(db, 'users', user.uid, 'logs');
       const q = query(logsRef, orderBy('date', 'desc'), limit(30));
@@ -163,9 +87,48 @@ const AppContent: React.FC = () => {
     }
   }, [user]);
 
+  // Sync journey progress from Firebase
+  useEffect(() => {
+    if (user) {
+      const progressRef = doc(db, 'users', user.uid, 'journey', 'progress');
+      const unsubscribe = onSnapshot(progressRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const fetchedProgress = docSnap.data() as JourneyProgress;
+          setJourneyProgress(fetchedProgress);
+          try {
+            localStorage.setItem('soul_journey_progress', JSON.stringify(fetchedProgress));
+          } catch (e) {}
+        } else {
+          // Document was deleted or does not exist - reset to default!
+          const defaultProgress = { currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null };
+          setJourneyProgress(defaultProgress);
+          try {
+            localStorage.removeItem('soul_journey_progress');
+          } catch (e) {}
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
+
+  const handleUpdateJourneyProgress = async (newProgress: JourneyProgress) => {
+    setJourneyProgress(newProgress);
+    try {
+      localStorage.setItem('soul_journey_progress', JSON.stringify(newProgress));
+    } catch (e) {}
+
+    if (user) {
+      try {
+        await setDoc(doc(db, 'users', user.uid, 'journey', 'progress'), newProgress);
+      } catch (err) {
+        console.error("Error saving journey progress:", err);
+      }
+    }
+  };
+
   // Trigger nudge on view change
   useEffect(() => {
-    if (!screenshotPreview && userProfile.isOnPath && currentView !== AppView.WELCOME && currentView !== AppView.DIAGNOSIS && currentView !== AppView.INSTRUCTIONS) {
+    if (userProfile.isOnPath && currentView !== AppView.WELCOME && currentView !== AppView.DIAGNOSIS && currentView !== AppView.INSTRUCTIONS) {
       setShowNavNudge(true);
       const timer = setTimeout(() => {
         setShowNavNudge(false);
@@ -174,14 +137,42 @@ const AppContent: React.FC = () => {
     }
   }, [currentView, userProfile.isOnPath]);
 
-  const handleDiagnosisComplete = async (score: number, name: string, favoriteActivities: string[]) => {
+  const handleDiagnosisComplete = async (
+    score: number,
+    name: string,
+    favoriteActivities: string[],
+    details?: {
+      glutenCount: number;
+      caseinCount: number;
+      lactoseCount: number;
+      spiritualCount: number;
+    }
+  ) => {
+    const testTimestamp = new Date().toISOString();
+    const newResult = {
+      date: testTimestamp,
+      score: score,
+      glutenCount: details?.glutenCount ?? 0,
+      caseinCount: details?.caseinCount ?? 0,
+      lactoseCount: details?.lactoseCount ?? 0,
+      spiritualCount: details?.spiritualCount ?? 0,
+      favoriteActivities: favoriteActivities
+    };
+
+    const existingHistory = userProfile.diagnosisHistory || [];
+    const updatedHistory = [
+      newResult,
+      ...existingHistory.filter(h => h.date !== testTimestamp)
+    ];
+
     const updates = {
       name: name,
       awakeningScore: score,
       hasSeenWarning: true,
-      startDate: new Date().toISOString(),
+      startDate: userProfile.startDate || new Date().toISOString(),
       isOnPath: true,
-      favoriteActivities: favoriteActivities
+      favoriteActivities: favoriteActivities,
+      diagnosisHistory: updatedHistory
     };
 
     setUserProfile(prev => ({ ...prev, ...updates }));
@@ -189,15 +180,12 @@ const AppContent: React.FC = () => {
     if (user) {
       try {
         await setDoc(doc(db, 'users', user.uid), { ...userProfile, ...updates }, { merge: true });
-        if (isBackendConfigured) {
-          await syncBackendUser({ ...userProfile, ...updates });
-        }
       } catch (err) {
         console.error("Error saving profile:", err);
       }
     }
 
-    setTimeout(() => setCurrentView(AppView.DASHBOARD), 1000);
+    setTimeout(() => setCurrentView(AppView.EVOLUTION), 1000);
   };
 
   const handleSaveLog = async (log: DailyLog) => {
@@ -214,9 +202,6 @@ const AppContent: React.FC = () => {
     if (user) {
       try {
         await setDoc(doc(db, 'users', user.uid, 'logs', log.date), log);
-        if (isBackendConfigured) {
-          await saveBackendJournalEntry(log, userProfile);
-        }
       } catch (err) {
         console.error("Error saving log:", err);
       }
@@ -274,9 +259,6 @@ const AppContent: React.FC = () => {
     if (user) {
       try {
         await setDoc(doc(db, 'users', user.uid, 'logs', today), newLog);
-        if (isBackendConfigured) {
-          await saveBackendJournalEntry(newLog, userProfile);
-        }
       } catch (err) {
         console.error("Error toggling goal:", err);
       }
@@ -284,53 +266,32 @@ const AppContent: React.FC = () => {
   };
 
   const handleAcceptDisclaimer = async (email: string) => {
-    const currentUser = auth.currentUser;
-
-    if (!currentUser) {
-      return;
+    const updates: Partial<UserProfile> = { hasAcceptedTerms: true };
+    if (email) {
+      updates.email = email;
     }
-
-    let acceptedProfile = userProfile;
-
-    const userDocRef = doc(db, 'users', currentUser.uid);
-    const userDoc = await getDoc(userDocRef);
-
-    if (!userDoc.exists()) {
-      acceptedProfile = {
-        name: 'Buscador',
-        email,
-        startDate: null,
-        awakeningScore: 0,
-        hasSeenWarning: true,
-        hasAcceptedTerms: true,
-        isOnPath: false,
-        role: 'client',
-      };
-      await setDoc(userDocRef, acceptedProfile);
-    } else {
-      const savedProfile = userDoc.data() as UserProfile;
-      acceptedProfile = { ...savedProfile, hasAcceptedTerms: true, role: savedProfile.role ?? 'client' };
-
-      if (!savedProfile.hasAcceptedTerms || !savedProfile.role) {
-        await setDoc(userDocRef, {
-          hasAcceptedTerms: true,
-          role: acceptedProfile.role,
-        }, { merge: true });
-      }
-    }
-
-    setUserProfile(acceptedProfile);
-
-    if (isBackendConfigured) {
-      await syncBackendUser(acceptedProfile, email);
-      await saveBackendConsent();
-    }
-
-    if (acceptedProfile.isOnPath) {
+    await handleUpdateProfile(updates);
+    
+    if (userProfile && userProfile.isOnPath) {
       setCurrentView(AppView.DASHBOARD);
     } else {
       setCurrentView(AppView.INSTRUCTIONS);
     }
+  };
+
+  const handleFirestoreError = (error: any, operationType: 'create' | 'update' | 'delete' | 'list' | 'get' | 'write', path: string) => {
+    const errInfo = {
+      error: error instanceof Error ? error.message : String(error),
+      operationType,
+      path,
+      authInfo: {
+        userId: auth.currentUser?.uid,
+        email: auth.currentUser?.email,
+        emailVerified: auth.currentUser?.emailVerified,
+        isAnonymous: auth.currentUser?.isAnonymous
+      }
+    };
+    console.error('Firestore operation warning: ', JSON.stringify(errInfo));
   };
 
   const handleUpdateProfile = async (updates: Partial<UserProfile>) => {
@@ -338,18 +299,91 @@ const AppContent: React.FC = () => {
     if (user) {
       try {
         await setDoc(doc(db, 'users', user.uid), updates, { merge: true });
-        if (isBackendConfigured) {
-          await syncBackendUser({ ...userProfile, ...updates });
-        }
       } catch (err) {
-        console.error("Error updating profile:", err);
+        handleFirestoreError(err, 'update', `users/${user.uid}`);
       }
     }
   };
 
-  if (fbLoading && !screenshotPreview) {
+  const handleResetJourney = async () => {
+    const resetProfile: UserProfile = {
+      name: 'Buscador',
+      startDate: null,
+      awakeningScore: 0,
+      hasSeenWarning: false,
+      hasAcceptedTerms: false,
+      isOnPath: false,
+      favoriteActivities: [],
+      diagnosisHistory: [],
+      role: 'client'
+    };
+
+    if (userProfile.email) {
+      resetProfile.email = userProfile.email;
+    }
+    if (userProfile.phone) {
+      resetProfile.phone = userProfile.phone;
+    }
+
+    setUserProfile(resetProfile);
+    setLogs([]);
+    setJourneyProgress({ currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null });
+
+    // Clear local storage
+    try {
+      localStorage.removeItem('reconexao_daily_logs');
+      localStorage.removeItem('soul_journey_progress');
+      localStorage.removeItem('userProfile_spiritual');
+      localStorage.removeItem('userLogs_spiritual');
+    } catch (e) {}
+
+    if (user) {
+      try {
+        const userPath = `users/${user.uid}`;
+        // Overwrite the user profile document on firestore (no merge to fully reset)
+        try {
+          await setDoc(doc(db, 'users', user.uid), resetProfile);
+        } catch (err) {
+          handleFirestoreError(err, 'write', userPath);
+        }
+
+        // Fetch and delete all logs collection documents
+        const { deleteDoc, doc: firestoreDoc, collection: firestoreCollection, getDocs } = await import('firebase/firestore');
+        const logsPath = `users/${user.uid}/logs`;
+        try {
+          const logsRef = firestoreCollection(db, 'users', user.uid, 'logs');
+          const logsSnap = await getDocs(logsRef);
+          for (const docSnap of logsSnap.docs) {
+            const logDocPath = `users/${user.uid}/logs/${docSnap.id}`;
+            try {
+              await deleteDoc(firestoreDoc(db, 'users', user.uid, 'logs', docSnap.id));
+            } catch (err) {
+              handleFirestoreError(err, 'delete', logDocPath);
+            }
+          }
+        } catch (err) {
+          handleFirestoreError(err, 'list', logsPath);
+        }
+
+        // Delete journey progress document from Firestore
+        const journeyDocPath = `users/${user.uid}/journey/progress`;
+        try {
+          await deleteDoc(firestoreDoc(db, 'users', user.uid, 'journey', 'progress'));
+        } catch (err) {
+          handleFirestoreError(err, 'delete', journeyDocPath);
+        }
+      } catch (err) {
+        console.error("Error resetting journey on firestore:", err);
+      }
+    }
+
+    setCurrentView(AppView.WELCOME);
+    window.location.reload();
+  };
+
+  if (fbLoading) {
     return (
-      <div className="app-shell bg-ethereal-950 flex items-center justify-center">
+      <div className="min-h-screen bg-ethereal-950 flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 size={48} className="text-magic-gold animate-spin mx-auto" />
           <p className="text-magic-gold font-serif italic tracking-widest">Sincronizando com a Centelha...</p>
@@ -361,44 +395,44 @@ const AppContent: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case AppView.WELCOME:
-        return <WelcomeCover onStart={() => setCurrentView(AppView.DISCLAIMER)} preview={screenshotPreview} />;
+        return <WelcomeCover onStart={() => setCurrentView(AppView.DISCLAIMER)} />;
       case AppView.DISCLAIMER:
-        return <DisclaimerScreen onAccept={handleAcceptDisclaimer} />;
+        return <DisclaimerScreen onAccept={handleAcceptDisclaimer} isLoggedIn={!!user} />;
       case AppView.INSTRUCTIONS:
         return <InstructionPortal onProceed={() => setCurrentView(userProfile.isOnPath ? AppView.DASHBOARD : AppView.DIAGNOSIS)} />;
       case AppView.DIAGNOSIS:
-        return <Diagnosis onComplete={handleDiagnosisComplete} userProfile={userProfile} />;
+        return <Diagnosis onComplete={handleDiagnosisComplete} userProfile={userProfile} onBack={() => setCurrentView(AppView.DASHBOARD)} />;
       case AppView.DASHBOARD:
-        return <Dashboard userProfile={userProfile} logs={logs} onToggleGoal={toggleDailyGoal} setView={setCurrentView} preview={screenshotPreview} />;
+        return <Dashboard userProfile={userProfile} logs={logs} onToggleGoal={toggleDailyGoal} setView={setCurrentView} journeyProgress={journeyProgress} />;
       case AppView.TRACKER:
         return <Tracker onSaveLog={handleSaveLog} logs={logs} />;
       case AppView.WELLNESS:
         return <Wellness />;
       case AppView.GUIDANCE:
-        return <Guidance userProfile={userProfile} />;
+        return <Guidance />;
       case AppView.COMMUNITY:
         return <Community />;
       case AppView.JOURNEY:
-        return <Journey userProfile={userProfile} preview={screenshotPreview} />;
+        return <Journey progress={journeyProgress} onUpdateProgress={handleUpdateJourneyProgress} onResetJourney={handleResetJourney} />;
       case AppView.EVOLUTION:
         return <EvolutionReport logs={logs} userProfile={userProfile} />;
       case AppView.SETTINGS:
-        return <Settings userProfile={userProfile} onUpdateProfile={handleUpdateProfile} setView={setCurrentView} />;
+        return <Settings userProfile={userProfile} onUpdateProfile={handleUpdateProfile} setView={setCurrentView} onResetJourney={handleResetJourney} />;
       default:
-        return <Dashboard userProfile={userProfile} logs={logs} onToggleGoal={toggleDailyGoal} />;
+        return <Dashboard userProfile={userProfile} logs={logs} onToggleGoal={toggleDailyGoal} setView={setCurrentView} journeyProgress={journeyProgress} />;
     }
   };
 
   return (
-    <div className="app-shell bg-ethereal-950 text-gray-100 font-sans selection:bg-magic-gold/30">
-      <main className="mx-auto w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl bg-transparent min-h-screen shadow-2xl relative overflow-x-hidden px-2 sm:px-4 md:px-6">
+    <div className="min-h-[100dvh] bg-ethereal-950 text-gray-100 font-sans selection:bg-magic-gold/30 overflow-x-hidden flex flex-col w-full">
+      <main className="mx-auto w-full max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-5xl bg-transparent min-h-[100dvh] shadow-2xl relative overflow-x-hidden px-3 sm:px-6 pt-safe pb-safe-nav flex-1">
         
-        <div className="app-route relative z-10">{renderView()}</div>
+        <div className="relative z-10 w-full">{renderView()}</div>
         
         {/* Nudge Toast for Navigation */}
         {showNavNudge && currentView !== AppView.INSTRUCTIONS && (
-          <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 w-[85%] max-w-sm animate-in slide-up" style={{ bottom: 'calc(7rem + env(safe-area-inset-bottom, 0px))' }}>
-            <div className="glass-mystic p-4 rounded-2xl border border-magic-gold/20 flex items-center gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] bg-ethereal-950/80 backdrop-blur-xl">
+          <div className="fixed bottom-[max(6.5rem,calc(5.5rem+env(safe-area-inset-bottom)))] left-1/2 -translate-x-1/2 z-50 w-[88%] max-w-sm animate-in slide-up">
+            <div className="glass-mystic p-4 rounded-2xl border border-magic-gold/20 flex items-center gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] bg-ethereal-950/90 backdrop-blur-xl">
                <div className="shrink-0 p-2 bg-magic-gold/10 rounded-lg text-magic-gold">
                   <Compass size={18} className="animate-spin-slow" />
                </div>
@@ -406,16 +440,16 @@ const AppContent: React.FC = () => {
                   <p className="text-[10px] font-black uppercase tracking-widest text-magic-gold">Voz da Centelha</p>
                   <p className="text-[11px] text-ethereal-100 italic leading-relaxed">Honre seu tempo peregrinando por todos os portais da senda.</p>
                </div>
-               <button onClick={() => setShowNavNudge(false)} className="text-ethereal-500 hover:text-white transition-colors">
+               <button onClick={() => setShowNavNudge(false)} className="text-ethereal-500 hover:text-white transition-colors p-1">
                   <X size={14} />
                </button>
             </div>
           </div>
         )}
 
-        <div className="fixed top-[-10%] left-[-10%] w-full h-full bg-aura-violet/10 blur-[150px] pointer-events-none rounded-full animate-pulse-soft" />
-        <div className="fixed bottom-[-10%] right-[-10%] w-full h-full bg-aura-teal/10 blur-[150px] pointer-events-none rounded-full animate-pulse-soft" style={{ animationDelay: '-2s' }} />
-        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-aura-rose/5 blur-[200px] pointer-events-none rounded-full animate-pulse-soft" style={{ animationDelay: '-4s' }} />
+        <div className="fixed top-[-10%] left-[-10%] w-full h-full bg-aura-violet/10 blur-[150px] pointer-events-none rounded-full animate-pulse-soft overflow-hidden" />
+        <div className="fixed bottom-[-10%] right-[-10%] w-full h-full bg-aura-teal/10 blur-[150px] pointer-events-none rounded-full animate-pulse-soft overflow-hidden" style={{ animationDelay: '-2s' }} />
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-aura-rose/5 blur-[200px] pointer-events-none rounded-full animate-pulse-soft overflow-hidden" style={{ animationDelay: '-4s' }} />
       </main>
       
       {userProfile.isOnPath && currentView !== AppView.WELCOME && currentView !== AppView.INSTRUCTIONS && (

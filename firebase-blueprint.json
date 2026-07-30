@@ -8,15 +8,15 @@
         "name": { "type": "string", "description": "User's name" },
         "email": { "type": "string", "format": "email", "description": "User's email" },
         "phone": { "type": "string", "description": "User's phone number" },
+        "photoURL": { "type": "string", "description": "User's base64 profile picture" },
         "startDate": { "type": "string", "description": "Date the user started the journey" },
         "awakeningScore": { "type": "number", "description": "Current awakening score" },
         "hasSeenWarning": { "type": "boolean", "description": "Whether the user has seen the medical warning" },
         "hasAcceptedTerms": { "type": "boolean", "description": "Whether the user has accepted the terms" },
         "isOnPath": { "type": "boolean", "description": "Whether the user is currently on the path" },
-        "favoriteActivities": { "type": "array", "items": { "type": "string" }, "description": "List of favorite activities" },
-        "role": { "type": "string", "enum": ["admin", "client"], "description": "Authorization role" }
+        "favoriteActivities": { "type": "array", "items": { "type": "string" }, "description": "List of favorite activities" }
       },
-      "required": ["name", "hasSeenWarning", "hasAcceptedTerms", "role"]
+      "required": ["name", "hasSeenWarning", "hasAcceptedTerms"]
     },
     "DailyLog": {
       "title": "DailyLog",
