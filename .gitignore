@@ -22,3 +22,31 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Frontend/mobile generated artifacts
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/capacitor-cordova-android-plugins/
+frontend/android/app/src/main/assets/capacitor.config.json
+frontend/android/app/src/main/assets/capacitor.plugins.json
+frontend/android/app/src/main/assets/public/
+frontend/android/app/src/main/res/xml/config.xml
+frontend/ios/Pods/
+frontend/ios/App/App/public/
+frontend/ios/App/DerivedData/
+frontend/ios/App/App/capacitor.config.json
+frontend/ios/App/App/config.xml
+frontend/ios/capacitor-cordova-ios-plugins/
+frontend/dist/
+
+# Local credentials and certificates
+credenciais.vps.md
+*.pem
+
+# Python backend local environment and generated files
+backend/fastapi/.env
+backend/fastapi/venv/
+backend/fastapi/.venv/
+__pycache__/
+*.py[cod]
