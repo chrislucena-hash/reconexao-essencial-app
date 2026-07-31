@@ -19,6 +19,7 @@ import { INITIAL_JOURNEY } from './constants';
 import { Compass, Sparkles, X, Flame, Loader2 } from 'lucide-react';
 import { doc, setDoc, collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import { db, auth } from './firebase';
+import { listJournalEntries, upsertJournalEntry, syncUserWithBackend, journalEntryToDailyLog } from './services/backendService';
 
 const AppContent: React.FC = () => {
   const { user, userProfile: fbProfile, loading: fbLoading } = useFirebase();
@@ -71,20 +72,29 @@ const AppContent: React.FC = () => {
     }
   }, [user, fbLoading, currentView]);
 
-  // Sync logs from Firebase
+  // Sync logs from backend or Firebase
   useEffect(() => {
-    if (user) {
-      const logsRef = collection(db, 'users', user.uid, 'logs');
-      const q = query(logsRef, orderBy('date', 'desc'), limit(30));
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const fetchedLogs = snapshot.docs.map(doc => doc.data() as DailyLog);
+    let cancelled = false;
+
+    const loadJournalEntries = async () => {
+      if (!user) return;
+      try {
+        const { entries } = await listJournalEntries();
+        if (cancelled) return;
+        const fetchedLogs = entries.map(journalEntryToDailyLog);
         setLogs(fetchedLogs);
         try {
           localStorage.setItem('reconexao_daily_logs', JSON.stringify(fetchedLogs));
         } catch (e) {}
-      });
-      return () => unsubscribe();
-    }
+      } catch (err) {
+        console.warn('Failed to load backend journal entries:', err);
+      }
+    };
+
+    loadJournalEntries();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   // Sync journey progress from Firebase
@@ -176,14 +186,7 @@ const AppContent: React.FC = () => {
     };
 
     setUserProfile(prev => ({ ...prev, ...updates }));
-
-    if (user) {
-      try {
-        await setDoc(doc(db, 'users', user.uid), { ...userProfile, ...updates }, { merge: true });
-      } catch (err) {
-        console.error("Error saving profile:", err);
-      }
-    }
+    await handleUpdateProfile(updates);
 
     setTimeout(() => setCurrentView(AppView.EVOLUTION), 1000);
   };
@@ -201,9 +204,9 @@ const AppContent: React.FC = () => {
 
     if (user) {
       try {
-        await setDoc(doc(db, 'users', user.uid, 'logs', log.date), log);
+        await upsertJournalEntry(log);
       } catch (err) {
-        console.error("Error saving log:", err);
+        console.error('Error saving log to backend:', err);
       }
     }
   };
@@ -297,6 +300,19 @@ const AppContent: React.FC = () => {
   const handleUpdateProfile = async (updates: Partial<UserProfile>) => {
     setUserProfile(prev => ({ ...prev, ...updates }));
     if (user) {
+      try {
+        await syncUserWithBackend({
+          firebaseUid: user.uid,
+          email: updates.email || user.email || '',
+          displayName: updates.name || user.displayName || 'Buscador',
+          photoUrl: updates.photoURL || user.photoURL || null,
+          phoneNumber: updates.phone || null,
+          provider: 'password',
+          emailVerified: user.emailVerified,
+        });
+      } catch (err) {
+        console.warn('Backend user sync failed:', err);
+      }
       try {
         await setDoc(doc(db, 'users', user.uid), updates, { merge: true });
       } catch (err) {
