@@ -17,9 +17,19 @@ import { FirebaseProvider, useFirebase } from './components/FirebaseProvider';
 import { AppView, UserProfile, DailyLog, JourneyProgress } from './types';
 import { INITIAL_JOURNEY } from './constants';
 import { Compass, Sparkles, X, Flame, Loader2 } from 'lucide-react';
-import { doc, setDoc, collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { db, auth } from './firebase';
-import { listJournalEntries, upsertJournalEntry, syncUserWithBackend, journalEntryToDailyLog } from './services/backendService';
+import {
+  listJournalEntries,
+  upsertJournalEntry,
+  syncUserWithBackend,
+  syncConsentWithBackend,
+  journalEntryToDailyLog,
+  listProgress,
+  upsertProgress,
+  deleteProgress,
+  deleteJournalEntry,
+} from './services/backendService';
 
 const AppContent: React.FC = () => {
   const { user, userProfile: fbProfile, loading: fbLoading } = useFirebase();
@@ -79,9 +89,22 @@ const AppContent: React.FC = () => {
     const loadJournalEntries = async () => {
       if (!user) return;
       try {
+        // The FastAPI journal is user-scoped, so bootstrap the user before reading it.
+        await syncUserWithBackend({ ...userProfile, email: user.email || userProfile.email });
         const { entries } = await listJournalEntries();
         if (cancelled) return;
-        const fetchedLogs = entries.map(journalEntryToDailyLog);
+        const fetchedLogs = entries.map((entry) => {
+          const backendLog = journalEntryToDailyLog(entry);
+          const localLog = logs.find((log) => log.date === backendLog.date);
+
+          return {
+            ...backendLog,
+            // These fields are still stored by the Firebase client contract.
+            spiritualPractices: localLog?.spiritualPractices ?? backendLog.spiritualPractices,
+            completedActions: localLog?.completedActions ?? backendLog.completedActions,
+            shadowObservations: localLog?.shadowObservations,
+          };
+        });
         setLogs(fetchedLogs);
         try {
           localStorage.setItem('reconexao_daily_logs', JSON.stringify(fetchedLogs));
@@ -97,28 +120,33 @@ const AppContent: React.FC = () => {
     };
   }, [user]);
 
-  // Sync journey progress from Firebase
+  // Also mirror the journey summary in FastAPI. Detailed day content remains
+  // compatible with the existing Firebase/local representation.
   useEffect(() => {
-    if (user) {
-      const progressRef = doc(db, 'users', user.uid, 'journey', 'progress');
-      const unsubscribe = onSnapshot(progressRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const fetchedProgress = docSnap.data() as JourneyProgress;
-          setJourneyProgress(fetchedProgress);
-          try {
-            localStorage.setItem('soul_journey_progress', JSON.stringify(fetchedProgress));
-          } catch (e) {}
-        } else {
-          // Document was deleted or does not exist - reset to default!
-          const defaultProgress = { currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null };
-          setJourneyProgress(defaultProgress);
-          try {
-            localStorage.removeItem('soul_journey_progress');
-          } catch (e) {}
-        }
-      });
-      return () => unsubscribe();
-    }
+    if (!user) return;
+
+    const loadBackendJourneyProgress = async () => {
+      try {
+        await syncUserWithBackend({ ...userProfile, email: user.email || userProfile.email });
+        const progressItems = await listProgress();
+        const journeySummary = progressItems.find((item) => item.moduleSlug === 'journey-21-days');
+        if (!journeySummary || localStorage.getItem('soul_journey_progress')) return;
+
+        const completedDays = Math.round((journeySummary.progressPercent / 100) * INITIAL_JOURNEY.length);
+        const days = INITIAL_JOURNEY.map((day) => ({ ...day, completed: day.day <= completedDays }));
+        const hydratedProgress: JourneyProgress = {
+          currentDay: days.find((day) => !day.completed)?.day || INITIAL_JOURNEY.length,
+          days,
+          lastCompletedDate: journeySummary.lastSeenAt?.slice(0, 10) || null,
+        };
+        setJourneyProgress(hydratedProgress);
+        localStorage.setItem('soul_journey_progress', JSON.stringify(hydratedProgress));
+      } catch (err) {
+        console.warn('Backend journey progress sync failed:', err);
+      }
+    };
+
+    loadBackendJourneyProgress();
   }, [user]);
 
   const handleUpdateJourneyProgress = async (newProgress: JourneyProgress) => {
@@ -128,6 +156,12 @@ const AppContent: React.FC = () => {
     } catch (e) {}
 
     if (user) {
+      try {
+        const completedDays = newProgress.days.filter((day) => day.completed).length;
+        await upsertProgress('journey-21-days', Math.round((completedDays / INITIAL_JOURNEY.length) * 100));
+      } catch (err) {
+        console.warn('Backend journey progress update failed:', err);
+      }
       try {
         await setDoc(doc(db, 'users', user.uid, 'journey', 'progress'), newProgress);
       } catch (err) {
@@ -261,6 +295,11 @@ const AppContent: React.FC = () => {
 
     if (user) {
       try {
+        await upsertJournalEntry(newLog);
+      } catch (err) {
+        console.warn('Backend daily goal sync failed:', err);
+      }
+      try {
         await setDoc(doc(db, 'users', user.uid, 'logs', today), newLog);
       } catch (err) {
         console.error("Error toggling goal:", err);
@@ -274,6 +313,14 @@ const AppContent: React.FC = () => {
       updates.email = email;
     }
     await handleUpdateProfile(updates);
+
+    if (user) {
+      try {
+        await syncConsentWithBackend('medical_disclaimer', '1.0.0');
+      } catch (err) {
+        console.warn('Backend consent sync failed:', err);
+      }
+    }
     
     if (userProfile && userProfile.isOnPath) {
       setCurrentView(AppView.DASHBOARD);
@@ -301,15 +348,7 @@ const AppContent: React.FC = () => {
     setUserProfile(prev => ({ ...prev, ...updates }));
     if (user) {
       try {
-        await syncUserWithBackend({
-          firebaseUid: user.uid,
-          email: updates.email || user.email || '',
-          displayName: updates.name || user.displayName || 'Buscador',
-          photoUrl: updates.photoURL || user.photoURL || null,
-          phoneNumber: updates.phone || null,
-          provider: 'password',
-          emailVerified: user.emailVerified,
-        });
+        await syncUserWithBackend({ ...userProfile, ...updates });
       } catch (err) {
         console.warn('Backend user sync failed:', err);
       }
@@ -354,6 +393,14 @@ const AppContent: React.FC = () => {
     } catch (e) {}
 
     if (user) {
+      try {
+        const { entries } = await listJournalEntries();
+        await Promise.all(entries.map((entry) => deleteJournalEntry(entry.id)));
+        await deleteProgress('journey-21-days');
+      } catch (err) {
+        console.warn('Backend journey reset failed:', err);
+      }
+
       try {
         const userPath = `users/${user.uid}`;
         // Overwrite the user profile document on firestore (no merge to fully reset)

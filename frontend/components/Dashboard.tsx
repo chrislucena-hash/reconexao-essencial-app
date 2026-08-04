@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { analyzeSoulJourney, generateDailyContent } from '../services/geminiService';
 import { DailyLog, UserProfile, AppView, DailyContent, JourneyProgress } from '../types';
-import { RITUALS, INITIAL_JOURNEY } from '../constants.tsx';
+import { RITUALS, INITIAL_JOURNEY } from '../constants';
 import { 
   Sparkles as SparklesIcon, 
   Star as StarIcon, 

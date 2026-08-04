@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-server
 *.local
 
 # Editor directories and files
@@ -43,6 +44,9 @@ frontend/dist/
 # Local credentials and certificates
 credenciais.vps.md
 *.pem
+*.jks
+*.keystore
+frontend/android/keystore.properties
 
 # Python backend local environment and generated files
 backend/fastapi/.env

@@ -51,6 +51,13 @@ import {
   generatePurificationTips
 } from '../services/geminiService';
 import { DailyInsight, DailyContent, Recipe } from '../types';
+import { useFirebase } from './FirebaseProvider';
+import {
+  BackendFastingSession,
+  finishFastingSession,
+  listFastingSessions,
+  startFastingSession,
+} from '../services/backendService';
 
 const DEFAULT_DAILY_INSIGHT: DailyInsight = {
   oracleMessage: "Olhe para dentro. Nas profundezas do seu silêncio habita a verdade imutável do seu ser.",
@@ -114,6 +121,7 @@ const DEFAULT_DAILY_CONTENT: DailyContent = {
 const FASTING_WINDOWS = [12, 14, 16, 18, 24];
 
 const Guidance: React.FC = () => {
+  const { user } = useFirebase();
   const [activeSubTab, setActiveSubTab] = useState<'jornada' | 'autocura' | 'saude-intestinal'>('jornada');
   const [content, setContent] = useState<DailyContent | null>(null);
   const [insight, setInsight] = useState<DailyInsight | null>(null);
@@ -151,10 +159,72 @@ const Guidance: React.FC = () => {
   const [loadingExtras, setLoadingExtras] = useState(false);
   const [fastingWindow, setFastingWindow] = useState<number>(16);
   const [isFasting, setIsFasting] = useState(false);
+  const [activeFastingSession, setActiveFastingSession] = useState<BackendFastingSession | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioCacheRef = useRef<Record<string, string>>({});
   const [loadingAudioText, setLoadingAudioText] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setActiveFastingSession(null);
+      setIsFasting(false);
+      return;
+    }
+
+    let cancelled = false;
+    const loadActiveFastingSession = async () => {
+      try {
+        const sessions = await listFastingSessions();
+        const activeSession = sessions
+          .filter((session) => session.status === 'active')
+          .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())[0];
+
+        if (cancelled) return;
+        setActiveFastingSession(activeSession || null);
+        setIsFasting(Boolean(activeSession));
+        if (activeSession) setFastingWindow(activeSession.selectedWindowHours);
+      } catch (error) {
+        // The guidance page remains usable while the backend is unavailable.
+        console.warn('Failed to load fasting sessions from backend:', error);
+      }
+    };
+
+    loadActiveFastingSession();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const handleFastingToggle = async () => {
+    if (isFasting) {
+      if (activeFastingSession) {
+        try {
+          await finishFastingSession(activeFastingSession);
+        } catch (error) {
+          console.warn('Failed to finish fasting session in backend:', error);
+        }
+      }
+      setActiveFastingSession(null);
+      setIsFasting(false);
+      return;
+    }
+
+    if (!user) {
+      setIsFasting(true);
+      return;
+    }
+
+    try {
+      const session = await startFastingSession(fastingWindow);
+      setActiveFastingSession(session);
+      setIsFasting(true);
+    } catch (error) {
+      console.warn('Failed to start fasting session in backend:', error);
+      // Keep the local experience available if the API is temporarily offline.
+      setIsFasting(true);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -665,7 +735,7 @@ const Guidance: React.FC = () => {
               </div>
 
               <button 
-                 onClick={() => setIsFasting(!isFasting)}
+                 onClick={handleFastingToggle}
                  className={`w-full py-5 rounded-[2.5rem] font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-2xl ${
                     isFasting ? 'bg-rose-950/50 text-rose-400 border border-rose-900' : 'bg-white text-nature-950 hover:scale-105 active:scale-95'
                  }`}
