@@ -67,18 +67,25 @@ jobs:
           npm run build
           npx cap sync android
 
-      - name: Build signed Android App Bundle
+      - name: Build signed Android artifacts
         working-directory: frontend/android
-        run: ./gradlew bundleRelease --no-daemon
+        run: ./gradlew bundleRelease assembleRelease --no-daemon
 
-      - name: Verify AAB signature
+      - name: Verify Android signatures
         working-directory: frontend/android
-        run: jarsigner -verify -verbose -certs app/build/outputs/bundle/release/app-release.aab
+        run: |
+          set -euo pipefail
+          jarsigner -verify -verbose -certs app/build/outputs/bundle/release/app-release.aab
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -x "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
 
-      - name: Upload signed AAB
+      - name: Upload signed Android artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: reconexao-essencial-release-aab
-          path: frontend/android/app/build/outputs/bundle/release/app-release.aab
+          name: reconexao-essencial-release-android
+          path: |
+            frontend/android/app/build/outputs/bundle/release/app-release.aab
+            frontend/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
