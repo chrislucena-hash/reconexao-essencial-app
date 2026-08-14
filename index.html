@@ -1,0 +1,265 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Reconexão" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Reconexão Essencial" />
+    <meta name="theme-color" content="#020617" />
+    <meta name="msapplication-TileColor" content="#020617" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Icons & Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="shortcut icon" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon.svg" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/icon.svg" />
+
+    <title>Reconexão Essencial - Sua Essência</title>
+    <!-- Fonts & Design System -->
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Montserrat:ital,wght@0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              reconexao: {
+                bg: '#F7F2EC',
+                card: '#FFFFFF',
+                navy: '#18245C',
+                blue: '#5B8DE6',
+                purple: '#A268D7',
+                green: '#2E7D68',
+                gold: '#E9B44C',
+                pink: '#D87CB5',
+              },
+              aura: {
+                violet: '#A268D7',
+                indigo: '#18245C',
+                teal: '#2E7D68',
+                emerald: '#2E7D68',
+                gold: '#E9B44C',
+                rose: '#D87CB5',
+                amber: '#E9B44C',
+                sky: '#5B8DE6',
+                deep: '#18245C'
+              },
+              nature: {
+                900: '#18245C',
+                950: '#18245C',
+              },
+              ethereal: {
+                50: '#FFFFFF',
+                100: '#18245C',
+                200: '#232D53',
+                300: '#323957',
+                400: '#4A506B',
+                500: '#4A506B',
+                600: '#323957',
+                700: '#232D53',
+                800: '#18245C',
+                900: '#111A42',
+                950: '#18245C',
+              },
+              magic: {
+                gold: '#E9B44C',
+                sand: '#F7F2EC'
+              }
+            },
+            fontFamily: {
+              sans: ['"Atkinson Hyperlegible"', 'sans-serif'],
+              serif: ['Montserrat', 'sans-serif'],
+              title: ['Montserrat', 'sans-serif'],
+              body: ['"Atkinson Hyperlegible"', 'sans-serif'],
+            },
+            borderRadius: {
+              '2xl': '20px',
+              '3xl': '24px',
+              '4xl': '28px',
+            },
+            animation: {
+              'float': 'float 6s ease-in-out infinite',
+              'pulse-soft': 'pulse-soft 6s ease-in-out infinite',
+              'fade-in': 'fadeIn 0.3s ease-out forwards',
+              'zoom-in': 'zoomIn 0.3s ease-out forwards',
+              'slide-up': 'slideUp 0.4s ease-out forwards',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-8px)' },
+              },
+              'pulse-soft': {
+                '0%, 100%': { opacity: '0.9', transform: 'scale(1)' },
+                '50%': { opacity: '0.7', transform: 'scale(0.99)' },
+              },
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              zoomIn: {
+                '0%': { opacity: '0', transform: 'scale(0.98)' },
+                '100%': { opacity: '1', transform: 'scale(1)' },
+              },
+              slideUp: {
+                '0%': { opacity: '0', transform: 'translateY(16px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        --sat: env(safe-area-inset-top, 0px);
+        --sab: env(safe-area-inset-bottom, 0px);
+        --sal: env(safe-area-inset-left, 0px);
+        --sar: env(safe-area-inset-right, 0px);
+      }
+      html {
+        min-height: 100%;
+        min-height: 100dvh;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-text-size-adjust: 100%;
+        -webkit-overflow-scrolling: touch;
+      }
+      body {
+        font-family: 'Atkinson Hyperlegible', sans-serif;
+        background-color: #F7F2EC;
+        color: #18245C;
+        font-size: 17px;
+        line-height: 1.6;
+        min-height: 100vh;
+        min-height: 100dvh;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+        color: #18245C;
+      }
+      #root {
+        min-height: 100vh;
+        min-height: 100dvh;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow-x: hidden;
+        overflow-y: visible;
+        background-color: #F7F2EC;
+      }
+      @media screen and (max-width: 768px) {
+        input, select, textarea {
+          font-size: 17px !important;
+        }
+      }
+      .pt-safe {
+        padding-top: max(1.25rem, calc(0.75rem + var(--sat)));
+      }
+      .pb-safe {
+        padding-bottom: max(1.25rem, calc(0.75rem + var(--sab)));
+      }
+      .pb-safe-nav {
+        padding-bottom: max(7.5rem, calc(6rem + var(--sab)));
+      }
+      .glass-mystic {
+        background: #FFFFFF;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(24, 36, 92, 0.08);
+        border-radius: 20px;
+        box-shadow: 0 4px 20px -2px rgba(24, 36, 92, 0.05);
+        color: #18245C;
+      }
+      .aura-bg {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background-color: #F7F2EC;
+        background-image: 
+          radial-gradient(circle at 10% 10%, rgba(91, 141, 230, 0.08) 0%, transparent 45%),
+          radial-gradient(circle at 90% 10%, rgba(162, 104, 215, 0.08) 0%, transparent 45%),
+          radial-gradient(circle at 90% 90%, rgba(46, 125, 104, 0.08) 0%, transparent 45%),
+          radial-gradient(circle at 10% 90%, rgba(233, 180, 76, 0.08) 0%, transparent 45%);
+        overflow: hidden;
+      }
+      .aura-blob {
+        position: absolute;
+        width: 90vw;
+        height: 90vw;
+        border-radius: 50%;
+        filter: blur(120px);
+        opacity: 0.15;
+      }
+      .gradient-text-gold {
+        color: #E9B44C;
+      }
+      .iridescent-border {
+        position: relative;
+        overflow: hidden;
+      }
+      .iridescent-border::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        padding: 1px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(91, 141, 230, 0.3), rgba(162, 104, 215, 0.3), rgba(216, 124, 181, 0.3));
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+      }
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: #F7F2EC; }
+      ::-webkit-scrollbar-thumb { background: rgba(24, 36, 92, 0.15); border-radius: 9999px; }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.40.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="min-h-screen">
+    <div class="aura-bg">
+      <div class="aura-blob bg-aura-violet top-[-25%] left-[-15%]" style="animation-delay: 0s"></div>
+      <div class="aura-blob bg-aura-teal bottom-[-25%] right-[-15%]" style="animation-delay: -5s"></div>
+      <div class="aura-blob bg-aura-rose top-[15%] right-[-35%]" style="animation-delay: -10s"></div>
+      <div class="aura-blob bg-aura-amber bottom-[15%] left-[-35%]" style="animation-delay: -15s"></div>
+      <div class="aura-blob bg-aura-indigo middle-center opacity-20" style="animation-delay: -7s"></div>
+      <div class="aura-blob bg-aura-sky top-[40%] left-[10%] opacity-10" style="animation-delay: -12s"></div>
+    </div>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
