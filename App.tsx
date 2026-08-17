@@ -20,6 +20,7 @@ import { unlockMobileAudio } from './services/audioService';
 import { Compass, Sparkles, X, Flame, Loader2 } from 'lucide-react';
 import { doc, setDoc, collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import { db, auth } from './firebase';
+import { syncUserWithBackend, upsertJournalEntry } from './services/backendService';
 
 const AppContent: React.FC = () => {
   const { user, userProfile: fbProfile, loading: fbLoading } = useFirebase();
@@ -204,6 +205,7 @@ const AppContent: React.FC = () => {
       } catch (err) {
         console.error("Error saving profile:", err);
       }
+      syncUserWithBackend({ ...userProfile, ...updates }).catch(err => console.warn('Backend user sync failed:', err));
     }
 
     setTimeout(() => {
@@ -229,6 +231,7 @@ const AppContent: React.FC = () => {
       } catch (err) {
         console.error("Error saving log:", err);
       }
+      upsertJournalEntry(log).catch(err => console.warn('Backend journal sync failed:', err));
     }
   };
 
@@ -326,6 +329,7 @@ const AppContent: React.FC = () => {
       } catch (err) {
         handleFirestoreError(err, 'update', `users/${user.uid}`);
       }
+      syncUserWithBackend({ ...userProfile, ...updates }).catch(err => console.warn('Backend user sync failed:', err));
     }
   };
 
