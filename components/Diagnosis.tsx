@@ -21,7 +21,8 @@ import {
   Wind as WindIcon,
   ArrowRight
 } from 'lucide-react';
-import { SpiritualInventoryItem, UserProfile } from '../types';
+import { SpiritualInventoryItem, UserProfile, AppView } from '../types';
+import NextStepGuide from './NextStepGuide';
 
 const GLUTEN_SIGNALS: SpiritualInventoryItem[] = [
   // Digestivos/Intestinais
@@ -96,9 +97,10 @@ interface DiagnosisProps {
   ) => void;
   userProfile: UserProfile;
   onBack?: () => void;
+  setView?: (view: AppView) => void;
 }
 
-const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack }) => {
+const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, setView }) => {
   const [selectedGluten, setSelectedGluten] = useState<string[]>([]);
   const [selectedCasein, setSelectedCasein] = useState<string[]>([]);
   const [selectedLactose, setSelectedLactose] = useState<string[]>([]);
@@ -106,6 +108,11 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack }
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [step, setStep] = useState<'intro' | 'symptoms' | 'spiritual' | 'result'>('intro');
   const [userName, setUserName] = useState(userProfile.name && userProfile.name !== 'Buscador' ? userProfile.name : '');
+
+  const changeStep = (newStep: 'intro' | 'symptoms' | 'spiritual' | 'result') => {
+    setStep(newStep);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const calculateVitalityScore = () => {
     const totalSignals = GLUTEN_SIGNALS.length + CASEIN_SIGNALS.length + LACTOSE_SIGNALS.length + SPIRITUAL_SIGNALS.length;
@@ -153,7 +160,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack }
           </div>
           <div className="space-y-3">
             <button
-              onClick={() => setStep('symptoms')}
+              onClick={() => changeStep('symptoms')}
               className="w-full bg-white text-nature-950 py-5 rounded-3xl font-bold text-lg hover:scale-105 transition-all shadow-xl"
             >
               Escutar a Essência
@@ -269,7 +276,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack }
 
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-6 md:px-8 py-8 pb-safe-nav bg-gradient-to-t from-[#F7F2EC] via-[#F7F2EC] to-transparent z-50">
           <button 
-            onClick={() => setStep('spiritual')}
+            onClick={() => changeStep('spiritual')}
             className="w-full bg-[#18245C] text-white py-6 rounded-[2.5rem] font-bold shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
           >
             Finalizar Teste do Corpo e Ir para Teste da Alma <ArrowRight size={18} />
@@ -281,7 +288,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack }
 
   if (step === 'spiritual') {
     return (
-      <div className="p-4 pt-safe pb-safe-nav space-y-8 animate-in fade-in">
+      <div className="p-4 pt-safe pb-safe-nav space-y-8 animate-in fade-in pb-28">
         <header className="px-4 text-center space-y-2">
           <h2 className="text-3xl font-serif text-[#18245C] font-bold tracking-tight italic">Teste da Alma</h2>
           <p className="text-[10px] font-black text-[#A268D7] uppercase tracking-[0.3em]">Passo 2: Alinhamento e Senda da Alma</p>
@@ -318,13 +325,13 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack }
 
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-6 md:px-8 py-8 pb-safe-nav bg-gradient-to-t from-[#F7F2EC] via-[#F7F2EC] to-transparent z-50 flex gap-3">
           <button 
-            onClick={() => setStep('symptoms')}
+            onClick={() => changeStep('symptoms')}
             className="flex-1 bg-[#18245C]/5 text-[#18245C] py-6 rounded-[2.5rem] font-bold border border-[#18245C]/10 transition-all active:scale-95"
           >
             Voltar
           </button>
           <button 
-            onClick={() => setStep('result')}
+            onClick={() => changeStep('result')}
             className="flex-[2] bg-[#18245C] text-white py-6 rounded-[2.5rem] font-bold shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
           >
             Finalizar Teste da Alma <ArrowRight size={18} />
@@ -336,7 +343,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack }
 
   if (step === 'result') {
     return (
-      <div className="p-4 pt-safe pb-safe-nav flex flex-col items-center justify-start min-h-screen animate-in zoom-in overflow-y-auto">
+      <div className="p-4 pt-safe pb-safe-nav flex flex-col items-center justify-start w-full animate-in zoom-in">
         <div className="text-center space-y-8 w-full max-w-md px-2">
           <div className="space-y-2">
             <h2 className="text-3xl font-serif text-[#18245C] font-bold italic">O Veredicto do Templo</h2>
@@ -407,12 +414,22 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack }
             disabled={!userName.trim()}
             className="w-full bg-[#E9B44C] text-[#18245C] py-6 rounded-3xl font-bold shadow-lg flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
           >
-            Confirmar Essência e Iniciar Jornada <Sparkles size={22} />
+            Confirmar Essência e Avançar para a Senda <Sparkles size={22} />
           </button>
 
           <p className="text-[9px] text-[#4A506B] text-center leading-relaxed italic px-2 opacity-80">
             As práticas aqui são espirituais e de desenvolvimento pessoal. Elas não substituem tratamento médico, nutricional ou psicológico. Se você suspeita de Doença Celíaca, é aconselhável que faça os testes sanguíneos para a desordem antes de iniciar a dieta sem glúten.
           </p>
+
+          <NextStepGuide 
+            currentStepName="Teste do Templo e da Alma"
+            stepNumber={1}
+            totalSteps={7}
+            nextStepName="Portal da Senda"
+            nextStepLabel="Avançar para a Senda"
+            onNavigate={handleComplete}
+            message="Seu teste de vitalidade foi concluído. Avance agora para o Portal da Senda dos 21 Dias de Reconexão."
+          />
         </div>
       </div>
     );

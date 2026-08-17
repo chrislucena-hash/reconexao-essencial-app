@@ -377,7 +377,7 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
             stepNumber={3}
             totalSteps={7}
             nextStepName="Portal do Guia"
-            nextStepLabel="Bússula da Alma"
+            nextStepLabel="Bússola da Alma"
             onNavigate={() => setView(AppView.GUIDANCE)}
             message="Diário atualizado com sucesso! Siga para o Portal do Guia para receber oráculos e receitas sagradas."
           />

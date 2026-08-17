@@ -206,7 +206,10 @@ const AppContent: React.FC = () => {
       }
     }
 
-    setTimeout(() => setCurrentView(AppView.EVOLUTION), 1000);
+    setTimeout(() => {
+      setCurrentView(AppView.JOURNEY);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 500);
   };
 
   const handleSaveLog = async (log: DailyLog) => {
