@@ -198,6 +198,7 @@ button, a, input, select, textarea {
   content: '';
   position: absolute;
   inset: 0;
+  pointer-events: none;
   padding: 1px;
   border-radius: 20px;
   background: linear-gradient(135deg, rgba(91, 141, 230, 0.3), rgba(162, 104, 215, 0.3), rgba(216, 124, 181, 0.3));
