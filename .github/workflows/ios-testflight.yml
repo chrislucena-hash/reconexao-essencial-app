@@ -190,6 +190,13 @@ jobs:
           APPSTORE_API_KEY_P8: ${{ secrets.APPSTORE_API_KEY_P8 }}
         run: |
           DECODED=$(printf "%s" "$APPSTORE_API_KEY_P8" | base64 --decode)
+
+          while IFS= read -r KEY_LINE; do
+            if [[ -n "$KEY_LINE" ]]; then
+              echo "::add-mask::$KEY_LINE"
+            fi
+          done <<< "$DECODED"
+
           {
             echo "key<<KEYEOF"
             echo "$DECODED"
@@ -204,10 +211,10 @@ jobs:
           api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
           issuer-id: ${{ secrets.APPSTORE_API_ISSUER_ID }}
           api-private-key: ${{ steps.decode_key.outputs.key }}
-          uses-non-exempt-encryption: 'false'
           wait-for-processing: 'true'
 
       - name: Upload IPA artifact
+        if: ${{ always() && hashFiles('build/App.ipa') != '' }}
         uses: actions/upload-artifact@v7
         with:
           name: reconexao-essencial-ios-${{ env.RELEASE_VERSION }}-${{ env.BUILD_NUMBER }}
