@@ -34,7 +34,7 @@ const HEALING_PORTALS: HealingPortal[] = [
     id: 'conscious-breath',
     category: 'breathing',
     hasVoice: false,
-    title: 'Respiração de Autocura (4-4-8)',
+    title: 'Respiração Consciente (4-4-8)',
     badge: 'Respiração Guiada por Sinos',
     desc: 'Pranayama rítmico acompanhado por sinos tibetanos e orbe de luz. Isento de voz falada para silenciar a mente.',
     icon: Wind,
@@ -44,7 +44,7 @@ const HEALING_PORTALS: HealingPortal[] = [
       breathing: "Inale a luz divina (4 tempos)...",
       feeling: "Retenha a energia no seu centro de força (4 tempos)...",
       affirming: "Solte suavemente, liberando tensões (8 tempos)...",
-      checking: "Permaneça na quietude. Seu ritmo respiratório restaurou o equilíbrio da sua energia vital."
+      checking: "Permaneça na quietude e observe como você se sente."
     },
     durations: {
       breathing: 4,
@@ -59,14 +59,14 @@ const HEALING_PORTALS: HealingPortal[] = [
     hasVoice: false,
     title: 'Pranayama do Equilíbrio Vital',
     badge: 'Respiração Rítmica',
-    desc: 'Respiração quadrada harmônica em 5 tempos para acalmar o sistema nervoso e estabilizar batimentos.',
+    desc: 'Respiração ritmada em 5 tempos para praticar a atenção ao momento presente.',
     icon: Activity,
     color: 'text-emerald-400',
     steps: {
       instruction: "Sente-se confortavelmente com a coluna ereta. Prepare-se para a respiração de equilíbrio prânico.",
       breathing: "Inale vitalidade e serenidade...",
       feeling: "Retenha o ar com leveza no peito...",
-      affirming: "Exale e dissipe toda ansiedade...",
+      affirming: "Exale com suavidade, respeitando seu conforto...",
       checking: "Sinta a desaceleração benéfica do seu corpo. Sinta o fluxo da paz interior."
     },
     durations: {
@@ -82,15 +82,15 @@ const HEALING_PORTALS: HealingPortal[] = [
     hasVoice: true,
     title: 'Meditação: Reintegração Emocional',
     badge: 'Meditação Guiada por Voz',
-    desc: 'Condução meditativa por voz calma e amorosa para dissolver ansiedade, medos e mágoas no abraço da luz.',
+    desc: 'Meditação guiada para acolher emoções e fazer uma pausa de reflexão.',
     icon: Heart,
     color: 'text-rose-400',
     steps: {
       instruction: "Acolha este momento com profunda serenidade. Feche os olhos, solte os ombros e permita que esta voz calma conduza sua alma a um estado de amor incondicional.",
       breathing: "Inale suavemente uma luz dourada e amorosa. Permita que ela envolva seu peito e ilumine cada batimento do seu coração.",
       feeling: "Retenha essa luz com doçura. Acolha qualquer preocupação com compaixão, sentindo-se protegido no abraço do divino.",
-      affirming: "Ao exalar lentamente, liberte o passado. Decrete em seu coração: 'Eu sou paz, eu sou luz, eu acolho minha cura'.",
-      checking: "Sinta a harmonia profunda restabelecida em seu ser. Suas emoções agora repousam em serena quietude."
+      affirming: "Ao exalar lentamente, observe o momento presente e repita, se quiser: 'Eu me acolho com gentileza'.",
+      checking: "Perceba como você se sente agora, sem exigir uma mudança nas emoções."
     },
     durations: {
       breathing: 5,
@@ -105,15 +105,15 @@ const HEALING_PORTALS: HealingPortal[] = [
     hasVoice: true,
     title: 'Meditação: Presença da Centelha',
     badge: 'Escaneamento do Templo',
-    desc: 'Escaneamento meditativo por voz doce e serena para purificar o campo físico e revitalizar suas células.',
+    desc: 'Exercício guiado de atenção às sensações do corpo.',
     icon: Sparkles,
     color: 'text-indigo-400',
     steps: {
       instruction: "Realizaremos um escaneamento meditado do seu templo físico. Permita que a voz amorosa guie a energia cristalina por todo o seu corpo.",
       breathing: "Inale uma luz violeta e purificadora. Sinta-a relaxar sua mente, pescoço e coluna, dissolvendo tensões.",
-      feeling: "Mantenha a atenção amorosa em seus órgãos e células, sentindo a centelha divina regenerar seu organismo.",
-      affirming: "Exale a rigidez e o cansaço. Afirme com ternura: 'Habito este corpo com saúde plena, paz e glória'.",
-      checking: "Perceba seu templo físico radiante, leve e reenergizado. Sua biologia ressoa na frequência perfeita do amor."
+      feeling: "Mantenha a atenção nas sensações do corpo, sem julgá-las.",
+      affirming: "Ao exalar, lembre-se: 'Posso cuidar de mim com gentileza'.",
+      checking: "Observe o que percebeu durante a prática."
     },
     durations: {
       breathing: 5,
@@ -149,17 +149,17 @@ const HEALING_PORTALS: HealingPortal[] = [
     id: 'self-hypnosis',
     category: 'hypnosis',
     hasVoice: true,
-    title: 'Autohipnose: Reprogramação da Biologia',
+    title: 'Relaxamento Guiado',
     badge: 'Autohipnose Guiada',
-    desc: 'Indução profunda conduzida por voz serena e afetuosa para reprogramar o subconsciente com comandos de cura.',
+    desc: 'Exercício de imaginação guiada e atenção ao momento presente.',
     icon: Moon,
     color: 'text-purple-400',
     steps: {
       instruction: "Relaxe profundamente. Deixe minha voz conduzir suavemente sua mente consciente até um estado de transe sereno e acolhedor.",
       breathing: "A cada respiração, você afunda o dobro em um estado de paz absoluta... soltando o controle e permitindo que seu subconsciente atue.",
-      feeling: "Em transe profundo, observe a luz da autocura reescrevendo memórias e restaurando a perfeita harmonia do seu ser.",
-      affirming: "Instale o comando hipnótico: 'Minhas células se regeneram agora. Eu aceito minha saúde e vitalidade plenamente'.",
-      checking: "O comando de autocura está gravado em seu subconsciente. Você desperta sentindo-se renovado, forte e profundamente em paz."
+      feeling: "Imagine uma luz acolhedora e observe as sensações que surgem.",
+      affirming: "Repita, se desejar: 'Posso fazer uma pausa e me acolher'.",
+      checking: "Ao terminar, observe como você se sente."
     },
     durations: {
       breathing: 6,
@@ -172,17 +172,17 @@ const HEALING_PORTALS: HealingPortal[] = [
     id: 'self-hypnosis-sleep',
     category: 'hypnosis',
     hasVoice: true,
-    title: 'Autohipnose: Indução ao Sono Profundo',
+    title: 'Relaxamento antes de dormir',
     badge: 'Autohipnose Guiada',
-    desc: 'Sessão de hipnose tranquila por voz calma para desacelerar a mente, eliminar estresse e induzir um sono reparador.',
+    desc: 'Áudio calmo para um momento de pausa antes de dormir.',
     icon: Flame,
     color: 'text-orange-400',
     steps: {
       instruction: "Desligue-se das preocupações do dia. Permita que esta voz amorosa descanse seus pensamentos e conduza seu ser ao sono sagrado.",
       breathing: "Inale o silêncio da noite. A cada expiração, suas pálpebras ficam mais pesadas e seu corpo relaxa profundamente.",
       feeling: "Sua mente desacelera... os pensamentos se desfazem suavemente no ar, deixando apenas a paz acolhedora do ambiente.",
-      affirming: "Grave em seu subconsciente: 'Eu me entrego ao descanso. Meu sono restaura meu corpo, minha alma e minha mente'.",
-      checking: "Mergulhe no sono reparador. Seu corpo se cura enquanto você descansa na segurança do universo."
+      affirming: "Repita, se desejar: 'Posso descansar no meu próprio ritmo'.",
+      checking: "Descanse se desejar, respeitando as necessidades do seu corpo."
     },
     durations: {
       breathing: 6,
@@ -622,7 +622,7 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
 
           // Sub-step: Exale / Afirmação
           setRitualStep('affirming');
-          setBreathingPhase("Afirmação & Cura");
+          setBreathingPhase("Afirmação & Presença");
           playBell();
           if (ritualActiveRef.current) {
             playVoicePassage(preloadedAudioRef.current.affirming, portal.steps.affirming);
@@ -637,7 +637,7 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
         // Phase 3: Closing / Retorno
         if (!ritualActiveRef.current) return;
         setRitualStep('checking');
-        setBreathingPhase("Selo de Cura");
+        setBreathingPhase("Pausa Final");
         setCountdown(null);
         playBell();
         if (ritualActiveRef.current) {
@@ -733,10 +733,11 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
       <header className="px-4 text-center space-y-3">
         <div className="flex items-center justify-center gap-2 text-magic-gold">
           <Stars size={16} />
-          <p className="text-[10px] font-black uppercase tracking-[0.5em]">Portal de Cura & Meditação</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.5em]">Portal de Autocuidado & Meditação</p>
           <Stars size={16} />
         </div>
-        <h2 className="text-4xl font-serif text-[#18245C] tracking-tighter italic leading-none">Santuário de Autocura</h2>
+        <h2 className="text-4xl font-serif text-[#18245C] tracking-tighter italic leading-none">Santuário de Autocuidado</h2>
+        <p className="text-xs text-[#4A506B]">Práticas de atenção e relaxamento. Faça apenas o que for confortável e interrompa se sentir desconforto.</p>
       </header>
 
       <div className="px-4 space-y-8">
@@ -746,7 +747,7 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
             <div className="p-8 glass-mystic border border-magic-gold/20 rounded-[2.5rem] text-center relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-magic-gold/5 blur-[50px] pointer-events-none" />
               <p className="text-xs text-ethereal-100 italic leading-relaxed relative z-10 font-light">
-                "A cura não é algo que você busca fora, mas a paz que você <span className="text-magic-gold font-bold">permite</span> despertar em sua própria alma."
+                "Reserve um momento para se ouvir com <span className="text-magic-gold font-bold">gentileza</span> e presença."
               </p>
             </div>
 
@@ -866,9 +867,9 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
                   {ritualStep === 'instruction' && "Ouça a Condução"}
                   {ritualStep === 'breathing' && (currentCycle > 0 ? `Ciclo ${currentCycle}: ${breathingPhase}` : "Inale a Luz")}
                   {ritualStep === 'feeling' && (currentCycle > 0 ? `Ciclo ${currentCycle}: ${breathingPhase}` : "Integre a Paz")}
-                  {ritualStep === 'affirming' && (currentCycle > 0 ? `Ciclo ${currentCycle}: ${breathingPhase}` : "Afirme a Cura")}
+                  {ritualStep === 'affirming' && (currentCycle > 0 ? `Ciclo ${currentCycle}: ${breathingPhase}` : "Afirmação de Presença")}
                   {ritualStep === 'checking' && "Integração Final"}
-                  {ritualStep === 'completed' && "Cura Consolidada"}
+                  {ritualStep === 'completed' && "Prática Concluída"}
                 </h3>
               </div>
               
@@ -902,7 +903,7 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
 
         {setView && (
           <NextStepGuide 
-            currentStepName="Portal de Cura"
+            currentStepName="Portal de Autocuidado"
             stepNumber={5}
             totalSteps={7}
             nextStepName="Portal da Evolução"

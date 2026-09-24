@@ -45,7 +45,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView }) => {
     { view: AppView.JOURNEY, icon: Compass, label: 'Senda', color: 'bg-[#E9B44C] text-white', textColor: 'text-[#E9B44C]' },
     { view: AppView.TRACKER, icon: ClipboardList, label: 'Diário', color: 'bg-[#5B8DE6] text-white', textColor: 'text-[#5B8DE6]' },
     { view: AppView.GUIDANCE, icon: Sparkles, label: 'Bússola', color: 'bg-[#A268D7] text-white', textColor: 'text-[#A268D7]' },
-    { view: AppView.WELLNESS, icon: Heart, label: 'Cura', color: 'bg-[#2E7D68] text-white', textColor: 'text-[#2E7D68]' },
+    { view: AppView.WELLNESS, icon: Heart, label: 'Cuidado', color: 'bg-[#2E7D68] text-white', textColor: 'text-[#2E7D68]' },
     { view: AppView.EVOLUTION, icon: TrendingUp, label: 'Evolução', color: 'bg-[#18245C] text-white', textColor: 'text-[#18245C]' },
     { view: AppView.COMMUNITY, icon: Users, label: 'Egrégora', color: 'bg-[#D87CB5] text-white', textColor: 'text-[#D87CB5]' },
   ];

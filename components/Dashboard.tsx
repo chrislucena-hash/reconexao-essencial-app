@@ -193,7 +193,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
                 .filter(([key, val]) => val && !['journaling', 'alignmentConfirmed'].includes(key))
                 .map(([key]) => (
                   <span key={key} className="px-2 py-1 bg-[#18245C]/5 rounded-lg text-[8px] font-black text-[#18245C] uppercase tracking-tighter">
-                    {key === 'purification' ? 'Purificação' : 
+                    {key === 'purification' ? 'Pausa e hidratação' :
                      key === 'nourishment' ? 'Nutrição' : 
                      key === 'nature' ? 'Natureza' : 
                      key === 'presence' ? 'Presença' : 
@@ -255,7 +255,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
           <div className="space-y-2">
             <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#A268D7]">O Oráculo Diz</h3>
             <p className="text-lg text-[#18245C] font-serif italic leading-relaxed">
-              {loadingInsight ? "Sintonizando..." : insight ? `"${insight}"` : "Sua jornada de autocura é um farol para sua alma."}
+              {loadingInsight ? "Sintonizando..." : insight ? `"${insight}"` : "Sua jornada de autoconhecimento segue no seu ritmo."}
             </p>
           </div>
         </section>

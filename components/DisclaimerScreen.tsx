@@ -73,8 +73,8 @@ const DisclaimerScreen: React.FC<DisclaimerScreenProps> = ({ onAccept, isLoggedI
             <p>O aplicativo Reconexão Essencial é uma plataforma dedicada ao autoconhecimento e espiritualidade. Ao acessar o sistema, você concorda que:</p>
             
             <div className="space-y-3">
-              <p><strong>Caráter Educativo:</strong> Todo o conteúdo, mapeamento de sintomas e sugestões têm finalidade exclusivamente educativa. Não constitui aconselhamento ou tratamento médico.</p>
-              <p><strong>Não Substituição Médica:</strong> As práticas sugeridas não substituem acompanhamento profissional de médicos, nutricionistas ou terapeutas qualificados.</p>
+              <p><strong>Caráter Educativo:</strong> O questionário registra percepções pessoais. O aplicativo não é um dispositivo médico e não diagnostica, trata, cura nem previne condições de saúde.</p>
+              <p><strong>Orientação Profissional:</strong> Consulte profissionais de saúde para orientações, diagnósticos ou tratamentos. Não retire alimentos da dieta com base no questionário.</p>
             </div>
           </div>
         </div>

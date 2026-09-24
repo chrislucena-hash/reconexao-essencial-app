@@ -9,9 +9,9 @@ const InstructionPortal: React.FC<InstructionPortalProps> = ({ onProceed }) => {
   const shrines = [
     { icon: Home, label: 'Portal do Início', desc: 'Onde sua centelha divina mapeia o progresso da sua jornada.' },
     { icon: Compass, label: 'Portal da Senda', desc: 'O caminho de 21 dias para a ascensão e expansão da consciência.' },
-    { icon: ClipboardList, label: 'Portal do Diário', desc: 'Espelho da alma para registrar a alquimia da sua autocura.' },
-    { icon: Sparkles, label: 'Portal do Guia', desc: 'Bússola para a purificação e nutrição consciente do templo.' },
-    { icon: Heart, label: 'Portal da Autocura', desc: 'Santuário para permitir que a centelha divina restaure seu ser.' },
+    { icon: ClipboardList, label: 'Portal do Diário', desc: 'Espaço para registrar suas experiências e percepções.' },
+    { icon: Sparkles, label: 'Portal do Guia', desc: 'Ideias de atenção plena e alimentação consciente.' },
+    { icon: Heart, label: 'Portal do Autocuidado', desc: 'Práticas guiadas de meditação e relaxamento.' },
     { icon: Users, label: 'Portal da Egrégora', desc: 'Egrégora de luz onde centelhas divinas se reconhecem.' },
   ];
 
@@ -30,7 +30,7 @@ const InstructionPortal: React.FC<InstructionPortalProps> = ({ onProceed }) => {
         
         <div className="space-y-4 text-center">
           <p className="text-sm text-[#18245C] font-serif italic leading-relaxed">
-            "A autocura integral floresce quando a sabedoria da alma e o cuidado com o templo físico caminham em harmonia."
+            "O autoconhecimento cresce quando você reserva tempo para observar sua experiência com gentileza."
           </p>
           
           <div className="p-6 bg-[#A268D7]/10 rounded-[2.5rem] border border-[#A268D7]/20 space-y-4">
@@ -39,11 +39,11 @@ const InstructionPortal: React.FC<InstructionPortalProps> = ({ onProceed }) => {
                <p className="text-[10px] font-black uppercase tracking-widest">A Senda da Clareza</p>
              </div>
              <p className="text-[11px] text-[#4A506B] italic leading-relaxed">
-               Compreenda que o corpo é o canal da sua luz. Beba <strong className="text-[#18245C]">3 litros de água solarizada</strong> diariamente e evite alimentos inflamatórios como o <strong className="text-[#18245C]">glúten, leite de vaca, açúcar, ultraprocessados e óleos vegetais</strong>.
+               Observe sua rotina com atenção. Beba água conforme suas necessidades e faça escolhas alimentares de acordo com suas preferências e orientações profissionais.
              </p>
              <div className="h-px bg-[#18245C]/10 w-1/2 mx-auto" />
              <p className="text-[11px] text-[#4A506B] italic leading-relaxed">
-               Faça o <strong className="text-[#18245C]">autoteste de 21 dias</strong>: retire todos eles completamente e, após esse ciclo, inclua-os um a um, observando atentamente os sinais do seu templo. Isso expande sua consciência corporal e integral, base do seu despertar espiritual. Após a inclusão, observe o que te faz mal e retire da sua vida. Respeite o seu templo, ele é o seu maior bem.
+               Use o Diário para registrar percepções. O aplicativo não determina causas de sintomas nem indica retirar alimentos. Se houver desconforto persistente, procure avaliação profissional antes de alterar a dieta.
              </p>
           </div>
 

@@ -17,6 +17,8 @@ O servidor Node usado no ambiente web é compilado separadamente em
 
 O bundle será gerado em `android/app/build/outputs/bundle/release/`.
 
+Antes do reenvio após uma rejeição, siga o [checklist do Play Console](docs/PLAY_CONSOLE_REVIEW.md), incluindo a declaração de recursos de saúde, a ficha da loja e o ícone da versão instalada.
+
 ## Assinatura
 
 Para publicar no Google Play, crie `android/keystore.properties` a

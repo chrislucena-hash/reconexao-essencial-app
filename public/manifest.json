@@ -1,7 +1,7 @@
 {
-  "name": "Reconexão Essencial - Sua Essência",
-  "short_name": "Reconexão",
-  "description": "Inicie sua jornada de autoconhecimento, autocura e reconexão espiritual profunda.",
+  "name": "Reconexão Essencial",
+  "short_name": "Reconexão Essencial",
+  "description": "Diário, meditação e práticas de autoconhecimento e relaxamento.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#020617",
@@ -10,7 +10,7 @@
   "categories": ["lifestyle", "health", "wellness"],
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/icon-mark.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

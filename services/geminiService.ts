@@ -16,6 +16,12 @@ function getTodayString(): string {
   return new Date().toISOString().split("T")[0];
 }
 
+// Generated copy must not introduce medical promises or prescriptive diets.
+function containsUnsupportedHealthAdvice(value: unknown): boolean {
+  const copy = JSON.stringify(value ?? "").toLocaleLowerCase("pt-BR");
+  return /desparas|detox|autofagia|regenera|anti.inflamat|inflamação|sensibilidade insul|sem contraind|\bcurar?\b|\bcura\b|\bjejum\b|\bdiagn[oó]stic|\btrate?\b|\btratamento\b|\belimine\b|\bretire\b/.test(copy);
+}
+
 async function generateContentWithModelFallback(
   paramsBuilder: (modelName: string) => any
 ): Promise<any> {
@@ -96,7 +102,7 @@ const DEFAULT_DAILY_CONTENT: DailyContent = {
       prepTime: "25 min"
     },
     {
-      title: "Sopa de Abóbora com Gengibre Regeneradora",
+      title: "Sopa de Abóbora com Gengibre",
       type: "Jantar",
       ingredients: ["400g de abóbora cabotiá picada", "1 pedaço pequeno de gengibre fresco ralado", "1 cebola picada", "Sal marinho e azeite de oliva"],
       instructions: [
@@ -111,23 +117,22 @@ const DEFAULT_DAILY_CONTENT: DailyContent = {
 };
 
 const DEFAULT_FERMENTATION_RECIPE: Recipe = {
-  title: "Kefir de Água do Templo",
-  type: "Fermentação Probiótica",
-  ingredients: ["500ml de água filtrada", "2 colheres de sopa de açúcar mascavo integral", "2 colheres de grãos de kefir de água"],
+  title: "Salada com Chucrute Pronto",
+  type: "Receita com Fermentado",
+  ingredients: ["Chucrute pronto para consumo", "Folhas de sua preferência", "Tomate", "Azeite a gosto"],
   instructions: [
-    "Dissolva o açúcar mascavo na água em um pote de vidro.",
-    "Adicione os grãos de kefir e cubra com um pano limpo preso por elástico.",
-    "Deixe fermentar em local escuro por 24 a 48 horas.",
-    "Coe os grãos e consuma a bebida probiótica refrescante."
+    "Lave as folhas e o tomate.",
+    "Monte a salada e acrescente o chucrute pronto.",
+    "Siga as instruções de conservação da embalagem e sirva com azeite, se desejar."
   ]
 };
 
 const DEFAULT_PURIFICATION_TIPS: string[] = [
-  "Beba um copo de água morna com limão pela manhã para despertar o sistema digestivo.",
-  "Mastigue sementes de mamão frescas pela manhã para liberação de emulsinas e enzimas purificadoras.",
-  "Mantenha jejum noturno de 12 a 16 horas para permitir a autofagia e regeneração celular.",
-  "Evite ingerir líquidos frios durante as refeições principais para preservar o fogo digestivo.",
-  "Consuma chás amargos (como dente-de-leão, carqueja ou alcachofra) antes das principais refeições."
+  "Faça pausas ao longo do dia e observe como você se sente.",
+  "Beba água conforme sua sede e necessidades individuais.",
+  "Inclua alimentos variados nas refeições, respeitando suas preferências e orientações profissionais.",
+  "Anote dúvidas sobre alimentação ou sintomas para conversar com um profissional de saúde.",
+  "Escolha um momento tranquilo para comer com atenção."
 ];
 
 const DEFAULT_RECIPE_OPTIONS: Record<string, Recipe[]> = {
@@ -194,16 +199,16 @@ const DEFAULT_RECIPE_OPTIONS: Record<string, Recipe[]> = {
 };
 
 const DEFAULT_ALCHEMIST_RECIPE = {
-  name: "Alquimia Regeneradora da Floresta",
+  name: "Alquimia da Floresta",
   desc: "Uma fusão harmônica e revigorante de elementos naturais para nutrir o corpo físico e expandir o corpo sutil.",
   ingredients: ["Ingredientes fornecidos pelo buscador", "Ervas finas (manjericão ou alecrim)", "Fio de azeite extra virgem", "Sal marinho e cúrcuma"],
   instructions: [
     "Respire profundamente e conecte-se com a energia dos ingredientes à sua frente.",
     "Refogue os ingredientes de forma consciente em fogo baixo com azeite e cúrcuma.",
-    "Tempere com sal marinho e adicione as ervas finas ao final, com intenção de cura e vitalidade.",
+    "Tempere e adicione as ervas finas ao final, apreciando os aromas e sabores.",
     "Agradeça ao templo físico e consuma com atenção plena."
   ],
-  spiritualNote: "Esta alquimia purifica os canais sutis do seu ser, facilitando o fluxo de energia vital (prana) e ancorando a presença divina no momento presente."
+  spiritualNote: "Reserve este momento para preparar e apreciar a refeição com presença."
 };
 
 // In-Memory Daily Cache
@@ -222,7 +227,7 @@ const dailyCache = {
 };
 
 const SPIRITUAL_SYSTEM_PROMPT = `
-Você é o Oráculo da Essência, um mentor espiritual e terapeuta holístico. 
+Você é o Oráculo da Essência, um guia de reflexão e bem-estar espiritual.
 Sua sabedoria baseia-se em:
 1. Psicologia Analítica (Sombras e Arquétipos).
 2. Filosofia Hermética (Como em cima, assim embaixo).
@@ -233,6 +238,7 @@ Instruções CRÍTICAS para geração:
 - oracleMessage: Uma mensagem poética e curta de inspiração.
 - dailyExercise: Um exercício PRÁTICO e BIOENERGÉTICO de no máximo 3 linhas. Priorize atividades físicas leves e prazerosas (como alongamento consciente, caminhada lenta ou movimentos fluidos) que conectem o buscador com o prazer de habitar o templo.
 - REGRAS DE SEGURANÇA: NUNCA sugira queimar incensos, inalar fumaça, usar ervas nocivas ou qualquer prática que envolva substâncias externas perigosas. Fumaça de incenso faz mal à saúde e é proibida.
+- Não faça diagnósticos, atribua causas a sintomas, prescreva dietas ou jejuns, nem prometa prevenção, tratamento ou cura. Recomende avaliação profissional quando houver sintomas.
 - FOCO DO EXERCÍCIO: Foque em micro-movimentos, respiração nasal, toques em pontos energéticos, sons vocais ou visualização criativa. 
 - EXEMPLO DE ESTILO: "Pressione a ponta da língua no palato e respire pelo nariz sentindo a vibração do ar na base da garganta por três ciclos completos."
 - dailyRitual: Um ritual mais estruturado com elements e processos. Inclua sempre um componente de movimento corporal leve e prazeroso.
@@ -289,7 +295,7 @@ export async function generateDailyInsight(): Promise<DailyInsight | null> {
       }
     }));
     const parsed = JSON.parse(response.text || "null");
-    if (parsed && parsed.oracleMessage) {
+    if (parsed && parsed.oracleMessage && !containsUnsupportedHealthAdvice(parsed)) {
       dailyCache.insight = { date: today, data: parsed };
       return parsed;
     }
@@ -324,7 +330,9 @@ export async function analyzeSoulJourney(logs: DailyLog[]): Promise<string> {
       model,
       contents: `Baseado nos últimos registros de consciência, forneça um insight profundo sobre a evolução do buscador: ${context}. Responda em 20 palavras.`,
     }));
-    return response.text || "O silêncio é o solo onde a verdade floresce.";
+    return response.text && !containsUnsupportedHealthAdvice(response.text)
+      ? response.text
+      : "O silêncio é o solo onde a verdade floresce.";
   } catch (error) { 
     console.warn("[Gemini API] Using default soul journey response.");
     return "Sua jornada é sagrada."; 
@@ -409,7 +417,7 @@ export async function generateDailyContent(): Promise<DailyContent | null> {
     const response = await generateContentWithModelFallback((model) => ({
       model,
       contents: `Gere o conteúdo nutritivo do dia para um buscador espiritual. 
-      Regras de Nutrição: SEM GLÚTEN, SEM LATICÍNIOS, SEM AÇÚCAR REFINADO, SEM ÓLEOS VEGETAIS.
+      Ofereça exemplos de refeições variadas, sem impor exclusões de grupos alimentares. Não atribua efeitos clínicos aos alimentos.
       Foque em 3 refeições principais (Desjejum, Almoço, Jantar).
       Inclua uma motivação poética e um desafio de presença.`,
       config: {
@@ -439,7 +447,7 @@ export async function generateDailyContent(): Promise<DailyContent | null> {
       }
     }));
     const parsed = JSON.parse(response.text || "null");
-    if (parsed && parsed.menu) {
+    if (parsed && parsed.menu && !containsUnsupportedHealthAdvice(parsed)) {
       dailyCache.content = { date: today, data: parsed };
       return parsed;
     }
@@ -476,7 +484,7 @@ export async function generateRecipeOptions(mealType: string): Promise<Recipe[]>
     const response = await generateContentWithModelFallback((model) => ({
       model,
       contents: `Gere 5 opções de receitas para ${mealType}. 
-      Regras: SEM GLÚTEN, SEM LATICÍNIOS, SEM AÇÚCAR, SEM ÓLEOS VEGETAIS.
+      Ofereça receitas variadas sem exclusões alimentares obrigatórias ou promessas de benefícios clínicos.
       Cada opção deve usar uma base de ingredientes diferente (ex: uma com ovos, outra com frutas, outra com raízes).`,
       config: {
         responseMimeType: "application/json",
@@ -497,7 +505,7 @@ export async function generateRecipeOptions(mealType: string): Promise<Recipe[]>
       }
     }));
     const parsed = JSON.parse(response.text || "[]");
-    if (Array.isArray(parsed) && parsed.length > 0) {
+    if (Array.isArray(parsed) && parsed.length > 0 && !containsUnsupportedHealthAdvice(parsed)) {
       dailyCache.recipeOptions[mealType] = { date: today, data: parsed };
       return parsed;
     }
@@ -529,7 +537,7 @@ export async function generateFermentationRecipe(): Promise<Recipe | null> {
   try {
     const response = await generateContentWithModelFallback((model) => ({
       model,
-      contents: `Gere uma receita de fermentação probiótica (Kefir, Kombucha, Rejuvelac, Chucrute, etc) para saúde intestinal.`,
+      contents: `Gere uma receita culinária que use um alimento fermentado comprado pronto para consumo. Não ensine fermentação caseira; mencione seguir as instruções de conservação da embalagem. Não alegue tratamento ou melhora de saúde.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -545,7 +553,7 @@ export async function generateFermentationRecipe(): Promise<Recipe | null> {
       }
     }));
     const parsed = JSON.parse(response.text || "null");
-    if (parsed && parsed.title) {
+    if (parsed && parsed.title && !containsUnsupportedHealthAdvice(parsed)) {
       dailyCache.fermentation = { date: today, data: parsed };
       return parsed;
     }
@@ -567,34 +575,7 @@ export async function generatePurificationTips(): Promise<string[]> {
     }
   }
 
-  // Server-side
-  const today = getTodayString();
-  if (dailyCache.purification && dailyCache.purification.date === today) {
-    return dailyCache.purification.data;
-  }
-
-  if (!ai) return DEFAULT_PURIFICATION_TIPS;
-  try {
-    const response = await generateContentWithModelFallback((model) => ({
-      model,
-      contents: `Gere 5 dicas curtas e potentes de purificação biológica e desparasitação natural. 
-      Inclua obrigatoriamente a dica de mastigar sementes de mamão para liberar princípios ativos.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: { type: Type.STRING }
-        }
-      }
-    }));
-    const parsed = JSON.parse(response.text || "[]");
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      dailyCache.purification = { date: today, data: parsed };
-      return parsed;
-    }
-  } catch (error) {
-    console.warn("[Gemini API] Using fallback for purification tips.");
-  }
+  // Health guidance is curated so generated text cannot introduce prescriptions.
   return DEFAULT_PURIFICATION_TIPS;
 }
 
@@ -610,7 +591,7 @@ export function getDynamicAlchemistFallback(ingredientsStr: string): any {
   const capitalizedFirst = firstIngredient.charAt(0).toUpperCase() + firstIngredient.slice(1);
   const name = `Alquimia de ${capitalizedFirst} do Templo`;
   
-  const desc = `Uma preparação mística, restauradora e personalizada feita com ${userIngredients.slice(0, 3).join(', ')}${userIngredients.length > 3 ? ' e outros elementos de poder' : ''}, consagrada para nutrir seu templo físico, restabelecer o equilíbrio e expandir os canais de energia sutil.`;
+  const desc = `Uma preparação personalizada feita com ${userIngredients.slice(0, 3).join(', ')}${userIngredients.length > 3 ? ' e outros ingredientes' : ''}, para apreciar o preparo com atenção.`;
   
   const ingredients = [
     ...userIngredients.map(i => i.charAt(0).toUpperCase() + i.slice(1)),
@@ -622,12 +603,12 @@ export function getDynamicAlchemistFallback(ingredientsStr: string): any {
   const instructions = [
     "Respire profundamente três vezes, acalme a mente e expresse gratidão aos elementos da natureza antes do preparo.",
     `Prepare os ingredientes principais de forma consciente e intencional: ${userIngredients.map(i => i.toLowerCase()).join(', ')}.`,
-    "Misture os elementos com delicadeza em fogo baixo com o azeite de oliva ou monte-os frescos à temperatura ambiente, infundindo pensamentos de regeneração e amor.",
-    "Adicione uma pitada de sal marinho integral e as ervas aromáticas para selar a alquimia com energia purificadora.",
+    "Misture os ingredientes com delicadeza, cozinhando-os adequadamente quando necessário.",
+    "Adicione temperos de sua preferência e aprecie o aroma.",
     "Agradeça ao seu templo biológico e consuma o alimento com presença absoluta e atenção plena a cada sabor."
   ];
   
-  const spiritualNote = "Esta alquimia sob medida purifica o fluxo de energia vital (prana) nos canais sutis do seu ser, acendendo o fogo digestivo (Agni) e promovendo a sintonia do corpo com a alma.";
+  const spiritualNote = "Use o preparo como um momento de pausa e atenção plena.";
   
   return {
     name,
@@ -660,13 +641,7 @@ export async function generateAlchemistRecipe(ingredients: string): Promise<any 
     const response = await generateContentWithModelFallback((model) => ({
       model,
       contents: `Você é o Alquimista de Suporte. O buscador tem os seguintes ingredientes: ${ingredients}. 
-      Crie uma receita mística e deliciosa que respeite RIGOROSAMENTE as regras: 
-      1. SEM GLÚTEN (nada de trigo, cevada, centeio).
-      2. SEM LATICÍNIOS (nada de leite, queijo, manteiga de vaca).
-      3. SEM AÇÚCAR REFINADO (use mel, melado ou frutas).
-      4. SEM ÓLEOS VEGETAIS (use azeite, óleo de coco ou banha).
-      
-      A linguagem deve ser poética e encorajadora.`,
+      Crie uma receita culinária com esses ingredientes. Não imponha exclusões alimentares nem prometa efeitos sobre sintomas, doenças ou regeneração. Caso haja alergias ou restrições, a pessoa deve seguir orientação individual de profissional de saúde. A linguagem pode ser poética e encorajadora.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -683,7 +658,7 @@ export async function generateAlchemistRecipe(ingredients: string): Promise<any 
       }
     }));
     const parsed = JSON.parse(response.text || "null");
-    if (parsed && parsed.name && Array.isArray(parsed.ingredients) && Array.isArray(parsed.instructions)) {
+    if (parsed && parsed.name && Array.isArray(parsed.ingredients) && Array.isArray(parsed.instructions) && !containsUnsupportedHealthAdvice(parsed)) {
       return parsed;
     }
   } catch (error) {

@@ -164,7 +164,7 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
         <div className="space-y-1.5">
           <p className="text-[10px] font-black uppercase text-[#E9B44C] tracking-[0.2em]">Aviso da Senda</p>
           <p className="text-xs text-[#18245C] italic leading-relaxed font-light">
-            No <strong className="text-[#18245C] font-semibold">Livro de Espelhos</strong>, o buscador deve preencher todos os quadros (Vibração, Presença, Recordatório Alimentar, Elixir da Água, Descanso e Emanações da Alma) para obter um reflexo íntegro, fiel e profundo de sua jornada de autocura.
+            No <strong className="text-[#18245C] font-semibold">Livro de Espelhos</strong>, você pode registrar sua energia, presença, alimentação, água, descanso e percepções. Preencha apenas o que desejar compartilhar com seu diário.
           </p>
         </div>
       </div>
@@ -303,7 +303,7 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
                 <div className="p-6 bg-aura-violet/10 rounded-3xl border border-aura-violet/20 flex flex-col items-center gap-4">
                   <div className="flex items-center gap-2 text-aura-violet">
                     <Moon size={18} className="animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Descanso do Templo (Jejum)</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Intervalo entre refeições (opcional)</span>
                   </div>
                   <div className="flex items-center gap-6">
                     <button onClick={() => setFastingHours(Math.max(0, fastingHours - 1))} className="p-2 bg-[#18245C]/10 rounded-full text-[#18245C] hover:bg-[#18245C]/20"><Minus size={16} /></button>
@@ -395,7 +395,7 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
             <div className="space-y-2">
               <h3 className="text-xl font-serif text-white italic">Quadros Incompletos</h3>
               <p className="text-xs text-ethereal-300 leading-relaxed">
-                Você possui quadros não preenchidos no seu <strong className="text-white">Livro de Espelhos</strong>. Para obter um reflexo completo e fiel da sua autocura, é altamente recomendável preencher todas as seções. Deseja salvar assim mesmo?
+                Há quadros não preenchidos no seu <strong className="text-white">Livro de Espelhos</strong>. Deseja salvar o que registrou até agora?
               </p>
             </div>
 

@@ -166,7 +166,7 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
               </div>
               <div className="text-left">
                 <h4 className="text-sm font-bold text-white">Mapeamento de Corpo e Alma</h4>
-                <p className="text-[9px] text-white/40 uppercase tracking-widest">Identificar sensibilidades e sintomas do templo</p>
+                <p className="text-[9px] text-white/40 uppercase tracking-widest">Registrar percepções e sinais do corpo</p>
               </div>
             </div>
             <ChevronRight size={18} className="text-white/20 group-hover:text-white transition-all animate-pulse" />
@@ -309,7 +309,7 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
                   <div className="space-y-4">
                     <div>
                       <p className="text-magic-gold font-bold not-italic uppercase tracking-tighter text-[10px] mb-1">Caráter Educativo e Espiritual</p>
-                      <p>Todo o conteúdo, incluindo testes de sensibilidade (glúten/caseína), mapeamento de sintomas e sugestões nutricionais, tem finalidade exclusivamente educativa e de expansão da consciência. Não constitui diagnóstico médico, prescrição dietética ou tratamento de saúde.</p>
+                      <p>O questionário registra percepções, e as sugestões de alimentação e bem-estar são gerais. O app não é um dispositivo médico, não identifica sensibilidades alimentares e não diagnostica, trata, cura nem previne condições médicas.</p>
                     </div>
                     
                     <div>
@@ -319,7 +319,7 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
                     
                     <div>
                       <p className="text-magic-gold font-bold not-italic uppercase tracking-tighter text-[10px] mb-1">Responsabilidade do Usuário</p>
-                      <p>A decisão de implementar mudanças na dieta (como a retirada de glúten ou leite) ou realizar práticas de jejum e purificação é de inteira responsabilidade do usuário. Recomendamos acompanhamento profissional para qualquer alteração clínica.</p>
+                      <p>Se houver sintomas, suspeita de alergia ou intenção de retirar alimentos da dieta, procure orientação individual de um profissional de saúde. As pausas do aplicativo não são indicação de jejum.</p>
                     </div>
                     
                     <div>
@@ -330,7 +330,7 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
 
                     <div>
                       <p className="text-magic-gold font-bold not-italic uppercase tracking-tighter text-[10px] mb-1">Limitação de Resultados</p>
-                      <p>O processo de "autocura" mencionado refere-se à busca por equilíbrio emocional e espiritual, e os resultados podem variar de pessoa para pessoa.</p>
+                      <p>As práticas de reflexão, meditação e relaxamento não prometem resultados clínicos. Observe sua experiência e interrompa qualquer prática que cause desconforto.</p>
                     </div>
                   </div>
                 </div>

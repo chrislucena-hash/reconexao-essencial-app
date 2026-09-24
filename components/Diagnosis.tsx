@@ -63,7 +63,7 @@ const CASEIN_SIGNALS: SpiritualInventoryItem[] = [
   
   // Outros
   { id: 'c6', name: 'Infecções de ouvido frequentes ou sensação de ouvido "tampado"', category: 'mental', weight: 2 },
-  { id: 'c7', name: 'Dores articulares migratórias (inflamação sistêmica)', category: 'mental', weight: 3 },
+  { id: 'c7', name: 'Dores articulares em diferentes locais do corpo', category: 'mental', weight: 3 },
 ];
 
 const LACTOSE_SIGNALS: SpiritualInventoryItem[] = [
@@ -114,7 +114,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const calculateVitalityScore = () => {
+  const calculateUnmarkedPercentage = () => {
     const totalSignals = GLUTEN_SIGNALS.length + CASEIN_SIGNALS.length + LACTOSE_SIGNALS.length + SPIRITUAL_SIGNALS.length;
     const markedCount = selectedGluten.length + selectedCasein.length + selectedLactose.length + selectedSpiritual.length;
     const unmarkedCount = totalSignals - markedCount;
@@ -122,7 +122,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
   };
 
   const handleComplete = () => {
-    const score = calculateVitalityScore();
+    const score = calculateUnmarkedPercentage();
     onComplete(score, userName.trim() || 'Buscador', selectedActivities, {
       glutenCount: selectedGluten.length,
       caseinCount: selectedCasein.length,
@@ -149,13 +149,13 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
           <div className="space-y-4">
             <h2 className="text-3xl font-serif text-white italic">O Templo e a Luz</h2>
             <p className="text-magic-gold text-[10px] font-black uppercase tracking-widest leading-relaxed">
-              Ciclo de 21 Dias Recomendado
+              Questionário de Percepções
             </p>
             <p className="text-ethereal-300 text-sm leading-relaxed">
-              Mapear onde sua centelha divina encontra resistência no templo físico é o primeiro passo da sua autocura. É altamente recomendável refazer este teste <strong className="text-white">a cada 21 dias</strong> para medir com precisão a evolução da sua vitalidade e clareza de alma.
+              Registre percepções sobre seu corpo e emoções para acompanhar seus próprios relatos. O questionário não mede vitalidade nem identifica a causa dos sintomas.
             </p>
             <p className="text-[10px] text-ethereal-400 italic leading-snug pt-4 border-t border-white/5">
-              As práticas aqui são espirituais e de desenvolvimento pessoal. Elas <strong className="text-white">não substituem</strong> tratamento médico, nutricional ou psicológico. Se você suspeita de Doença Celíaca, é aconselhável que faça os testes sanguíneos para a desordem antes de iniciar a dieta sem glúten.
+              Este questionário não diagnostica alergia, intolerância ou doença celíaca. Se houver sintomas ou suspeita de alguma condição, procure avaliação profissional antes de retirar alimentos da dieta.
             </p>
           </div>
           <div className="space-y-3">
@@ -183,18 +183,18 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
     return (
       <div className="p-4 pt-safe pb-safe-nav space-y-8 animate-in fade-in">
         <header className="px-4 text-center space-y-2">
-          <h2 className="text-3xl font-serif text-[#18245C] font-bold tracking-tight italic">Teste do Corpo</h2>
-          <p className="text-[10px] font-black text-[#E9B44C] uppercase tracking-[0.3em]">Passo 1: Sensibilidades e Inflamação do Templo</p>
+          <h2 className="text-3xl font-serif text-[#18245C] font-bold tracking-tight italic">Registro do Corpo</h2>
+          <p className="text-[10px] font-black text-[#E9B44C] uppercase tracking-[0.3em]">Passo 1: Percepções do corpo</p>
         </header>
 
         <div className="space-y-4 px-2 animate-in slide-up">
           <div className="p-8 glass-mystic border border-[#E9B44C]/30 rounded-[3rem] bg-[#E9B44C]/10 space-y-5 text-center relative overflow-hidden group shadow-sm">
             <div className="flex flex-col items-center gap-2">
               <Stethoscope size={28} className="text-[#E9B44C]" />
-              <h3 className="text-xl font-serif text-[#18245C] font-bold italic">Sinais de Inflamação Sistêmica</h3>
+              <h3 className="text-xl font-serif text-[#18245C] font-bold italic">Sinais percebidos</h3>
             </div>
             <p className="text-[12px] text-[#4A506B] leading-relaxed italic">
-              Identifique como seu templo reage a gatilhos inflamatórios específicos.
+              Marque apenas o que percebeu. A lista não identifica inflamação nem relaciona sintomas a alimentos.
             </p>
           </div>
 
@@ -202,7 +202,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
           <div className="space-y-4">
             <div className="flex items-center gap-2 px-4">
               <div className="h-px flex-1 bg-[#18245C]/10" />
-              <span className="text-[10px] font-black text-[#E9B44C] uppercase tracking-[0.3em]">Gatilho: Glúten</span>
+              <span className="text-[10px] font-black text-[#E9B44C] uppercase tracking-[0.3em]">Grupo de observações A</span>
               <div className="h-px flex-1 bg-[#18245C]/10" />
             </div>
             <div className="grid grid-cols-1 gap-3">
@@ -227,7 +227,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
           <div className="space-y-4 pt-6">
             <div className="flex items-center gap-2 px-4">
               <div className="h-px flex-1 bg-[#18245C]/10" />
-              <span className="text-[10px] font-black text-[#5B8DE6] uppercase tracking-[0.3em]">Gatilho: Caseína</span>
+              <span className="text-[10px] font-black text-[#5B8DE6] uppercase tracking-[0.3em]">Grupo de observações B</span>
               <div className="h-px flex-1 bg-[#18245C]/10" />
             </div>
             <div className="grid grid-cols-1 gap-3">
@@ -252,7 +252,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
           <div className="space-y-4 pt-6">
             <div className="flex items-center gap-2 px-4">
               <div className="h-px flex-1 bg-[#18245C]/10" />
-              <span className="text-[10px] font-black text-[#2E7D68] uppercase tracking-[0.3em]">Gatilho: Lactose</span>
+              <span className="text-[10px] font-black text-[#2E7D68] uppercase tracking-[0.3em]">Grupo de observações C</span>
               <div className="h-px flex-1 bg-[#18245C]/10" />
             </div>
             <div className="grid grid-cols-1 gap-3">
@@ -299,9 +299,9 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
             <div className="w-12 h-12 bg-[#A268D7]/20 rounded-full flex items-center justify-center mx-auto mb-2">
               <Compass size={24} className="text-[#A268D7]" />
             </div>
-            <span className="text-[10px] font-black text-[#A268D7] uppercase tracking-widest">A Senda da Autocura</span>
+            <span className="text-[10px] font-black text-[#A268D7] uppercase tracking-widest">A Senda do Autoconhecimento</span>
             <p className="text-[11px] text-[#4A506B] leading-relaxed italic">
-              Este exame avalia como sua centelha divina flui através da sua alma. A autocura é o ato de remover o que impede essa luz de brilhar.
+              Estas perguntas ajudam a refletir sobre emoções e experiências pessoais. Não são avaliação clínica.
             </p>
           </div>
 
@@ -346,16 +346,16 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
       <div className="p-4 pt-safe pb-safe-nav flex flex-col items-center justify-start w-full animate-in zoom-in">
         <div className="text-center space-y-8 w-full max-w-md px-2">
           <div className="space-y-2">
-            <h2 className="text-3xl font-serif text-[#18245C] font-bold italic">O Veredicto do Templo</h2>
-            <p className="text-[10px] font-black text-[#E9B44C] uppercase tracking-[0.3em]">Seu Estado Vibracional e Alinhamento</p>
+            <h2 className="text-3xl font-serif text-[#18245C] font-bold italic">Seu Registro</h2>
+            <p className="text-[10px] font-black text-[#E9B44C] uppercase tracking-[0.3em]">Resumo das respostas do questionário</p>
           </div>
 
           <div className="relative w-44 h-44 mx-auto">
             <div className="relative w-full h-full glass-mystic rounded-full flex items-center justify-center border border-[#E9B44C]/30 shadow-lg">
                <div className="flex flex-col items-center">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-[#E9B44C] mb-1">Vitalidade Geral</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-[#E9B44C] mb-1">Itens não marcados</span>
                   <h3 className="text-6xl font-serif font-bold text-[#18245C]">
-                    {calculateVitalityScore()}%
+                    {calculateUnmarkedPercentage()}%
                   </h3>
                </div>
             </div>
@@ -369,15 +369,15 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
               </span>
               <div className="space-y-1.5 pt-1">
                 <div className="flex justify-between text-xs">
-                  <span className="text-[#4A506B]">Glúten:</span>
+                  <span className="text-[#4A506B]">Grupo A:</span>
                   <span className={`font-bold ${selectedGluten.length > 0 ? 'text-rose-600' : 'text-[#2E7D68]'}`}>{selectedGluten.length} sinais</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-[#4A506B]">Caseína:</span>
+                  <span className="text-[#4A506B]">Grupo B:</span>
                   <span className={`font-bold ${selectedCasein.length > 0 ? 'text-rose-600' : 'text-[#2E7D68]'}`}>{selectedCasein.length} sinais</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-[#4A506B]">Lactose:</span>
+                  <span className="text-[#4A506B]">Grupo C:</span>
                   <span className={`font-bold ${selectedLactose.length > 0 ? 'text-rose-600' : 'text-[#2E7D68]'}`}>{selectedLactose.length} sinais</span>
                 </div>
               </div>
@@ -390,8 +390,8 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
                 </span>
                 <p className="text-xs text-[#4A506B] italic leading-relaxed pt-1">
                   {selectedSpiritual.length === 0 
-                    ? 'Alinhamento cristalino e harmonia plena alcançada com o Todo.' 
-                    : `Identificadas ${selectedSpiritual.length} resistência(s) que impedem o fluxo da sua luz original.`}
+                    ? 'Você não marcou itens de reflexão nesta etapa.'
+                    : `Você marcou ${selectedSpiritual.length} item(ns) de reflexão nesta etapa.`}
                 </p>
               </div>
             </div>
@@ -418,7 +418,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
           </button>
 
           <p className="text-[9px] text-[#4A506B] text-center leading-relaxed italic px-2 opacity-80">
-            As práticas aqui são espirituais e de desenvolvimento pessoal. Elas não substituem tratamento médico, nutricional ou psicológico. Se você suspeita de Doença Celíaca, é aconselhável que faça os testes sanguíneos para a desordem antes de iniciar a dieta sem glúten.
+            Este registro não diagnostica condições de saúde. Procure avaliação profissional antes de restringir alimentos ou se houver sintomas persistentes.
           </p>
 
           <NextStepGuide 

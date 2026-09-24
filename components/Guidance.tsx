@@ -100,7 +100,7 @@ const DEFAULT_DAILY_CONTENT: DailyContent = {
       prepTime: "25 min"
     },
     {
-      title: "Sopa de Abóbora com Gengibre Regeneradora",
+      title: "Sopa de Abóbora com Gengibre",
       type: "Jantar",
       ingredients: ["400g de abóbora cabotiá picada", "1 pedaço pequeno de gengibre fresco ralado", "1 cebola picada", "Sal marinho e azeite de oliva"],
       instructions: [
@@ -114,7 +114,7 @@ const DEFAULT_DAILY_CONTENT: DailyContent = {
   ]
 };
 
-const FASTING_WINDOWS = [12, 14, 16, 18, 24];
+const FASTING_WINDOWS = [5, 10, 15, 20];
 
 interface GuidanceProps {
   setView?: (view: AppView) => void;
@@ -158,21 +158,24 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
   const [loadingExtras, setLoadingExtras] = useState(false);
   const [fastingWindow, setFastingWindow] = useState<number>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pausa_sagrada_hours');
-      return saved ? parseInt(saved, 10) : 16;
+      const saved = localStorage.getItem('pausa_sagrada_minutes');
+      const minutes = saved ? parseInt(saved, 10) : 5;
+      return FASTING_WINDOWS.includes(minutes) ? minutes : 5;
     }
-    return 16;
+    return 5;
   });
   const [fastingStartTime, setFastingStartTime] = useState<number | null>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pausa_sagrada_start');
-      return saved ? parseInt(saved, 10) : null;
+      const minutes = Number(localStorage.getItem('pausa_sagrada_minutes'));
+      return saved && FASTING_WINDOWS.includes(minutes) ? parseInt(saved, 10) : null;
     }
     return null;
   });
   const [isFasting, setIsFasting] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      return !!localStorage.getItem('pausa_sagrada_start');
+      return !!localStorage.getItem('pausa_sagrada_start')
+        && FASTING_WINDOWS.includes(Number(localStorage.getItem('pausa_sagrada_minutes')));
     }
     return false;
   });
@@ -185,7 +188,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
       return;
     }
 
-    const targetTime = fastingStartTime + fastingWindow * 3600 * 1000;
+    const targetTime = fastingStartTime + fastingWindow * 60 * 1000;
 
     const updateTimer = () => {
       const now = Date.now();
@@ -198,7 +201,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
         setFastingStartTime(null);
         localStorage.removeItem('pausa_sagrada_start');
 
-        const message = `Sua Pausa Sagrada de ${fastingWindow}h foi concluída! Seu templo físico está regenerado e pronto para a nutrição consciente.`;
+        const message = `Seu lembrete de pausa de ${fastingWindow} minutos terminou.`;
         setFastingFinishedNotification(message);
 
         // Web Notification API
@@ -228,13 +231,15 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
       setIsFasting(false);
       setFastingStartTime(null);
       localStorage.removeItem('pausa_sagrada_start');
+      localStorage.removeItem('pausa_sagrada_minutes');
       localStorage.removeItem('pausa_sagrada_hours');
     } else {
       const now = Date.now();
       setIsFasting(true);
       setFastingStartTime(now);
       localStorage.setItem('pausa_sagrada_start', now.toString());
-      localStorage.setItem('pausa_sagrada_hours', fastingWindow.toString());
+      localStorage.setItem('pausa_sagrada_minutes', fastingWindow.toString());
+      localStorage.removeItem('pausa_sagrada_hours');
 
       if (typeof window !== 'undefined' && 'Notification' in window) {
         if (Notification.permission === 'default') {
@@ -290,14 +295,13 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
           setFermentationRecipe(ferment);
         } else {
           setFermentationRecipe({
-            title: "Kefir de Água do Templo",
-            type: "Fermentação Probiótica",
-            ingredients: ["500ml de água filtrada", "2 colheres de sopa de açúcar mascavo integral", "2 colheres de grãos de kefir de água"],
+            title: "Salada com Chucrute Pronto",
+            type: "Receita com Fermentado",
+            ingredients: ["Chucrute pronto para consumo", "Folhas de sua preferência", "Tomate", "Azeite a gosto"],
             instructions: [
-              "Dissolva o açúcar mascavo na água em um pote de vidro.",
-              "Adicione os grãos de kefir e cubra com um pano limpo preso por elástico.",
-              "Deixe fermentar em local escuro por 24 a 48 horas.",
-              "Coe os grãos e consuma a bebida probiótica refrescante."
+              "Lave as folhas e o tomate.",
+              "Monte a salada e acrescente o chucrute pronto.",
+              "Siga as instruções de conservação da embalagem e sirva com azeite, se desejar."
             ]
           });
         }
@@ -307,11 +311,11 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
           setPurificationTips(tips);
         } else {
           setPurificationTips([
-            "Beba um copo de água morna com limão pela manhã para despertar o sistema digestivo.",
-            "Mastigue sementes de mamão frescas pela manhã para liberação de emulsinas e enzimas purificadoras.",
-            "Mantenha jejum noturno de 12 a 16 horas para permitir a regeneração celular.",
-            "Evite ingerir líquidos frios durante as refeições principais para preservar as enzimas digestivas.",
-            "Consuma chás amargos (como dente-de-leão ou alcachofra) antes das principais refeições."
+            "Faça pausas ao longo do dia e observe como você se sente.",
+            "Beba água conforme sua sede e necessidades individuais.",
+            "Inclua alimentos variados nas refeições, respeitando suas preferências e orientações profissionais.",
+            "Anote dúvidas sobre alimentação ou sintomas para conversar com um profissional de saúde.",
+            "Escolha um momento tranquilo para comer com atenção."
           ]);
         }
       } catch (error) {
@@ -319,22 +323,21 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
         setInsight(DEFAULT_DAILY_INSIGHT);
         setContent(DEFAULT_DAILY_CONTENT);
         setFermentationRecipe({
-          title: "Kefir de Água do Templo",
-          type: "Fermentação Probiótica",
-          ingredients: ["500ml de água filtrada", "2 colheres de sopa de açúcar mascavo integral", "2 colheres de grãos de kefir de água"],
+          title: "Salada com Chucrute Pronto",
+          type: "Receita com Fermentado",
+          ingredients: ["Chucrute pronto para consumo", "Folhas de sua preferência", "Tomate", "Azeite a gosto"],
           instructions: [
-            "Dissolva o açúcar mascavo na água em um pote de vidro.",
-            "Adicione os grãos de kefir e cubra com um pano limpo preso por elástico.",
-            "Deixe fermentar em local escuro por 24 a 48 horas.",
-            "Coe os grãos e consuma a bebida probiótica refrescante."
+            "Lave as folhas e o tomate.",
+            "Monte a salada e acrescente o chucrute pronto.",
+            "Siga as instruções de conservação da embalagem e sirva com azeite, se desejar."
           ]
         });
         setPurificationTips([
-          "Beba um copo de água morna com limão pela manhã para despertar o sistema digestivo.",
-          "Mastigue sementes de mamão frescas pela manhã para liberação de emulsinas e enzimas purificadoras.",
-          "Mantenha jejum noturno de 12 a 16 horas para permitir a regeneração celular.",
-          "Evite ingerir líquidos frios durante as refeições principais para preservar as enzimas digestivas.",
-          "Consuma chás amargos (como dente-de-leão ou alcachofra) antes das principais refeições."
+          "Faça pausas ao longo do dia e observe como você se sente.",
+          "Beba água conforme sua sede e necessidades individuais.",
+          "Inclua alimentos variados nas refeições, respeitando suas preferências e orientações profissionais.",
+          "Anote dúvidas sobre alimentação ou sintomas para conversar com um profissional de saúde.",
+          "Escolha um momento tranquilo para comer com atenção."
         ]);
       } finally {
         setLoading(false);
@@ -669,15 +672,15 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
            <div className="grid grid-cols-3 gap-2 px-2">
               <div className="p-3 glass-mystic rounded-2xl border border-aura-teal/20 text-center space-y-1">
                  <Flame size={16} className="text-aura-teal mx-auto" />
-                 <p className="text-[8px] font-black text-[#18245C] uppercase tracking-tighter">Anti-inflamatório</p>
+                 <p className="text-[8px] font-black text-[#18245C] uppercase tracking-tighter">Variedade</p>
               </div>
               <div className="p-3 glass-mystic rounded-2xl border border-aura-emerald/20 text-center space-y-1">
                  <Activity size={16} className="text-aura-emerald mx-auto" />
-                 <p className="text-[8px] font-black text-[#18245C] uppercase tracking-tighter">Probiótico</p>
+                 <p className="text-[8px] font-black text-[#18245C] uppercase tracking-tighter">Preparo</p>
               </div>
               <div className="p-3 glass-mystic rounded-2xl border border-aura-violet/20 text-center space-y-1">
                  <Zap size={16} className="text-aura-violet mx-auto" />
-                 <p className="text-[8px] font-black text-[#18245C] uppercase tracking-tighter">Energético</p>
+                 <p className="text-[8px] font-black text-[#18245C] uppercase tracking-tighter">Atenção</p>
               </div>
            </div>
            
@@ -701,7 +704,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                               <span className="text-[8px] font-bold text-[#18245C] uppercase">{recipe.prepTime || '15 min'}</span>
                            </div>
                            <span className="flex items-center gap-1 bg-aura-emerald/20 px-2 py-0.5 rounded-md border border-aura-emerald/30 text-[8px] font-black text-aura-emerald uppercase tracking-widest">
-                              <ShieldCheck size={10} /> Testada e Aprovada
+                              <ShieldCheck size={10} /> Sugestão de receita
                            </span>
                          </div>
                          <h4 className="text-2xl font-serif text-[#18245C] leading-snug">{recipe.title}</h4>
@@ -763,7 +766,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
               <div className="space-y-2">
                  <h4 className="text-[10px] font-black text-magic-gold uppercase tracking-widest">Ritmo da Pausa</h4>
                  <p className="text-xs text-ethereal-200 leading-relaxed italic">
-                   "Para uma regeneração profunda, o jejum deve começar **logo após o jantar**. Busque realizar sua última refeição até as **20h**, permitindo que seu corpo silencie antes do descanso."
+                   "Respeite seus horários e suas necessidades individuais de alimentação e descanso. Se tiver dúvidas sobre mudanças na rotina alimentar, converse com um profissional de saúde."
                  </p>
               </div>
            </section>
@@ -777,7 +780,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                     </div>
                     <div>
                        <h3 className="text-2xl font-serif text-white italic">Pausa Sagrada</h3>
-                       <p className="text-[10px] font-black text-aura-violet uppercase tracking-widest">O Vazio que Cura</p>
+                       <p className="text-[10px] font-black text-aura-violet uppercase tracking-widest">Lembrete de pausa</p>
                     </div>
                  </div>
                  <div className={`p-3 rounded-full transition-all ${isFasting ? 'bg-aura-violet text-white animate-pulse' : 'bg-white/5 text-ethereal-500'}`}>
@@ -786,19 +789,19 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
               </div>
 
               <p className="text-xs text-ethereal-400 italic leading-relaxed">
-                Honre o silêncio digestivo para permitir que sua essência se regenere. Escolha seu portal de tempo:
+                Escolha a duração de um lembrete para fazer uma pausa. Este temporizador não orienta jejum nem substitui orientação individual sobre alimentação.
               </p>
 
               <div className="flex flex-wrap gap-3">
-                 {FASTING_WINDOWS.map(hours => (
+                 {FASTING_WINDOWS.map(minutes => (
                     <button
-                       key={hours}
-                       onClick={() => setFastingWindow(hours)}
+                       key={minutes}
+                       onClick={() => setFastingWindow(minutes)}
                        className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${
-                          fastingWindow === hours ? 'bg-aura-violet text-white border-aura-violet shadow-lg' : 'glass-mystic text-ethereal-500 border-white/5'
+                          fastingWindow === minutes ? 'bg-aura-violet text-white border-aura-violet shadow-lg' : 'glass-mystic text-ethereal-500 border-white/5'
                        }`}
                     >
-                       {hours}h
+                       {minutes} min
                     </button>
                  ))}
               </div>
@@ -816,12 +819,12 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                        <div 
                           className="bg-aura-violet h-full transition-all duration-1000"
                           style={{
-                             width: `${Math.min(100, Math.max(0, 100 - (fastingTimeLeft / (fastingWindow * 3600)) * 100))}%`
+                             width: `${Math.min(100, Math.max(0, 100 - (fastingTimeLeft / (fastingWindow * 60)) * 100))}%`
                           }}
                        />
                     </div>
                     <p className="text-[10px] text-ethereal-400 italic">
-                       Ao finalizar a janela de {fastingWindow}h, você receberá uma notificação visual e sonora.
+                       Ao terminar a pausa de {fastingWindow} minutos, você receberá uma notificação.
                     </p>
                  </div>
               )}
@@ -832,7 +835,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                     isFasting ? 'bg-rose-950/50 text-rose-400 border border-rose-900' : 'bg-white text-nature-950 hover:scale-105 active:scale-95'
                  }`}
               >
-                 {isFasting ? <><X size={18} /> Encerrar Protocolo</> : <><Zap size={18} /> Iniciar Janela de {fastingWindow}h</>}
+                 {isFasting ? <><X size={18} /> Encerrar lembrete</> : <><Zap size={18} /> Iniciar lembrete de {fastingWindow} minutos</>}
               </button>
            </section>
 
@@ -843,8 +846,8 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                     <FlaskConical size={20} />
                  </div>
                  <div>
-                    <h3 className="text-2xl font-serif text-white italic">Alquimia em Jejum</h3>
-                    <p className="text-[10px] font-black text-aura-teal uppercase tracking-widest">Purificação do Despertar</p>
+                    <h3 className="text-2xl font-serif text-white italic">Ideias de autocuidado</h3>
+                    <p className="text-[10px] font-black text-aura-teal uppercase tracking-widest">Pequenas pausas no dia</p>
                  </div>
               </div>
 
@@ -856,16 +859,16 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                           <div className="p-2 bg-aura-teal/10 rounded-xl">
                              <ShieldCheck size={18} />
                           </div>
-                          <h4 className="font-serif text-lg text-white">Ritual do Alho</h4>
+                          <h4 className="font-serif text-lg text-white">Pausa consciente</h4>
                        </div>
-                       <p className="text-[9px] font-black text-aura-teal/80 uppercase tracking-widest">Desparasitação Natural</p>
+                       <p className="text-[9px] font-black text-aura-teal/80 uppercase tracking-widest">Atenção ao presente</p>
                        <p className="text-xs text-ethereal-300 leading-relaxed italic">
-                         "Corte 2 a 3 lâminas finas de alho fresco e tome-as com água pura como se fossem comprimidos. Isso evita o sabor residual e limpa o templo profundamente de parasitas e inflamações."
+                         "Reserve alguns minutos para respirar com conforto e observar como você se sente."
                        </p>
                     </div>
                     <div className="pt-2 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-ethereal-500 uppercase tracking-widest">
-                       <span>Frequência: Diário</span>
-                       <span className="text-aura-teal">Ativo</span>
+                       <span>Quando desejar</span>
+                       <span className="text-aura-teal">Opcional</span>
                     </div>
                  </div>
 
@@ -876,16 +879,16 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                           <div className="p-2 bg-magic-gold/10 rounded-xl">
                              <Flame size={18} />
                           </div>
-                          <h4 className="font-serif text-lg text-white">Fogo Digestivo</h4>
+                          <h4 className="font-serif text-lg text-white">Alimentação com atenção</h4>
                         </div>
-                        <p className="text-[9px] font-black text-magic-gold/80 uppercase tracking-widest">Ativação & Imunidade</p>
+                        <p className="text-[9px] font-black text-magic-gold/80 uppercase tracking-widest">Escolhas individuais</p>
                         <p className="text-xs text-ethereal-300 leading-relaxed italic">
-                          "Suco de 1/2 limão, 1 colher de café de cúrcuma pura, uma pitada de pimenta preta e raspas de gengibre em 50ml de água morna. Acende seu fogo interno (Agni) e desinflama a mucosa."
+                          "Faça suas refeições com calma, respeitando fome, saciedade, preferências e orientações profissionais."
                         </p>
                      </div>
                      <div className="pt-2 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-ethereal-500 uppercase tracking-widest">
-                        <span>Frequência: Manhã</span>
-                        <span className="text-magic-gold">Ativo</span>
+                        <span>Quando desejar</span>
+                        <span className="text-magic-gold">Opcional</span>
                      </div>
                   </div>
 
@@ -896,16 +899,16 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                            <div className="p-2 bg-aura-violet/10 rounded-xl">
                               <Droplets size={18} />
                            </div>
-                           <h4 className="font-serif text-lg text-white">Equilíbrio do Templo</h4>
+                           <h4 className="font-serif text-lg text-white">Registro pessoal</h4>
                         </div>
-                        <p className="text-[9px] font-black text-aura-violet/80 uppercase tracking-widest">pH & Glicemia</p>
+                        <p className="text-[9px] font-black text-aura-violet/80 uppercase tracking-widest">Observação</p>
                         <p className="text-xs text-ethereal-300 leading-relaxed italic">
-                          "1 colher de sopa de vinagre de maçã orgânico diluída em 50ml de água morna antes da primeira refeição. Prepara o estômago com acidez ideal e melhora a sensibilidade insulínica."
+                          "Se perceber sintomas ou desconfortos, anote-os e procure orientação de um profissional de saúde."
                         </p>
                      </div>
                      <div className="pt-2 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-ethereal-500 uppercase tracking-widest">
-                        <span>Frequência: Pré-refeição</span>
-                        <span className="text-aura-violet">Ativo</span>
+                        <span>Quando necessário</span>
+                        <span className="text-aura-violet">Opcional</span>
                      </div>
                   </div>
               </div>
@@ -937,9 +940,9 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                    <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-aura-emerald/5 rounded-full blur-[60px]" />
                    <div className="space-y-6">
                       <div className="flex items-center gap-2">
-                         <span className="text-[10px] font-black text-aura-emerald uppercase tracking-widest">Fermentação Probiótica</span>
+                         <span className="text-[10px] font-black text-aura-emerald uppercase tracking-widest">Receita com fermentado pronto</span>
                          <span className="flex items-center gap-1 bg-aura-emerald/20 px-2 py-0.5 rounded-md border border-aura-emerald/30 text-[8px] font-black text-aura-emerald uppercase tracking-widest">
-                            <ShieldCheck size={10} /> Testada e Aprovada
+                            <ShieldCheck size={10} /> Sugestão de receita
                          </span>
                       </div>
                       <h4 className="text-2xl font-serif text-white italic">{fermentationRecipe.title}</h4>
@@ -973,14 +976,14 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                     <ShieldCheck size={24} />
                  </div>
                  <div>
-                    <h3 className="text-2xl font-serif text-white italic">Purificação do Templo</h3>
-                    <p className="text-[10px] font-black text-aura-teal uppercase tracking-widest">Protocolo de Limpeza • Fazer por 1 semana sempre que necessário</p>
+                    <h3 className="text-2xl font-serif text-white italic">Autocuidado no dia a dia</h3>
+                    <p className="text-[10px] font-black text-aura-teal uppercase tracking-widest">Sugestões gerais</p>
                  </div>
               </div>
 
               <div className="p-4 bg-aura-teal/10 border border-aura-teal/20 rounded-2xl text-center">
                  <p className="text-xs text-aura-teal font-medium italic">
-                    Realize o protocolo por uma semana sempre que necessário para desparasitação e renovação do templo.
+                    Estas sugestões são gerais. Para sintomas, suspeita de parasitose ou mudanças na alimentação, procure avaliação profissional.
                  </p>
               </div>
               
@@ -1006,7 +1009,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                     );
                  })}
               </ul>
-              <p className="text-[9px] text-ethereal-600 uppercase tracking-[0.3em] text-center mt-4 font-black">Safe & Natural • Fazer por 1 semana sempre que necessário • Sem Contraindicações</p>
+              <p className="text-[9px] text-ethereal-600 uppercase tracking-[0.3em] text-center mt-4 font-black">Adapte às suas necessidades individuais</p>
            </section>
 
            {/* DIAGNÓSTICO DE CELÍACOS - NOVO */}
@@ -1017,15 +1020,15 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                     <ShieldAlert size={24} />
                  </div>
                  <div>
-                    <h3 className="text-2xl font-serif text-white italic">Diagnóstico de Celíacos</h3>
-                    <p className="text-[10px] font-black text-aura-rose uppercase tracking-widest">Protocolo de Investigação</p>
+                    <h3 className="text-2xl font-serif text-white italic">Sobre doença celíaca</h3>
+                    <p className="text-[10px] font-black text-aura-rose uppercase tracking-widest">Informações para conversar com profissionais</p>
                  </div>
               </div>
 
               <div className="space-y-6 relative z-10">
                  <div className="p-6 bg-rose-950/20 rounded-[2rem] border border-rose-900/30 space-y-3">
                     <p className="text-xs text-ethereal-200 leading-relaxed italic">
-                      "A doença celíaca é uma condição autoimune onde a ingestão de glúten causa danos ao intestino delgado. O diagnóstico preciso é fundamental para a restauração da saúde."
+                      "A doença celíaca requer avaliação clínica. Este aplicativo não identifica a condição nem recomenda mudanças na dieta por conta própria."
                     </p>
                  </div>
 
@@ -1035,7 +1038,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                           <Stethoscope size={14} /> Exames de Sangue
                        </h5>
                        <p className="text-[11px] text-ethereal-300 italic leading-relaxed">
-                          Pesquisa de anticorpos específicos (Anti-transglutaminase IgA, Anti-endomísio IgA). É essencial estar consumindo glúten durante os testes.
+                          Um profissional de saúde pode avaliar se exames de sangue são indicados e orientar a preparação adequada.
                        </p>
                     </div>
                     <div className="p-5 glass-mystic rounded-2xl border border-white/5 space-y-2">
@@ -1059,7 +1062,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                  <div className="p-6 bg-white/5 rounded-[2rem] border border-white/5 flex items-start gap-4">
                     <AlertCircle className="text-aura-gold shrink-0 mt-1" size={18} />
                     <p className="text-[10px] text-ethereal-400 italic leading-relaxed">
-                       Importante: Nunca retire o glúten da dieta antes de realizar os exames, pois isso pode gerar resultados falso-negativos. Consulte sempre um gastroenterologista.
+                       Se suspeitar de doença celíaca, procure um profissional de saúde antes de retirar o glúten. A avaliação e os exames devem ser orientados individualmente.
                     </p>
                  </div>
               </div>
@@ -1093,7 +1096,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
             setActiveSubTab('saude-intestinal');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          message="Siga para a aba de Saúde Intestinal para vivenciar a Pausa Sagrada e a purificação probiótica do templo."
+          message="Siga para a aba de alimentação e pausas para conhecer sugestões gerais de autocuidado."
         />
       )}
 
@@ -1102,10 +1105,10 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
           currentStepName="Portal do Guia - Saúde Intestinal"
           stepNumber={4}
           totalSteps={7}
-          nextStepName="Portal de Cura"
-          nextStepLabel="Praticar Exercícios na Cura"
+          nextStepName="Portal de Autocuidado"
+          nextStepLabel="Praticar Meditação e Relaxamento"
           onNavigate={() => setView(AppView.WELLNESS)}
-          message="Com os saberes e alquimias do Guia em mãos, pratique os rituais de tigela tibetana e mantras no Portal de Cura."
+          message="Explore práticas de meditação e relaxamento no Portal de Autocuidado."
         />
       )}
 
@@ -1134,7 +1137,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                           <div className="flex items-center gap-2">
                              <span className="text-[9px] font-black text-aura-gold uppercase tracking-widest">Opção {i+1}</span>
                              <span className="flex items-center gap-1 bg-aura-emerald/20 px-2 py-0.5 rounded-md border border-aura-emerald/30 text-[7px] font-black text-aura-emerald uppercase tracking-widest">
-                                <ShieldCheck size={8} /> Testada
+                                <ShieldCheck size={8} /> Sugestão
                              </span>
                           </div>
                           <h5 className="text-[#18245C] font-serif text-lg group-hover:text-aura-gold transition-colors italic">{opt.title}</h5>
@@ -1162,7 +1165,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
             </div>
             <div className="space-y-2">
               <h3 className="text-2xl font-serif text-[#18245C] italic">Pausa Sagrada Concluída!</h3>
-              <p className="text-[10px] font-black text-aura-violet uppercase tracking-widest">Portal de Regeneração</p>
+              <p className="text-[10px] font-black text-aura-violet uppercase tracking-widest">Portal de Reflexão</p>
             </div>
             <p className="text-sm text-[#4A506B] italic leading-relaxed">
               {fastingFinishedNotification}
