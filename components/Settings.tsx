@@ -256,6 +256,22 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
             <ChevronRight size={18} className="text-white/20 group-hover:text-white transition-all animate-pulse" />
           </button>
 
+          <a
+            href="mailto:reconexaoessencial.br@gmail.com?subject=Solicita%C3%A7%C3%A3o%20de%20exclus%C3%A3o%20da%20conta%20e%20dados"
+            className="w-full glass-mystic p-5 rounded-3xl border border-white/5 flex items-center justify-between group hover:border-rose-500/30 transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-500">
+                <Mail size={20} />
+              </div>
+              <div className="text-left">
+                <h4 className="text-sm font-bold text-white">Solicitar exclusão da conta e dados</h4>
+                <p className="text-[9px] text-white/40 uppercase tracking-widest">Envie o pedido à equipe pelo seu e-mail</p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="text-white/20 group-hover:text-white transition-all" />
+          </a>
+
           <button 
             onClick={handleReset}
             className="w-full glass-mystic p-5 rounded-3xl border border-white/5 flex items-center justify-between group hover:border-rose-500/30 transition-all"

@@ -35,6 +35,13 @@ Se houver ficha em inglês, mantenha o título **Reconexão Essencial** e traduz
 
 1. Use `android/` da raiz para gerar a release; `frontend/android/` contém artefatos locais e não é a fonte do CI.
 2. Gere um AAB assinado com a chave de upload cadastrada e `versionCode` maior que o último enviado. O workflow recebe esse número em `version_code`.
-3. Instale a nova versão em uma faixa de testes e confira nome e ícone no launcher, inclusive o ícone redondo/adaptativo.
-4. Atualize declaração, título, ícone e descrições no Play Console. Confirme a política de privacidade pública e no app, conforme [política de saúde](https://support.google.com/googleplay/android-developer/answer/16679511?hl=pt-BR).
+3. Instale a nova versão em uma faixa de testes e confira nome e ícone no launcher, inclusive o ícone redondo/adaptativo. Confira também o link de solicitação de exclusão de conta em **Configurações**.
+4. Atualize declaração, título, ícone e descrições no Play Console. Confirme a política de privacidade pública e no app, conforme [política de saúde](https://support.google.com/googleplay/android-developer/answer/16679511?hl=pt-BR). A página pública atualmente vinculada no app é a [política no Notion](https://www.notion.so/POL-TICA-DE-PRIVACIDADE-APP-RECONEX-O-ESSENCIAL-31eb9d89692a801e947efdd664aaa46d). Revise nela a descrição de dados coletados, uso, compartilhamento, retenção e exclusão, e informe no formulário de segurança dos dados um [recurso web para solicitar exclusão da conta](https://support.google.com/googleplay/android-developer/answer/13327111?hl=pt-BR). A solicitação por e-mail precisa ser atendida pela equipe, inclusive quanto aos dados associados à conta.
 5. Envie as mudanças para revisão em **Visão geral da publicação**.
+
+### Artefato preparado em 24/09/2026
+
+- Branch: `codex/android-play-policy-20260924`.
+- Workflow `android-release.yml`: AAB assinado com `versionCode` 6 e pacote `com.reconexaoessencial`. O certificado de assinatura coincide com o do AAB anterior gerado pelo CI, de `versionCode` 5.
+- Antes de carregar o AAB, compare o número 6 com o maior `versionCode` já enviado ao Play Console. O histórico de uploads no Play Console não pôde ser verificado pelo repositório.
+- O manifesto e os recursos do AAB registram **Reconexão Essencial**; os ícones nativos foram comparados com os arquivos fonte. A instalação e inspeção visual no launcher ainda exigem uma faixa de testes e um dispositivo Android.
