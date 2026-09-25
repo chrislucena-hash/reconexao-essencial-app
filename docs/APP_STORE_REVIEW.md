@@ -44,3 +44,10 @@ Referências: [Privacidade do App](https://developer.apple.com/help/app-store-co
 2. Resolva os itens de privacidade, exclusão e comunidade acima; confirme que a ficha, a política e o app descrevem a mesma versão. Confirme o número de build no App Store Connect.
 3. Quando estiver pronto, execute o workflow com `build_only=false` e o número de build definitivo, habilite testes internos/externos conforme necessário e registre feedback. O TestFlight é recomendado para achar falhas, mas não há uma etapa obrigatória de testes fechados equivalente à exigência de algumas contas no Google Play.
 4. Selecione o build na versão do App Store Connect e use **Add for Review → Submit for Review**. [Instruções oficiais](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-app).
+
+### Candidato técnico gerado em 25/09/2026
+
+- A [execução 36171461495 do CI](https://github.com/chrislucena-hash/reconexao-essencial-app/actions/runs/36171461495) gerou o IPA assinado a partir do commit `844dc6a` com `build_only=true`. As etapas de upload ao App Store Connect foram ignoradas.
+- Artefato: `reconexao-essencial-ios-1.0.7-7/App.ipa` no CI; cópia local em `/tmp/reconexao-ios-artifact-20260925/reconexao-essencial-ios-1.0.7-7/App.ipa`. SHA-256: `acfbff1c6b1e05cc55c6c342a68ac2326b8a02697680ad74c59f54f13ed067a8`.
+- A inspeção do IPA confirmou `com.reconexaoessencial`, **Reconexão Essencial**, versão `1.0.7`, build `7`, idioma `pt-BR`, ícones compilados, perfil de provisionamento, assinatura e arquivos web. Não foi feita instalação em iPhone/iPad nem comparação com o ícone publicado no App Store Connect.
+- `1.0.7`/`7` é um candidato técnico. Confira se o par versão/build está disponível no App Store Connect antes de fazer upload. Os problemas de privacidade e comunidade acima ainda impedem tratar este candidato como pronto para revisão.
