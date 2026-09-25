@@ -53,6 +53,8 @@ Se houver ficha em inglês, mantenha o título **Reconexão Essencial** e traduz
 
 Antes do passo 5, valide a política e **Segurança dos dados** contra o funcionamento real: o app usa Firebase Authentication/Firestore, sincroniza perfil e diário com o backend e permite publicações, comentários e foto de perfil na comunidade. A política pública atual é breve e não explica claramente provedores, retenção e o procedimento de exclusão desses registros. A opção de Configurações apenas abre um pedido por e-mail; a equipe ainda precisa executar e confirmar a exclusão dos dados em todos os serviços aplicáveis. Uma URL pública que abre normalmente não basta para confirmar essas declarações.
 
+Em 25/09/2026, a página pública ainda chamava o questionário de **“testes de sensibilidade”**. O app revisado o apresenta como registro de percepções e não identifica sensibilidades. Atualize essa expressão na política publicada e confira que o texto sobre exclusão descreva com precisão o pedido por e-mail e o procedimento efetivamente executado pela equipe.
+
 ### Artefato anterior preparado em 24/09/2026
 
 - Branch: `codex/android-play-policy-20260924`.
