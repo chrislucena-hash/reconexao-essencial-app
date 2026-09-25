@@ -61,3 +61,9 @@ Antes do passo 5, valide a política e **Segurança dos dados** contra o funcion
 - O manifesto e os recursos do AAB registram **Reconexão Essencial**; os ícones nativos foram comparados com os arquivos fonte. A instalação e inspeção visual no launcher ainda exigem uma faixa de testes e um dispositivo Android.
 - A captura `LAUNCHER_ICON-6296.png` mencionada pelo Google não estava no texto encaminhado; sem ela ou acesso à ficha atual do Play Console, a identidade visual publicada não pode ser comparada ao ícone instalado.
 - O AAB de `versionCode` 6 não contém os ajustes de texto de 25/09/2026. Use um novo AAB gerado a partir da revisão mais recente, com código superior ao maior já enviado ao Play Console.
+
+### Novo candidato em 25/09/2026
+
+- A [execução 36137312685 do CI](https://github.com/chrislucena-hash/reconexao-essencial-app/actions/runs/36137312685) gerou um AAB assinado com `versionCode` 7 a partir do commit `754cdac`.
+- O AAB está em `android/app/build/outputs/bundle/release/reconexao-essencial-v7.aab` neste workspace; SHA-256: `09047ce877a93cbe04aa5687c68cf601c0f9de7a6a34a2f627c2769409ccf98b`.
+- O código 7 também é provisório até ser comparado ao maior `versionCode` já enviado ao Play Console. O pacote e o nome estão corretos, a assinatura é a mesma do AAB anterior e os 15 ícones do pacote coincidem com os arquivos fonte.
