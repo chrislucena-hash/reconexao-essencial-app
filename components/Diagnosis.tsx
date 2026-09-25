@@ -68,8 +68,8 @@ const CASEIN_SIGNALS: SpiritualInventoryItem[] = [
 
 const LACTOSE_SIGNALS: SpiritualInventoryItem[] = [
   // Digestivo (Lactose)
-  { id: 'l1', name: 'Inchaço abdominal imediato após consumo de laticínios', category: 'mental', weight: 3 },
-  { id: 'l2', name: 'Diarreia ou fezes moles logo após ingerir leite/queijo', category: 'mental', weight: 3 },
+  { id: 'l1', name: 'Inchaço abdominal percebido após refeições', category: 'mental', weight: 3 },
+  { id: 'l2', name: 'Episódios de diarreia ou fezes moles', category: 'mental', weight: 3 },
   { id: 'l3', name: 'Cólicas abdominais fortes e ruídos intestinais (borborigmos)', category: 'mental', weight: 2 },
   { id: 'l4', name: 'Gases excessivos e desconforto gástrico súbito', category: 'mental', weight: 2 },
 ];
@@ -279,7 +279,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
             onClick={() => changeStep('spiritual')}
             className="w-full bg-[#18245C] text-white py-6 rounded-[2.5rem] font-bold shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
           >
-            Finalizar Teste do Corpo e Ir para Teste da Alma <ArrowRight size={18} />
+            Concluir Registro do Corpo e Ir para Reflexão <ArrowRight size={18} />
           </button>
         </div>
       </div>
@@ -422,13 +422,13 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
           </p>
 
           <NextStepGuide 
-            currentStepName="Teste do Templo e da Alma"
+            currentStepName="Questionário de Percepções"
             stepNumber={1}
             totalSteps={7}
             nextStepName="Portal da Senda"
             nextStepLabel="Avançar para a Senda"
             onNavigate={handleComplete}
-            message="Seu teste de vitalidade foi concluído. Avance agora para o Portal da Senda dos 21 Dias de Reconexão."
+            message="Seu registro de percepções foi concluído. Avance agora para o Portal da Senda dos 21 Dias de Reconexão."
           />
         </div>
       </div>

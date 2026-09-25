@@ -145,12 +145,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
           </div>
           <div className="space-y-1">
             <p className="text-[9px] font-black text-[#D87CB5] uppercase tracking-widest flex items-center gap-1.5">
-              <span>Autoexame Sagrado</span>
+              <span>Registro Pessoal</span>
               <span className="w-1.5 h-1.5 rounded-full bg-[#D87CB5]" />
             </p>
-            <h4 className="text-[#18245C] font-serif text-lg italic leading-tight">Teste do Corpo e da Alma</h4>
+            <h4 className="text-[#18245C] font-serif text-lg italic leading-tight">Questionário de Percepções</h4>
             <p className="text-[11px] text-[#4A506B] italic leading-relaxed">
-              Altamente recomendável realizar este teste <strong className="text-[#18245C]">a cada 21 dias</strong> para medir com precisão a evolução da sua vitalidade e expansão de consciência.
+              Registre o que percebe em seu corpo e suas emoções. As respostas não medem vitalidade nem identificam causas de sintomas.
             </p>
           </div>
         </div>

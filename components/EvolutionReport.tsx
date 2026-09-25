@@ -157,7 +157,7 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
               <Sparkles size={16} className="text-[#E9B44C] mx-auto animate-pulse" />
               <p className="text-sm font-serif text-[#18245C] italic font-bold">Seu ponto de partida está traçado!</p>
               <p className="text-xs text-[#4A506B] leading-relaxed max-w-sm mx-auto">
-                As métricas abaixo e o gráfico de Fluxo Vibracional foram estimados com base no seu <strong className="text-[#18245C]">Teste do Corpo e da Alma</strong>. Registre seu dia no <strong className="text-[#18245C] font-semibold">Diário</strong> para acompanhar as oscilações diárias de sua energia e presença!
+                As notas de energia e presença vêm do que você informou no Diário. O questionário não estima essas notas.
               </p>
             </div>
           )}
@@ -465,13 +465,13 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
       <section className="space-y-6">
         <div className="flex items-center gap-3 px-4">
           <Sparkles size={20} className="text-[#E9B44C]" />
-          <h3 className="text-2xl font-serif text-[#18245C] italic font-bold">Histórico de Alinhamento</h3>
+          <h3 className="text-2xl font-serif text-[#18245C] italic font-bold">Histórico de Respostas</h3>
         </div>
 
         {(!userProfile.diagnosisHistory || userProfile.diagnosisHistory.length === 0) ? (
           <div className="glass-mystic p-8 rounded-[3rem] border border-[#18245C]/10 space-y-4 text-center">
             <p className="text-xs text-[#4A506B] italic leading-relaxed">
-              Nenhum ciclo de teste foi gravado ainda. Realize o <strong className="text-[#18245C]">Teste do Corpo e da Alma</strong> na página inicial para registrar seu ponto de partida e acompanhar sua evolução.
+              Nenhuma resposta foi registrada ainda. Abra o <strong className="text-[#18245C]">Questionário de Percepções</strong> na página inicial para registrar o que você percebeu.
             </p>
           </div>
         ) : (
@@ -525,8 +525,8 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                     </p>
                     <p className="text-[10px] text-[#4A506B] italic leading-snug">
                       {test.spiritualCount === 0 
-                        ? 'Alinhamento cristalino alcançado.' 
-                        : `Identificadas ${test.spiritualCount} áreas de resistência/sombra.`}
+                        ? 'Nenhum item de reflexão marcado.'
+                        : `${test.spiritualCount} item(ns) de reflexão marcado(s).`}
                     </p>
                   </div>
                 </div>
