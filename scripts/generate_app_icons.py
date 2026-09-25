@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the existing SVG identity for Android, the web and Google Play.
+"""Render the existing SVG identity for Android, iOS, the web and Google Play.
 
 Run with Python 3, Pillow and Google Chrome/Chromium installed:
     python3 scripts/generate_app_icons.py
@@ -113,6 +113,7 @@ def main() -> None:
         save(full, ROOT / f"public/icon-{size}.png", size)
     # Google Play requires a full square icon; transparency is removed here.
     save(full.convert("RGB"), ROOT / "assets/play-store/icon-512.png", 512)
+    save(full.convert("RGB"), ROOT / "ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png", 1024)
     for density, factor in DENSITIES.items():
         directory = RES / f"mipmap-{density}"
         save(full, directory / "ic_launcher.png", int(48 * factor))
@@ -134,7 +135,7 @@ def main() -> None:
         '    android:src="@mipmap/ic_launcher_foreground" android:gravity="center" />\n',
         encoding="utf-8",
     )
-    print("Generated 15 Android launcher PNGs, web icons, and assets/play-store/icon-512.png.")
+    print("Generated 15 Android launcher PNGs, the iOS icon, web icons, and the Google Play icon.")
 
 
 if __name__ == "__main__":

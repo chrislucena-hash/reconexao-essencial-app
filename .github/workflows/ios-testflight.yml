@@ -6,16 +6,16 @@ on:
       version_name:
         description: App Store version (CFBundleShortVersionString)
         required: true
-        default: '1.0.2'
         type: string
       build_number:
         description: App Store build number (CFBundleVersion)
         required: true
-        default: '6'
         type: string
-  push:
-    tags:
-      - 'ios-release-*'
+      build_only:
+        description: Generate signed IPA without uploading to TestFlight
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -26,13 +26,13 @@ concurrency:
 
 jobs:
   build-ios:
-    name: Build iOS and upload to TestFlight
+    name: Build iOS IPA
     runs-on: macos-26
 
     env:
       BUNDLE_ID: com.reconexaoessencial
-      RELEASE_VERSION: ${{ inputs.version_name || '1.0.2' }}
-      BUILD_NUMBER: ${{ inputs.build_number || '6' }}
+      RELEASE_VERSION: ${{ inputs.version_name }}
+      BUILD_NUMBER: ${{ inputs.build_number }}
       VITE_API_BASE_URL: https://api.reconexaoessencial.com.br/api/v1
       APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM }}
       CERTIFICATE_PASSPHRASE: ${{ secrets.CERTIFICATE_PASSPHRASE }}
@@ -144,10 +144,12 @@ jobs:
           ARCHIVE_BUNDLE_ID=$(plutil -extract CFBundleIdentifier raw -o - "$APP_INFO")
           ARCHIVE_VERSION=$(plutil -extract CFBundleShortVersionString raw -o - "$APP_INFO")
           ARCHIVE_BUILD=$(plutil -extract CFBundleVersion raw -o - "$APP_INFO")
+          ARCHIVE_DISPLAY_NAME=$(plutil -extract CFBundleDisplayName raw -o - "$APP_INFO")
 
           test "$ARCHIVE_BUNDLE_ID" = "$BUNDLE_ID"
           test "$ARCHIVE_VERSION" = "$RELEASE_VERSION"
           test "$ARCHIVE_BUILD" = "$BUILD_NUMBER"
+          test "$ARCHIVE_DISPLAY_NAME" = "Reconexão Essencial"
 
       - name: Export IPA
         shell: bash
@@ -184,6 +186,7 @@ jobs:
             -exportPath "$PWD/build"
 
       - name: Decode App Store Connect API key
+        if: ${{ !inputs.build_only }}
         id: decode_key
         shell: bash
         env:
@@ -204,6 +207,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload IPA to App Store Connect
+        if: ${{ !inputs.build_only }}
         uses: apple-actions/upload-testflight-build@v5.3.0
         with:
           app-path: ${{ github.workspace }}/build/App.ipa
