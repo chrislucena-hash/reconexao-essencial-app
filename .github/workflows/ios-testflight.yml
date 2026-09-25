@@ -145,11 +145,13 @@ jobs:
           ARCHIVE_VERSION=$(plutil -extract CFBundleShortVersionString raw -o - "$APP_INFO")
           ARCHIVE_BUILD=$(plutil -extract CFBundleVersion raw -o - "$APP_INFO")
           ARCHIVE_DISPLAY_NAME=$(plutil -extract CFBundleDisplayName raw -o - "$APP_INFO")
+          ARCHIVE_LANGUAGE=$(plutil -extract CFBundleDevelopmentRegion raw -o - "$APP_INFO")
 
           test "$ARCHIVE_BUNDLE_ID" = "$BUNDLE_ID"
           test "$ARCHIVE_VERSION" = "$RELEASE_VERSION"
           test "$ARCHIVE_BUILD" = "$BUILD_NUMBER"
           test "$ARCHIVE_DISPLAY_NAME" = "Reconexão Essencial"
+          test "$ARCHIVE_LANGUAGE" = "pt-BR"
 
       - name: Export IPA
         shell: bash

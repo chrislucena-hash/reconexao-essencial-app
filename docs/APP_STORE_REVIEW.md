@@ -6,7 +6,7 @@ Em 25/09/2026, a [ficha pública brasileira](https://apps.apple.com/br/app/recon
 
 - Nome instalado no novo pacote: **Reconexão Essencial** (`CFBundleDisplayName`). Defina o mesmo nome na ficha principal e em todas as localizações do App Store Connect. Confira também o nome apresentado no resultado de busca.
 - O novo ícone iOS é gerado do mesmo `public/icon.svg` usado para a marca Android e para `assets/play-store/icon-512.png`. Substitua capturas de tela antigas, se mostrarem ícone, nome ou funções desatualizados. Compare o ícone publicado com o instalado no iPhone antes de submeter.
-- A ficha pública já está na versão **1.0.6**. Escolha a próxima `version_name` e um `build_number` ainda não usado para essa versão, conferindo o histórico no App Store Connect. Os antigos valores padrão 1.0.2/6 foram removidos do workflow.
+- A ficha pública já está na versão **1.0.6**. Escolha a próxima `version_name` e um `build_number` ainda não usado para essa versão, conferindo o histórico no App Store Connect. Os antigos valores padrão 1.0.2/6 foram removidos do workflow. O binário novo declara **Português (Brasil)** como idioma da interface; confira as localizações da ficha separadamente.
 - Execute o workflow **iOS TestFlight** manualmente com `build_only=true` para gerar o IPA assinado como artefato sem carregá-lo na Apple. Depois de validar, `build_only=false` carrega o IPA no App Store Connect/TestFlight. O upload não publica na App Store; a submissão para revisão é separada.
 
 ## Ficha e alegações de saúde
