@@ -63,20 +63,58 @@ jobs:
         run: |
           npm run lint
           npm run build
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html = Path('dist/index.html').read_text(encoding='utf-8')
+          javascript = b''.join(path.read_bytes() for path in Path('dist/assets').glob('*.js'))
+          assert 'background-color: #F7F2EC;' in html, 'Expected light frontend background'
+          assert 'Questionário de Percepções'.encode() in javascript, 'Expected current frontend copy'
+          assert 'Teste do Corpo e da Alma'.encode() not in javascript, 'Outdated frontend copy found'
+          PY
           npx cap sync android
 
-      - name: Build signed Android App Bundle
+      - name: Build signed Android App Bundle and APK
         working-directory: android
-        run: ./gradlew bundleRelease --no-daemon
+        run: ./gradlew bundleRelease assembleRelease --no-daemon
 
       - name: Verify AAB signature
         working-directory: android
         run: jarsigner -verify -verbose -certs app/build/outputs/bundle/release/app-release.aab
 
+      - name: Verify signed APK and bundled light frontend
+        working-directory: android
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -name apksigner | sort -V | tail -n 1)
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          python3 - <<'PY'
+          from zipfile import ZipFile
+
+          with ZipFile('app/build/outputs/apk/release/app-release.apk') as apk:
+              html = apk.read('assets/public/index.html').decode('utf-8')
+              javascript = b''.join(apk.read(name) for name in apk.namelist()
+                                    if name.startswith('assets/public/assets/') and name.endswith('.js'))
+          assert 'background-color: #F7F2EC;' in html, 'APK does not contain the light frontend'
+          assert 'Questionário de Percepções'.encode() in javascript, 'APK has outdated frontend copy'
+          assert 'Teste do Corpo e da Alma'.encode() not in javascript, 'APK has outdated frontend copy'
+          PY
+
       - name: Upload signed AAB
         uses: actions/upload-artifact@v4
         with:
-          name: reconexao-essencial-release-aab
+          name: reconexao-essencial-v${{ inputs.version_code }}-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: reconexao-essencial-v${{ inputs.version_code }}-claro-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
