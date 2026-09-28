@@ -17,6 +17,20 @@ O servidor Node usado no ambiente web é compilado separadamente em
 
 O bundle será gerado em `android/app/build/outputs/bundle/release/`.
 
+O workflow **Android Release** também gera um APK de release assinado em
+`android/app/build/outputs/apk/release/app-release.apk`. Ele valida o fundo claro
+`#F7F2EC` e o texto atualizado dentro do próprio APK. O APK serve para
+instalação manual; para publicar pelo Play Console, use o AAB. Como o APK do CI
+usa a chave de upload, ele pode não instalar por cima de uma cópia distribuída
+pelo Google Play caso a chave de assinatura do app seja diferente. Nesse caso,
+teste pela faixa do Play ou baixe o APK assinado pelo Google no Explorador de
+pacotes de apps, sem apagar os dados da instalação atual.
+
+Em 28/09/2026, a [execução 36429348578](https://github.com/chrislucena-hash/reconexao-essencial-app/actions/runs/36429348578)
+gerou o APK claro com `versionCode` 7 a partir do commit `672878c`. SHA-256 do
+APK: `c4e1c4c4852c599d8823f340ca596594aecb49a45b62417a3b5bd68424df7fdd`.
+O JavaScript do APK é idêntico ao do AAB de código 7 gerado anteriormente.
+
 Antes do reenvio após uma rejeição, siga o [checklist do Play Console](docs/PLAY_CONSOLE_REVIEW.md), incluindo a declaração de recursos de saúde, a ficha da loja e o ícone da versão instalada.
 
 ## Assinatura
