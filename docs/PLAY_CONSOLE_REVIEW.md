@@ -40,6 +40,25 @@ de carregamento da comunidade foram verificados. Esse teste não verifica login
 real, publicação no Firestore, geração de áudio ou instalação Android; repita
 esses fluxos com a conta de revisão e o pacote final no dispositivo.
 
+### Pacote v8 preparado em 29/09/2026
+
+A [execução 36601017680 do GitHub Actions](https://github.com/chrislucena-hash/reconexao-essencial-app/actions/runs/36601017680)
+concluiu com sucesso o build e a validação de assinatura do commit
+`d7da53937508777965121c779b81030c6a119e66` na branch
+`codex/play-rejection-fixes-20260929`, com `versionCode` **8**. O certificado
+do AAB corresponde ao do AAB v7. Os arquivos copiados para este workspace são:
+
+- APK assinado para teste: `android/app/build/outputs/apk/release/reconexao-essencial-v8-claro.apk` — SHA-256 `6d7cb45b252298f65ab83b3d025d1c6047f70cc9008aceb07b2ffde8fc8fe2e0`.
+- AAB assinado para Play Console: `android/app/build/outputs/bundle/release/reconexao-essencial-v8.aab` — SHA-256 `17838a7131a397a964c1431a8b3f8c2aa887cb4f27d07c8ca6990f05e5174287`.
+
+Os dois arquivos contêm CSS local com `#F7F2EC`, a imagem da capa e o texto atual
+do questionário; os vídeos de demonstração removidos não estão no pacote. Não
+foi possível instalar ou testar o AAB em um Android físico conectado aqui. O
+APK usa a chave de upload e pode não instalar como atualização sobre uma cópia
+da Play Store assinada pelo Google; verifique o AAB na faixa de testes. O v8
+**não foi enviado ao Play Console**. Compare o código 8 com o maior código já
+carregado no Console antes de qualquer envio.
+
 **Bloqueio atual:** em 29/09/2026, `https://api.reconexaoessencial.com.br/api/v1/health`
 respondia `301` com `Location` igual à própria URL. O app não consegue usar o
 backend enquanto houver esse loop. Verifique o modo SSL/TLS e os redirecionamentos
