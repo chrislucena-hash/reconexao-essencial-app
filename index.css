@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* CSS Safe Area Insets & Mobile Alignments for iOS and Android */
 :root {
   --sat: env(safe-area-inset-top, 0px);
@@ -130,24 +134,24 @@ button, a, input, select, textarea {
 }
 
 /* Preserve white text for filled buttons and dark badges */
-.brand-gradient-btn,
-.brand-gradient-btn *,
-.bg-\[\#18245C\],
-.bg-\[\#18245C\] *,
-.bg-\[\#5B8DE6\],
-.bg-\[\#5B8DE6\] *,
-.bg-\[\#A268D7\],
-.bg-\[\#A268D7\] *,
-.bg-\[\#2E7D68\],
-.bg-\[\#2E7D68\] *,
-.bg-reconexao-navy,
-.bg-reconexao-navy *,
-.bg-reconexao-blue,
-.bg-reconexao-blue *,
-.bg-reconexao-purple,
-.bg-reconexao-purple *,
-.bg-reconexao-green,
-.bg-reconexao-green * {
+:root .brand-gradient-btn,
+:root .brand-gradient-btn *,
+:root .bg-\[\#18245C\],
+:root .bg-\[\#18245C\] *,
+:root .bg-\[\#5B8DE6\],
+:root .bg-\[\#5B8DE6\] *,
+:root .bg-\[\#A268D7\],
+:root .bg-\[\#A268D7\] *,
+:root .bg-\[\#2E7D68\],
+:root .bg-\[\#2E7D68\] *,
+:root .bg-reconexao-navy,
+:root .bg-reconexao-navy *,
+:root .bg-reconexao-blue,
+:root .bg-reconexao-blue *,
+:root .bg-reconexao-purple,
+:root .bg-reconexao-purple *,
+:root .bg-reconexao-green,
+:root .bg-reconexao-green * {
   color: #FFFFFF !important;
 }
 
@@ -211,4 +215,3 @@ button, a, input, select, textarea {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #F7F2EC; }
 ::-webkit-scrollbar-thumb { background: rgba(24, 36, 92, 0.15); border-radius: 9999px; }
-

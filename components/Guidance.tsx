@@ -714,7 +714,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
              {content.menu.map((recipe, index) => (
                <section key={index} className="relative glass-mystic rounded-[3.5rem] border border-white/5 overflow-hidden group transition-all shadow-2xl">
                   {refreshingIdx === index && (
-                    <div className="absolute inset-0 bg-nature-950/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in">
+                    <div className="absolute inset-0 bg-reconexao-bg/90 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in">
                        <Loader2 className="text-aura-gold animate-spin mb-2" size={32} />
                        <span className="text-[10px] font-black text-white uppercase tracking-widest">Abrindo Portais...</span>
                     </div>
@@ -745,7 +745,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                            <RotateCcw size={18} />
                            <span className="text-[8px] font-black text-aura-gold uppercase tracking-widest">Outras Opções</span>
                          </button>
-                         <button onClick={() => handleShare(recipe)} className="p-3 bg-[#18245C]/5 text-[#18245C] hover:bg-[#18245C]/10 rounded-2xl border border-[#18245C]/10 transition-all"><Share2 size={18} /></button>
+                          <button onClick={() => handleShare(recipe)} title="Compartilhar receita" aria-label="Compartilhar receita" className="p-3 bg-[#18245C]/5 text-[#18245C] hover:bg-[#18245C]/10 rounded-2xl border border-[#18245C]/10 transition-all"><Share2 size={18} /></button>
                        </div>
                      </div>
 

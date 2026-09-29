@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_API_BASE_URL: https://api.reconexaoessencial.com.br/api/v1
+      VITE_CONTENT_API_BASE_URL: ${{ vars.VITE_CONTENT_API_BASE_URL }}
       VERSION_CODE: ${{ inputs.version_code }}
       KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -69,6 +70,8 @@ jobs:
           html = Path('dist/index.html').read_text(encoding='utf-8')
           javascript = b''.join(path.read_bytes() for path in Path('dist/assets').glob('*.js'))
           assert 'background-color: #F7F2EC;' in html, 'Expected light frontend background'
+          assert 'cdn.tailwindcss.com' not in html, 'Release must bundle its styles locally'
+          assert any(Path('dist/assets').glob('*.css')), 'Bundled styles missing'
           assert 'Questionário de Percepções'.encode() in javascript, 'Expected current frontend copy'
           assert 'Teste do Corpo e da Alma'.encode() not in javascript, 'Outdated frontend copy found'
           assert b'w3schools.com/html/movie.mp4' not in javascript, 'Demo video found in release'
@@ -100,8 +103,11 @@ jobs:
               javascript = b''.join(apk.read(name) for name in apk.namelist()
                                     if name.startswith('assets/public/assets/') and name.endswith('.js'))
               assert 'assets/public/meditation-cover.jpg' in apk.namelist(), 'Cover image missing from APK'
+              assert any(name.startswith('assets/public/assets/') and name.endswith('.css')
+                         for name in apk.namelist()), 'Styles missing from APK'
               assert b'w3schools.com/html/movie.mp4' not in javascript, 'Demo video found in APK'
           assert 'background-color: #F7F2EC;' in html, 'APK does not contain the light frontend'
+          assert 'cdn.tailwindcss.com' not in html, 'APK depends on external styles'
           assert 'Questionário de Percepções'.encode() in javascript, 'APK has outdated frontend copy'
           assert 'Teste do Corpo e da Alma'.encode() not in javascript, 'APK has outdated frontend copy'
           PY

@@ -71,13 +71,14 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
       <header className="flex items-center gap-4">
         <button 
           onClick={() => setView(AppView.DASHBOARD)}
-          className="p-3 bg-white/5 rounded-2xl text-white hover:bg-white/10 transition-all"
+          className="p-3 bg-reconexao-navy/5 rounded-2xl text-reconexao-navy hover:bg-reconexao-navy/10 transition-all"
+          aria-label="Voltar ao início"
         >
           <ArrowLeft size={20} />
         </button>
         <div>
           <p className="text-magic-gold text-[10px] font-black uppercase tracking-[0.4em]">Configurações</p>
-          <h2 className="text-3xl font-serif text-white italic">Seu Portal</h2>
+          <h2 className="text-3xl font-serif text-reconexao-navy italic">Seu Portal</h2>
         </div>
       </header>
 

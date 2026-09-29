@@ -4,8 +4,8 @@
   "description": "Diário, meditação e práticas de autoconhecimento e relaxamento.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#020617",
-  "theme_color": "#020617",
+  "background_color": "#F7F2EC",
+  "theme_color": "#F7F2EC",
   "orientation": "portrait",
   "categories": ["lifestyle", "health", "wellness"],
   "icons": [

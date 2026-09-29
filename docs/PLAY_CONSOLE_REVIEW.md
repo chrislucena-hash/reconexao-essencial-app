@@ -22,6 +22,24 @@ retirada. Teste no dispositivo todos os botões visíveis, inclusive publicaçã
 comentários, receita, áudio, diário e configurações; a compilação sozinha não
 comprova esses fluxos.
 
+Outra falha confirmada no teste visual era o contraste: títulos brancos na
+comunidade, jornada e configurações ficavam sobre o fundo claro, a aba selecionada
+do Guia tinha texto escuro sobre botão escuro, e a entrada de comentários tinha
+fundo escuro com texto escuro. Esses elementos foram corrigidos preservando a
+paleta. O botão de imagem junto ao texto da publicação alterava a foto de perfil;
+foi retirado dali, mantendo a alteração na própria foto com identificação clara.
+Os estilos Tailwind são agora compilados e incluídos no pacote; o app não depende
+de `cdn.tailwindcss.com` para montar a interface. O fundo da WebView e o manifesto
+web também usam `#F7F2EC`. A marca do ícone permanece a mesma.
+
+Validação local: TypeScript e build passaram. Um navegador em largura de celular,
+com serviços externos bloqueados e dados de teste locais, exibiu 11 telas com
+fundo claro e sem exceções; abertura/fechamento dos detalhes do diário,
+compartilhamento de publicação, legibilidade da entrada de comentários e erro
+de carregamento da comunidade foram verificados. Esse teste não verifica login
+real, publicação no Firestore, geração de áudio ou instalação Android; repita
+esses fluxos com a conta de revisão e o pacote final no dispositivo.
+
 **Bloqueio atual:** em 29/09/2026, `https://api.reconexaoessencial.com.br/api/v1/health`
 respondia `301` com `Location` igual à própria URL. O app não consegue usar o
 backend enquanto houver esse loop. Verifique o modo SSL/TLS e os redirecionamentos
@@ -40,6 +58,12 @@ para revisão até verificar essa infraestrutura e repetir os fluxos no Android.
 O antigo botão **Reportar** da comunidade só ocultava uma postagem localmente;
 agora ele informa **Ocultar nesta sessão**. Implemente um fluxo real de denúncia
 e moderação antes de lançar a comunidade como recurso público.
+
+O workflow Android lê `VITE_CONTENT_API_BASE_URL` das **Variables** do repositório
+GitHub. Configure essa variável somente depois de verificar as rotas `/api/...`
+e permitir a origem da WebView no CORS do servidor. Não coloque a chave Gemini
+em variável `VITE_*`: ela deve existir somente no servidor. O build web deixou
+de substituir chaves Gemini dentro do JavaScript distribuído.
 
 ## Declaração de apps de saúde
 

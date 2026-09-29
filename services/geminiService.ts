@@ -14,8 +14,11 @@ function fetchContentApi(path: string, options?: RequestInit): Promise<Response>
 }
 
 // Only initialize Gemini API client when running on the server (node/express context)
-const ai = typeof window === "undefined" ? new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY || process.env.API_KEY,
+const serverApiKey = typeof window === "undefined"
+  ? process.env.GEMINI_API_KEY || process.env.API_KEY
+  : undefined;
+const ai = serverApiKey ? new GoogleGenAI({
+  apiKey: serverApiKey,
   httpOptions: {
     headers: {
       "User-Agent": "aistudio-build",
@@ -744,7 +747,9 @@ export async function moderateContent(text: string): Promise<{ safe: boolean; re
         body: JSON.stringify({ text })
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      return await response.json();
+      const result = await response.json();
+      if (typeof result?.safe !== 'boolean') throw new Error('Invalid moderation response');
+      return { safe: result.safe, reason: typeof result.reason === 'string' ? result.reason : undefined };
     } catch (error) {
       console.warn("Client error in moderateContent:", error);
       return { safe: false, reason: "Não foi possível verificar o conteúdo agora. Tente novamente mais tarde." };
@@ -771,7 +776,9 @@ export async function moderateContent(text: string): Promise<{ safe: boolean; re
         }
       }
     }));
-    return JSON.parse(response.text || '{"safe": true}');
+    const result = JSON.parse(response.text || 'null');
+    if (typeof result?.safe !== 'boolean') throw new Error('Invalid moderation response');
+    return { safe: result.safe, reason: typeof result.reason === 'string' ? result.reason : undefined };
   } catch (error) {
     return { safe: false, reason: "A verificação de conteúdo está indisponível." };
   }

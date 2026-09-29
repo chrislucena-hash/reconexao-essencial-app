@@ -76,7 +76,7 @@ const Journey: React.FC<JourneyProps> = ({ progress, onUpdateProgress, onResetJo
           <Compass size={20} className="animate-spin-slow" />
           <p className="text-[10px] font-black uppercase tracking-[0.5em]">Portal da Senda</p>
         </div>
-        <h2 className="text-4xl font-serif text-white tracking-tighter italic leading-none">21 Dias de Reconexão</h2>
+        <h2 className="text-4xl font-serif text-reconexao-navy tracking-tighter italic leading-none">21 Dias de Reconexão</h2>
         
         <div className="flex flex-col items-center gap-2 pt-4">
           <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
@@ -113,7 +113,7 @@ const Journey: React.FC<JourneyProps> = ({ progress, onUpdateProgress, onResetJo
             </p>
           </div>
 
-          <div className="p-6 bg-nature-950/50 rounded-3xl border border-white/5 space-y-3">
+          <div className="p-6 bg-reconexao-navy/5 rounded-3xl border border-reconexao-navy/10 space-y-3">
             <div className="flex items-center gap-2 text-aura-emerald">
               <Zap size={14} />
               <p className="text-[9px] font-black uppercase tracking-widest">Ação Sagrada</p>
@@ -152,7 +152,7 @@ const Journey: React.FC<JourneyProps> = ({ progress, onUpdateProgress, onResetJo
 
       {/* Journey Map */}
       <div className="space-y-6">
-        <h4 className="text-center text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">Mapa da Ascensão</h4>
+        <h4 className="text-center text-[10px] font-black text-ethereal-400 uppercase tracking-[0.4em]">Mapa da Ascensão</h4>
         <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-3">
           {progress.days.map((day) => {
             const isCurrent = day.day === progress.currentDay;

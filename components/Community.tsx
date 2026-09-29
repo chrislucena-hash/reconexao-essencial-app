@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, Image as ImageIcon, X, Send, Sparkles, Edit3, Save, MoreVertical, Camera, Star, ShieldAlert, Loader2, Trash2, MessageSquare } from 'lucide-react';
+import { Heart, MessageCircle, Share2, X, Send, Sparkles, Edit3, Save, MoreVertical, Camera, Star, ShieldAlert, Loader2, Trash2, MessageSquare } from 'lucide-react';
 import { CommunityPost, Comment, AppView } from '../types';
 import { moderateContent } from '../services/geminiService';
 import { useFirebase } from './FirebaseProvider';
@@ -359,7 +359,7 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
   return (
     <div className="p-4 pt-safe pb-safe-nav max-w-2xl mx-auto space-y-10 animate-in fade-in">
       <header className="flex flex-col items-center text-center gap-2">
-        <h2 className="text-4xl font-serif text-white tracking-tighter italic leading-tight">Egrégora</h2>
+        <h2 className="text-4xl font-serif text-reconexao-navy tracking-tighter italic leading-tight">Egrégora</h2>
         <p className="text-ethereal-300 text-xs italic max-w-lg leading-relaxed">
           Junte-se a outras centelhas divinas para aumentar a nossa egrégora. Troquem informações para ajudarem uns aos outros. Somos todos um.
         </p>
@@ -371,7 +371,7 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
         
         {/* User Identity Setup */}
         <div className="flex items-center gap-4 border-b border-white/5 pb-4">
-          <div className="relative group cursor-pointer shrink-0" onClick={() => avatarInputRef.current?.click()}>
+          <button type="button" aria-label="Alterar foto de perfil" className="relative group cursor-pointer shrink-0" onClick={() => avatarInputRef.current?.click()}>
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-magic-gold/40 shadow-lg relative bg-white/5 flex items-center justify-center">
               {isUploadingAvatar ? (
                 <Loader2 size={20} className="animate-spin text-magic-gold" />
@@ -388,7 +388,7 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
             <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
               <Camera size={14} className="text-white" />
             </div>
-          </div>
+          </button>
           
           <div className="flex-1 min-w-0">
             <p className="text-[8px] font-black text-magic-gold uppercase tracking-[0.2em]">Sua Identidade Sagrada</p>
@@ -439,10 +439,7 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
           />
         </div>
 
-        <div className="flex justify-between items-center border-t border-white/5 pt-6">
-          <div className="flex gap-3">
-            <button className="p-4 text-ethereal-400 hover:text-magic-gold bg-white/5 hover:bg-white/10 rounded-2xl transition-all" onClick={() => avatarInputRef.current?.click()} title="Mudar Foto"><ImageIcon size={22} /></button>
-          </div>
+        <div className="flex justify-end items-center border-t border-white/5 pt-6">
           <button 
             onClick={handlePost}
             disabled={!newPost.trim() || isModerating}
@@ -462,9 +459,9 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
           </button>
         </div>
         {moderationError && (
-          <div className="mt-4 p-4 bg-rose-950/30 border border-rose-500/30 rounded-2xl flex items-center gap-3 animate-in slide-in-from-top-2">
-            <ShieldAlert size={18} className="text-rose-400 shrink-0" />
-            <p className="text-[10px] text-rose-200 font-medium italic leading-relaxed">
+          <div className="mt-4 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 animate-in slide-in-from-top-2" role="alert">
+            <ShieldAlert size={18} className="text-rose-700 shrink-0" />
+            <p className="text-[10px] text-rose-700 font-medium italic leading-relaxed">
               Sua emanação não pôde ser enviada: {moderationError}
             </p>
           </div>
@@ -480,7 +477,7 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
           </div>
         )}
         {postsError && (
-          <div className="glass-mystic rounded-3xl border border-rose-500/30 p-8 text-center text-rose-200 text-sm" role="alert">
+          <div className="glass-mystic rounded-3xl border border-rose-200 p-8 text-center text-rose-700 text-sm" role="alert">
             Não foi possível carregar a comunidade. Verifique sua conexão e tente novamente.
           </div>
         )}
@@ -591,7 +588,7 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
       {activeCommentsPost && (
         <div className="fixed inset-0 z-[250] bg-black/80 backdrop-blur-md flex flex-col justify-end sm:justify-center p-0 sm:p-4 animate-in fade-in duration-300">
           <div 
-            className="w-full max-w-xl mx-auto glass-mystic border-t sm:border border-white/10 rounded-t-[2.5rem] sm:rounded-[3rem] shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom duration-300 bg-nature-950/95"
+            className="w-full max-w-xl mx-auto glass-mystic border-t sm:border border-reconexao-navy/10 rounded-t-[2.5rem] sm:rounded-[3rem] shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom duration-300 bg-white"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -664,14 +661,14 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
 
             {/* Moderation Error Alert */}
             {commentModerationError && (
-              <div className="px-6 py-3 bg-rose-950/40 border-t border-rose-500/30 flex items-center gap-2 text-rose-300 text-xs italic shrink-0">
+              <div className="px-6 py-3 bg-rose-50 border-t border-rose-200 flex items-center gap-2 text-rose-700 text-xs italic shrink-0" role="alert">
                 <ShieldAlert size={16} className="shrink-0" />
                 <span>{commentModerationError}</span>
               </div>
             )}
 
             {/* New Comment Input Field */}
-            <div className="p-4 sm:p-6 pb-safe border-t border-white/10 bg-nature-950 shrink-0">
+            <div className="p-4 sm:p-6 pb-safe border-t border-reconexao-navy/10 bg-reconexao-bg shrink-0">
               <div className="flex items-center gap-3">
                 <input 
                   type="text"
@@ -679,7 +676,7 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
                   onChange={(e) => setNewCommentText(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(); }}
                   placeholder="Escreva sua mensagem para a tribo..."
-                  className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-xs text-white placeholder:text-ethereal-600 outline-none focus:border-magic-gold/40 transition-all italic"
+                  className="flex-1 min-w-0 bg-white border border-reconexao-navy/10 rounded-2xl px-5 py-3.5 text-xs text-reconexao-navy placeholder:text-ethereal-600 outline-none focus:border-magic-gold/40 transition-all italic"
                 />
                 <button
                   onClick={handleAddComment}
