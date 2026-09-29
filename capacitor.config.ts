@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Reconexão Essencial',
   webDir: 'dist',
   android: {
-    backgroundColor: '#020617',
+    backgroundColor: '#F7F2EC',
   },
 };
 

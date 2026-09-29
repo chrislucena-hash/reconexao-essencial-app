@@ -1,5 +1,17 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
+import { Capacitor } from "@capacitor/core";
 import { DailyLog, Ritual, DailyInsight, DailyContent, Recipe } from "../types";
+
+const CONTENT_API_BASE_URL = (import.meta.env?.VITE_CONTENT_API_BASE_URL || "").replace(/\/+$/, "");
+
+function fetchContentApi(path: string, options?: RequestInit): Promise<Response> {
+  // The native WebView has no Node server at /api. A remote content server must
+  // be configured explicitly; otherwise callers use their local fallback.
+  if (Capacitor.isNativePlatform() && !CONTENT_API_BASE_URL) {
+    throw new Error("Content API is not configured for the native app");
+  }
+  return fetch(`${CONTENT_API_BASE_URL}${path}`, options);
+}
 
 // Only initialize Gemini API client when running on the server (node/express context)
 const ai = typeof window === "undefined" ? new GoogleGenAI({
@@ -250,12 +262,12 @@ Use linguagem poética, profunda e vibrante.
 export async function generateDailyInsight(): Promise<DailyInsight | null> {
   if (typeof window !== "undefined") {
     try {
-      const response = await fetch("/api/daily-insight");
+      const response = await fetchContentApi("/api/daily-insight");
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       return await response.json();
     } catch (error) {
       console.warn("Client error generating daily insight:", error);
-      return null;
+      return DEFAULT_DAILY_INSIGHT;
     }
   }
 
@@ -308,7 +320,7 @@ export async function generateDailyInsight(): Promise<DailyInsight | null> {
 export async function analyzeSoulJourney(logs: DailyLog[]): Promise<string> {
   if (typeof window !== "undefined") {
     try {
-      const response = await fetch("/api/analyze-soul-journey", {
+      const response = await fetchContentApi("/api/analyze-soul-journey", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ logs })
@@ -318,7 +330,7 @@ export async function analyzeSoulJourney(logs: DailyLog[]): Promise<string> {
       return data.feedback || "O silêncio é o solo onde a verdade floresce.";
     } catch (error) {
       console.warn("Client error in analyzeSoulJourney:", error);
-      return "Sua jornada é sagrada.";
+      return "Seus registros estão salvos. A reflexão automática está indisponível no momento.";
     }
   }
 
@@ -344,13 +356,13 @@ let isImageGenerationSupported = true;
 export async function generateAppCover(): Promise<string | null> {
   if (typeof window !== "undefined") {
     try {
-      const response = await fetch("/api/app-cover");
+      const response = await fetchContentApi("/api/app-cover");
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       return data.cover;
     } catch (error) {
       console.warn("Client error in generateAppCover:", error);
-      return null;
+      return "/meditation-cover.jpg";
     }
   }
 
@@ -360,7 +372,7 @@ export async function generateAppCover(): Promise<string | null> {
     return dailyCache.appCover.data;
   }
 
-  const defaultCoverUrl = "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1080&auto=format&fit=crop";
+  const defaultCoverUrl = "/meditation-cover.jpg";
 
   if (!ai || !isImageGenerationSupported) return defaultCoverUrl;
   try {
@@ -397,12 +409,12 @@ export async function generateAppCover(): Promise<string | null> {
 export async function generateDailyContent(): Promise<DailyContent | null> {
   if (typeof window !== "undefined") {
     try {
-      const response = await fetch("/api/daily-content");
+      const response = await fetchContentApi("/api/daily-content");
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       return await response.json();
     } catch (error) {
       console.warn("Client error generating daily content:", error);
-      return null;
+      return DEFAULT_DAILY_CONTENT;
     }
   }
 
@@ -460,7 +472,7 @@ export async function generateDailyContent(): Promise<DailyContent | null> {
 export async function generateRecipeOptions(mealType: string): Promise<Recipe[]> {
   if (typeof window !== "undefined") {
     try {
-      const response = await fetch("/api/recipe-options", {
+      const response = await fetchContentApi("/api/recipe-options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mealType })
@@ -469,7 +481,7 @@ export async function generateRecipeOptions(mealType: string): Promise<Recipe[]>
       return await response.json();
     } catch (error) {
       console.warn("Client error in generateRecipeOptions:", error);
-      return [];
+      return DEFAULT_RECIPE_OPTIONS[mealType] || [];
     }
   }
 
@@ -518,7 +530,7 @@ export async function generateRecipeOptions(mealType: string): Promise<Recipe[]>
 export async function generateFermentationRecipe(): Promise<Recipe | null> {
   if (typeof window !== "undefined") {
     try {
-      const response = await fetch("/api/fermentation-recipe");
+      const response = await fetchContentApi("/api/fermentation-recipe");
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       return await response.json();
     } catch (error) {
@@ -566,12 +578,12 @@ export async function generateFermentationRecipe(): Promise<Recipe | null> {
 export async function generatePurificationTips(): Promise<string[]> {
   if (typeof window !== "undefined") {
     try {
-      const response = await fetch("/api/purification-tips");
+      const response = await fetchContentApi("/api/purification-tips");
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       return await response.json();
     } catch (error) {
       console.warn("Client error in generatePurificationTips:", error);
-      return [];
+      return DEFAULT_PURIFICATION_TIPS;
     }
   }
 
@@ -622,7 +634,7 @@ export function getDynamicAlchemistFallback(ingredientsStr: string): any {
 export async function generateAlchemistRecipe(ingredients: string): Promise<any | null> {
   if (typeof window !== "undefined") {
     try {
-      const response = await fetch("/api/alchemist-recipe", {
+      const response = await fetchContentApi("/api/alchemist-recipe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ingredients })
@@ -670,7 +682,7 @@ export async function generateAlchemistRecipe(ingredients: string): Promise<any 
 export async function generateSpeech(text: string, instruction?: string): Promise<string | null> {
   if (typeof window !== "undefined") {
     try {
-      const response = await fetch("/api/speech", {
+      const response = await fetchContentApi("/api/speech", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, instruction })
@@ -726,7 +738,7 @@ export async function generateSpeech(text: string, instruction?: string): Promis
 export async function moderateContent(text: string): Promise<{ safe: boolean; reason?: string }> {
   if (typeof window !== "undefined") {
     try {
-      const response = await fetch("/api/moderate-content", {
+      const response = await fetchContentApi("/api/moderate-content", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text })
@@ -735,12 +747,12 @@ export async function moderateContent(text: string): Promise<{ safe: boolean; re
       return await response.json();
     } catch (error) {
       console.warn("Client error in moderateContent:", error);
-      return { safe: true };
+      return { safe: false, reason: "Não foi possível verificar o conteúdo agora. Tente novamente mais tarde." };
     }
   }
 
   // Server-side
-  if (!ai) return { safe: true };
+  if (!ai) return { safe: false, reason: "A verificação de conteúdo está indisponível." };
   try {
     const response = await generateContentWithModelFallback((model) => ({
       model,
@@ -761,6 +773,6 @@ export async function moderateContent(text: string): Promise<{ safe: boolean; re
     }));
     return JSON.parse(response.text || '{"safe": true}');
   } catch (error) {
-    return { safe: true };
+    return { safe: false, reason: "A verificação de conteúdo está indisponível." };
   }
 }

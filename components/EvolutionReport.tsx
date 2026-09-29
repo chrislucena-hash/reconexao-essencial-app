@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   Line, 
   XAxis, 
@@ -36,6 +36,7 @@ interface EvolutionReportProps {
 }
 
 const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, setView }) => {
+  const [expandedLogDate, setExpandedLogDate] = useState<string | null>(null);
   const sortedLogs = useMemo(() => {
     return [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [logs]);
@@ -663,10 +664,39 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                          ))
                        }
                     </div>
-                    <button className="text-[9px] font-black text-[#18245C]/60 uppercase tracking-widest group-hover:text-[#18245C] transition-colors flex items-center gap-1">
-                      Ver Detalhes <ChevronRight size={12} />
+                    <button
+                      type="button"
+                      onClick={() => setExpandedLogDate(expandedLogDate === log.date ? null : log.date)}
+                      aria-expanded={expandedLogDate === log.date}
+                      className="text-[9px] font-black text-[#18245C]/60 uppercase tracking-widest group-hover:text-[#18245C] transition-colors flex items-center gap-1"
+                    >
+                      {expandedLogDate === log.date ? 'Ocultar detalhes' : 'Ver detalhes'} <ChevronRight size={12} />
                     </button>
                   </div>
+                  {expandedLogDate === log.date && (
+                    <div className="space-y-3 pt-4 border-t border-[#18245C]/10 text-xs text-[#4A506B]" role="region" aria-label={`Registro de ${log.date}`}>
+                      <p><strong className="text-[#18245C]">Reflexão:</strong> {log.reflection || 'Nenhuma reflexão registrada.'}</p>
+                      {log.shadowObservations && <p><strong className="text-[#18245C]">Observações:</strong> {log.shadowObservations}</p>}
+                      {log.spiritualPractices && Object.entries(log.spiritualPractices).some(([, value]) => !!value) && (
+                        <div>
+                          <strong className="text-[#18245C]">Práticas registradas:</strong>
+                          {log.spiritualPractices.morning && <p>Manhã: {log.spiritualPractices.morning}</p>}
+                          {log.spiritualPractices.afternoon && <p>Tarde: {log.spiritualPractices.afternoon}</p>}
+                          {log.spiritualPractices.evening && <p>Noite: {log.spiritualPractices.evening}</p>}
+                        </div>
+                      )}
+                      {log.foodRecord && (
+                        <div>
+                          <strong className="text-[#18245C]">Alimentação registrada:</strong>
+                          {log.foodRecord.breakfast && <p>Café da manhã: {log.foodRecord.breakfast}</p>}
+                          {log.foodRecord.lunch && <p>Almoço: {log.foodRecord.lunch}</p>}
+                          {log.foodRecord.dinner && <p>Jantar: {log.foodRecord.dinner}</p>}
+                          {log.foodRecord.snacks && <p>Lanches: {log.foodRecord.snacks}</p>}
+                          <p>Água: {log.foodRecord.waterGlasses || 0} copos</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>

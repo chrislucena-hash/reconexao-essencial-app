@@ -71,6 +71,7 @@ jobs:
           assert 'background-color: #F7F2EC;' in html, 'Expected light frontend background'
           assert 'Questionário de Percepções'.encode() in javascript, 'Expected current frontend copy'
           assert 'Teste do Corpo e da Alma'.encode() not in javascript, 'Outdated frontend copy found'
+          assert b'w3schools.com/html/movie.mp4' not in javascript, 'Demo video found in release'
           PY
           npx cap sync android
 
@@ -98,6 +99,8 @@ jobs:
               html = apk.read('assets/public/index.html').decode('utf-8')
               javascript = b''.join(apk.read(name) for name in apk.namelist()
                                     if name.startswith('assets/public/assets/') and name.endswith('.js'))
+              assert 'assets/public/meditation-cover.jpg' in apk.namelist(), 'Cover image missing from APK'
+              assert b'w3schools.com/html/movie.mp4' not in javascript, 'Demo video found in APK'
           assert 'background-color: #F7F2EC;' in html, 'APK does not contain the light frontend'
           assert 'Questionário de Percepções'.encode() in javascript, 'APK has outdated frontend copy'
           assert 'Teste do Corpo e da Alma'.encode() not in javascript, 'APK has outdated frontend copy'

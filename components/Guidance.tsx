@@ -126,7 +126,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
   const [insight, setInsight] = useState<DailyInsight | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showCopyToast, setShowCopyToast] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [ingredientsInput, setIngredientsInput] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("reconexao_alchemist_input") || "";
@@ -156,6 +156,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
   const [fermentationRecipe, setFermentationRecipe] = useState<Recipe | null>(null);
   const [purificationTips, setPurificationTips] = useState<string[]>([]);
   const [loadingExtras, setLoadingExtras] = useState(false);
+  const [fermentationRefreshError, setFermentationRefreshError] = useState(false);
   const [fastingWindow, setFastingWindow] = useState<number>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pausa_sagrada_minutes');
@@ -565,26 +566,51 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
 
   const handleRefreshFerment = async () => {
     setLoadingExtras(true);
+    setFermentationRefreshError(false);
     try {
       const ferment = await generateFermentationRecipe();
       if (ferment && typeof ferment === 'object' && ferment.title && Array.isArray(ferment.ingredients) && Array.isArray(ferment.instructions)) {
         setFermentationRecipe(ferment);
+      } else {
+        setFermentationRefreshError(true);
       }
     } catch (e) {
       console.warn("Failed to refresh fermentation recipe:", e);
+      setFermentationRefreshError(true);
     } finally {
       setLoadingExtras(false);
     }
   };
 
-  const handleShare = (recipe: Recipe) => {
-    const shareText = `Confira esta alquimia nutritiva do ReViva: ${recipe.title}. ✨`;
+  const handleShare = async (recipe: Recipe) => {
+    const shareText = `${recipe.title}\nIngredientes: ${recipe.ingredients.join(', ')}\n\n— Reconexão Essencial`;
     if (navigator.share) {
-      navigator.share({ title: 'ReViva Alquimia', text: shareText, url: window.location.href }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(shareText);
-      setShowCopyToast(true);
-      setTimeout(() => setShowCopyToast(false), 3000);
+      try {
+        await navigator.share({ title: 'Reconexão Essencial', text: shareText });
+        return;
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
+      }
+    }
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareText);
+      } else {
+        const field = document.createElement('textarea');
+        field.value = shareText;
+        field.style.position = 'fixed';
+        field.style.opacity = '0';
+        document.body.appendChild(field);
+        field.select();
+        const copied = document.execCommand('copy');
+        field.remove();
+        if (!copied) throw new Error('Clipboard unavailable');
+      }
+      setShareFeedback('Texto da receita copiado para compartilhar.');
+      setTimeout(() => setShareFeedback(null), 3000);
+    } catch {
+      setShareFeedback('Compartilhamento indisponível neste dispositivo.');
+      setTimeout(() => setShareFeedback(null), 3000);
     }
   };
 
@@ -929,12 +955,19 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                    </div>
                    <button 
                      onClick={handleRefreshFerment}
+                     title="Atualizar receita"
+                     aria-label="Atualizar receita"
                      className="p-3 bg-white/5 rounded-2xl border border-white/10 text-ethereal-500 hover:text-white transition-all disabled:opacity-50"
                      disabled={loadingExtras}
                    >
                      {loadingExtras ? <Loader2 size={18} className="animate-spin" /> : <RotateCcw size={18} />}
                    </button>
                 </div>
+                {fermentationRefreshError && (
+                  <p className="px-2 text-xs text-rose-300" role="alert">
+                    Não foi possível atualizar a receita agora. A sugestão atual continua disponível.
+                  </p>
+                )}
 
                 <div className="glass-mystic p-8 rounded-[3rem] border border-aura-emerald/10 relative overflow-hidden group shadow-2xl">
                    <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-aura-emerald/5 rounded-full blur-[60px]" />
@@ -1180,19 +1213,18 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
         </div>
       )}
 
-      {/* Beautiful Copy Link Toast */}
-      {showCopyToast && (
+      {shareFeedback && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm animate-in slide-up duration-300">
           <div className="glass-mystic p-5 rounded-3xl border border-magic-gold/30 bg-magic-gold/10 backdrop-blur-xl flex items-center gap-4 shadow-[0_15px_30px_rgba(0,0,0,0.5)]">
             <div className="p-2 bg-magic-gold/20 rounded-xl text-magic-gold">
               <CheckCircle2 size={20} className="animate-pulse" />
             </div>
             <div className="flex-1">
-              <p className="text-[10px] font-black uppercase tracking-widest text-magic-gold">Frequência Compartilhada</p>
-              <p className="text-xs text-ethereal-100 italic leading-snug">Link copiado para sua egrégora! ✨</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-magic-gold">Compartilhar receita</p>
+              <p className="text-xs text-ethereal-100 italic leading-snug">{shareFeedback}</p>
             </div>
             <button 
-              onClick={() => setShowCopyToast(false)}
+              onClick={() => setShareFeedback(null)}
               className="text-ethereal-500 hover:text-white transition-colors p-1"
             >
               <X size={16} />

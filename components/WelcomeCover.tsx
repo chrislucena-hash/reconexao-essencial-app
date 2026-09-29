@@ -73,7 +73,7 @@ const WelcomeCover: React.FC<WelcomeCoverProps> = ({ onStart }) => {
         {/* Scenic Mountain Meditating Image at Bottom */}
         <div className="w-full relative overflow-hidden rounded-t-[2.5rem] shadow-2xl border-t border-white/60 shrink-0 mt-auto">
           <img 
-            src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=1000" 
+            src="/meditation-cover.jpg"
             alt="Meditação na Senda" 
             className="w-full h-52 sm:h-60 object-cover object-top filter contrast-[1.05] brightness-[0.98]"
           />

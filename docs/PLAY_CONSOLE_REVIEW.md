@@ -1,5 +1,46 @@
 # Reenvio ao Google Play: Reconexão Essencial
 
+## Nova rejeição de 29/09/2026: identidade e interface
+
+O Play Console apontou **ícone/nome instalado diferente da ficha pt-BR** e
+**controles sem resposta ou conteúdo provisório**. O texto da notificação não
+inclui as imagens de evidência; compare-as no Play Console antes de concluir a
+revisão. O pacote Android já declara `Reconexão Essencial` e usa a mesma marca
+fonte do arquivo `assets/play-store/icon-512.png`, mas isso não prova qual ícone
+ou nome está salvo na ficha do Play Console. Na **Página de detalhes padrão**,
+na localização **pt-BR** e em cada página personalizada/tradução, confirme o
+título `Reconexão Essencial`, substitua o ícone pela imagem de 512 × 512 deste
+repositório e revise as capturas. Instale o novo AAB pela faixa de teste e
+compare o launcher normal, redondo e adaptativo com a ficha exibida ao mesmo
+testador. A identidade da ficha é uma edição no Play Console, não no GitHub.
+
+O código desta revisão remove os vídeos/fotos de demonstração da comunidade,
+liga o compartilhamento, abre os detalhes do diário, mostra estados de
+carregamento/erro/vazio e inclui a foto da capa no pacote em vez de depender
+de uma URL externa. A câmera de vídeos de demonstração, sem upload real, foi
+retirada. Teste no dispositivo todos os botões visíveis, inclusive publicação,
+comentários, receita, áudio, diário e configurações; a compilação sozinha não
+comprova esses fluxos.
+
+**Bloqueio atual:** em 29/09/2026, `https://api.reconexaoessencial.com.br/api/v1/health`
+respondia `301` com `Location` igual à própria URL. O app não consegue usar o
+backend enquanto houver esse loop. Verifique o modo SSL/TLS e os redirecionamentos
+do subdomínio `api` no Cloudflare e no servidor de origem; com certificado válido
+na origem, prefira **Full (strict)**. [Guia Cloudflare para loops](https://developers.cloudflare.com/ssl/troubleshooting/too-many-redirects/).
+Além disso, as funções de conteúdo dinâmico em `services/geminiService.ts`
+chamam `/api/...` do servidor Node usado na web. Esse servidor **não** é
+empacotado no Android, e o FastAPI em `VITE_API_BASE_URL` não oferece essas
+rotas. Quando esse servidor existir publicamente, defina
+`VITE_CONTENT_API_BASE_URL` no build com a origem HTTPS que oferece as rotas
+`/api/...`; não use `VITE_API_BASE_URL` do FastAPI para isso sem implementar
+as mesmas rotas. A revisão agora apresenta conteúdo local curado ou mensagem explícita
+quando a chamada falha, mas geração dinâmica, áudio remoto e moderação precisam
+de um endpoint implantado e testado para funcionar. **Não envie o novo pacote
+para revisão até verificar essa infraestrutura e repetir os fluxos no Android.**
+O antigo botão **Reportar** da comunidade só ocultava uma postagem localmente;
+agora ele informa **Ocultar nesta sessão**. Implemente um fluxo real de denúncia
+e moderação antes de lançar a comunidade como recurso público.
+
 ## Declaração de apps de saúde
 
 Em **Política → Conteúdo do app → Apps de saúde**, declare as funções da versão enviada:
