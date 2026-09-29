@@ -2,17 +2,35 @@
 
 ## Nova rejeição de 29/09/2026: identidade e interface
 
-O Play Console apontou **ícone/nome instalado diferente da ficha pt-BR** e
-**controles sem resposta ou conteúdo provisório**. O texto da notificação não
-inclui as imagens de evidência; compare-as no Play Console antes de concluir a
-revisão. O pacote Android já declara `Reconexão Essencial` e usa a mesma marca
-fonte do arquivo `assets/play-store/icon-512.png`, mas isso não prova qual ícone
-ou nome está salvo na ficha do Play Console. Na **Página de detalhes padrão**,
-na localização **pt-BR** e em cada página personalizada/tradução, confirme o
-título `Reconexão Essencial`, substitua o ícone pela imagem de 512 × 512 deste
-repositório e revise as capturas. Instale o novo AAB pela faixa de teste e
-compare o launcher normal, redondo e adaptativo com a ficha exibida ao mesmo
-testador. A identidade da ficha é uma edição no Play Console, não no GitHub.
+O Play Console apontou **ícone instalado diferente da ficha pt-BR** e
+**controles sem resposta ou conteúdo provisório**. Nas capturas recebidas em
+29/09, a ficha pt-BR usa um coração azul/roxo com a inscrição
+“RECONEXÃO ESSENCIAL” sobre fundo cósmico; o launcher do app analisado exibe o
+**X azul padrão do Capacitor** em fundo branco. O nome instalado aparece
+truncado como “Reconexão Esse...” e a evidência visual não prova que o nome
+esteja errado. A captura também não mostra o `versionCode` do pacote analisado.
+
+O X corresponde ao ícone nativo preservado no código de `d5362a9` (15/09),
+anterior à troca de identidade de `c0ac668` (24/09). AABs v7 e v8 foram
+inspecionados: os ícones normal, redondo e adaptativo contêm o coração, não o X.
+É provável que a análise tenha instalado um pacote antigo ainda ativo, mas só
+o Play Console pode confirmar qual versão foi examinada. Verifique os bundles
+ativos em **produção, teste aberto, teste fechado e teste interno**; substitua
+ou desative os que ainda trazem o X. A [orientação do Google para reenviar um
+app rejeitado](https://support.google.com/googleplay/android-developer/answer/2477981?hl=pt-BR)
+também pede a correção em todas as faixas pertinentes, não apenas na nova
+versão de teste.
+
+Há uma segunda diferença visual a resolver: o arquivo
+[`assets/play-store/icon-512.png`](../assets/play-store/icon-512.png) e os
+ícones nativos v7/v8 mostram o coração em fundo azul escuro **sem texto nem
+textura cósmica**. Esse arquivo ainda não é o ícone da ficha mostrado na
+captura. Escolha uma identidade final e aplique-a em todas as fichas
+(padrão, personalizadas e traduzidas) e no pacote Android. Se a escolha for o
+ícone nativo atual, envie o PNG deste repositório à ficha; se for manter a
+arte cósmica da ficha, prepare os ícones nativos a partir da arte original e
+gere um novo AAB. Instale esse AAB por uma faixa de teste e compare o launcher
+normal, redondo e adaptativo com a ficha visível ao mesmo testador.
 
 O código desta revisão remove os vídeos/fotos de demonstração da comunidade,
 liga o compartilhamento, abre os detalhes do diário, mostra estados de
@@ -97,7 +115,7 @@ Confira todas as outras opções disponíveis antes de salvar. Não marque "Meu 
 
 ## Identidade do app
 
-O nome instalado em Android é **Reconexão Essencial**, com pacote `com.reconexaoessencial`. Use esse mesmo nome em todas as fichas e traduções. O ícone da ficha deve usar [o PNG de 512 × 512](../assets/play-store/icon-512.png), derivado da mesma marca usada nos ícones nativos. Confira também fichas personalizadas, capturas de tela e a versão instalada do novo pacote. A imagem citada na rejeição, `LAUNCHER_ICON-6296.png`, não acompanha o texto recebido aqui; compare-a no Play Console.
+O nome instalado em Android é **Reconexão Essencial**, com pacote `com.reconexaoessencial`. Use esse mesmo nome em todas as fichas e traduções. A evidência de 29/09 confirma que o ícone da ficha pt-BR é a arte cósmica com texto, enquanto o pacote analisado mostrou o X padrão. Os AABs v7/v8 já substituíram o X por um coração sem texto, mas a arte da ficha ainda não corresponde à arte de 512 × 512 versionada neste repositório. Resolva essa diferença escolhendo a identidade final descrita acima. Confira também fichas personalizadas, capturas e **cada pacote ativo**; a captura do launcher não identifica o código de versão.
 
 ## Descrição sugerida para a ficha principal
 
@@ -145,7 +163,7 @@ Em 25/09/2026, a página pública ainda chamava o questionário de **“testes d
 - Workflow `android-release.yml`: AAB assinado com `versionCode` 6 e pacote `com.reconexaoessencial`. O certificado de assinatura coincide com o do AAB anterior gerado pelo CI, de `versionCode` 5.
 - Antes de carregar o AAB, compare o número 6 com o maior `versionCode` já enviado ao Play Console. O histórico de uploads no Play Console não pôde ser verificado pelo repositório.
 - O manifesto e os recursos do AAB registram **Reconexão Essencial**; os ícones nativos foram comparados com os arquivos fonte. A instalação e inspeção visual no launcher ainda exigem uma faixa de testes e um dispositivo Android.
-- A captura `LAUNCHER_ICON-6296.png` mencionada pelo Google não estava no texto encaminhado; sem ela ou acesso à ficha atual do Play Console, a identidade visual publicada não pode ser comparada ao ícone instalado.
+- Em 29/09, capturas do Play Console mostraram o X padrão do Capacitor no launcher e a arte cósmica com coração na ficha pt-BR; o código de versão instalado na análise não aparece nelas.
 - O AAB de `versionCode` 6 não contém os ajustes de texto de 25/09/2026. Use um novo AAB gerado a partir da revisão mais recente, com código superior ao maior já enviado ao Play Console.
 
 ### Novo candidato em 25/09/2026
