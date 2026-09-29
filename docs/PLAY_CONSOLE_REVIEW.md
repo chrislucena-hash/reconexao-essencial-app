@@ -58,6 +58,50 @@ de carregamento da comunidade foram verificados. Esse teste não verifica login
 real, publicação no Firestore, geração de áudio ou instalação Android; repita
 esses fluxos com a conta de revisão e o pacote final no dispositivo.
 
+### Auditoria de funções simuladas e confirmações prematuras (29/09/2026)
+
+Esta revisão distingue o **candidato v8** (`codex/play-rejection-fixes-20260929`)
+do checkout local `agent/ios-testflight-release`; eles não têm o mesmo código.
+
+- No checkout local, `components/Community.tsx` ainda apresenta quatro vídeos
+  de demonstração externos como momentos de usuários, um botão de vídeo sem
+  fluxo de upload, “Conectar” apenas em estado local, “Reportar” apenas em
+  estado local e um botão de compartilhar sem ação. **Não gere uma nova release
+  Android desse checkout.** O candidato v8 retirou os momentos demonstrativos,
+  o upload de vídeo e o botão falso; o antigo “Reportar” passou a indicar
+  claramente “Ocultar nesta sessão”, mas denúncia e moderação reais continuam
+  pendentes.
+- No v8, `services/geminiService.ts` devolve mensagens, desafios e receitas
+  fixas quando a API de conteúdo falha. O “Alquimista” monta uma receita
+  genérica a partir do texto digitado, sem garantir um preparo culinário válido.
+  `components/Guidance.tsx` mostra essas sugestões sem distinguir sua origem;
+  o modal promete “5 Alquimias Diferentes”, embora o fallback local contenha
+  duas opções de desjejum, duas de almoço e uma de jantar. O botão de atualizar
+  a receita fermentada pode reapresentar a mesma receita fixa como se fosse
+  nova. Rotule o conteúdo local como sugestão fixa ou mostre indisponibilidade
+  explícita; não prometa geração ou atualização quando a API estiver fora.
+- No v8, `components/Tracker.tsx` exibe sucesso assim que chama `onSaveLog`,
+  enquanto `App.tsx` captura e apenas registra uma falha de gravação no
+  Firestore. `NextStepGuide` também afirma “Diário atualizado com sucesso!”
+  antes de qualquer gravação; o questionário mostra “registro concluído” antes
+  de confirmar o envio. Perfil, progresso da jornada e reinício do ciclo
+  são atualizados localmente mesmo quando a sincronização remota falha; no
+  reinício, os erros são ignorados e ainda pode aparecer mensagem de exclusão
+  completa. Trate a confirmação como resultado de uma operação verificada e
+  mostre erro quando houver falha.
+- Postagens e comentários do v8 usam Firestore de verdade, mas dependem de
+  `/api/moderate-content`; sem `VITE_CONTENT_API_BASE_URL` funcional, a
+  moderação bloqueia o envio. Respiração e meditação executam um cronômetro
+  real; áudio gerado depende do mesmo servidor e pode recorrer à voz do
+  dispositivo. `services/notificationService.ts` contém um agendador que só
+  registra uma mensagem no console, mas nenhuma tela importa essa função.
+
+**Resultado:** a ausência de vídeos demonstrativos no v8 não encerra a
+violação de recursos corrompidos. Corrija as confirmações prematuras, os
+fallbacks apresentados como geração e a infraestrutura antes de publicar.
+Uma inspeção estática não substitui testar o AAB instalado pela Play com
+uma conta de revisão e observar cada ação e seu estado após reiniciar o app.
+
 ### Pacote v8 preparado em 29/09/2026
 
 A [execução 36601017680 do GitHub Actions](https://github.com/chrislucena-hash/reconexao-essencial-app/actions/runs/36601017680)
