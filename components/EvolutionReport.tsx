@@ -25,7 +25,7 @@ import {
   Apple,
   Moon
 } from 'lucide-react';
-import { DailyLog, UserProfile, JourneyProgress, AppView } from '../types';
+import { DailyLog, UserProfile, JourneyProgress, AppView, hasRecordedRatings } from '../types';
 import { motion } from 'framer-motion';
 import NextStepGuide from './NextStepGuide';
 
@@ -45,7 +45,7 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
     // Exiba somente avaliações informadas no diário. Alimentos, práticas e o
     // questionário são registros separados; não estimam energia ou sintomas.
     return sortedLogs
-      .filter(log => Number.isFinite(log.energyLevel) && Number.isFinite(log.awarenessLevel))
+      .filter(hasRecordedRatings)
       .map(log => ({
         date: new Date(log.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
         rawDate: log.date,
@@ -572,14 +572,14 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                        <span className="text-[9px] font-black text-[#E9B44C] uppercase tracking-widest">
                          {new Date(log.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                        </span>
-                       <div className="flex gap-2">
+                       {hasRecordedRatings(log) && <div className="flex gap-2">
                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${log.energyLevel >= 4 ? 'bg-[#2E7D68]/20 text-[#2E7D68]' : 'bg-rose-100 text-rose-700'}`}>
                            Energia: {log.energyLevel}
                          </span>
                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${log.awarenessLevel >= 4 ? 'bg-[#A268D7]/20 text-[#A268D7]' : 'bg-rose-100 text-rose-700'}`}>
                            Presença: {log.awarenessLevel}
                          </span>
-                       </div>
+                       </div>}
                      </div>
                      
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -632,10 +632,10 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                         {new Date(log.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}
                       </p>
                       <h4 className="text-[#18245C] font-serif text-lg italic font-bold">
-                        {log.reflection ? (log.reflection.length > 60 ? log.reflection.substring(0, 60) + '...' : log.reflection) : "Silêncio Sagrado"}
+                        {log.reflection ? (log.reflection.length > 60 ? log.reflection.substring(0, 60) + '...' : log.reflection) : log.completedActions.journaling ? 'Sem reflexão escrita' : 'Rito registrado'}
                       </h4>
                     </div>
-                    <div className="flex gap-2">
+                    {hasRecordedRatings(log) && <div className="flex gap-2">
                       <div className="flex items-center gap-1 px-2 py-1 bg-[#2E7D68]/10 rounded-lg border border-[#2E7D68]/20">
                         <Zap size={10} className="text-[#2E7D68]" />
                         <span className="text-[10px] font-bold text-[#18245C]">{log.energyLevel}</span>
@@ -644,7 +644,7 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                         <Eye size={10} className="text-[#A268D7]" />
                         <span className="text-[10px] font-bold text-[#18245C]">{log.awarenessLevel}</span>
                       </div>
-                    </div>
+                    </div>}
                   </div>
 
                   {log.synchronicities && (

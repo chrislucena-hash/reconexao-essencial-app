@@ -29,7 +29,7 @@ import { RITUALS } from '../constants';
 import NextStepGuide from './NextStepGuide';
 
 interface TrackerProps {
-  onSaveLog: (log: DailyLog) => void;
+  onSaveLog: (log: DailyLog) => Promise<void>;
   logs: DailyLog[];
   setView?: (view: AppView) => void;
 }
@@ -45,6 +45,8 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
   const [awarenessLevel, setAwarenessLevel] = useState(3);
   const [showConfirmSave, setShowConfirmSave] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Food record state
   const [breakfast, setBreakfast] = useState('');
@@ -108,32 +110,40 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
     }
   }, [date, logs]);
 
-  const executeSave = () => {
-    onSaveLog({
-      date,
-      spiritualPractices: { morning: '', afternoon: '', evening: '' },
-      reflection,
-      synchronicities,
-      shadowObservations,
-      energyLevel,
-      awarenessLevel,
-      foodRecord: {
-        breakfast,
-        lunch,
-        dinner,
-        snacks,
-        waterGlasses,
-        fastingHours
-      },
-      completedActions: { 
-        ...habits, 
-        journaling: true
-      } as any
-    });
-    setShowSuccessToast(true);
-    setTimeout(() => {
-      setShowSuccessToast(false);
-    }, 4000);
+  const executeSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      await onSaveLog({
+        date,
+        spiritualPractices: { morning: '', afternoon: '', evening: '' },
+        reflection,
+        synchronicities,
+        shadowObservations,
+        energyLevel,
+        awarenessLevel,
+        ratingsRecorded: true,
+        foodRecord: {
+          breakfast,
+          lunch,
+          dinner,
+          snacks,
+          waterGlasses,
+          fastingHours
+        },
+        completedActions: {
+          ...habits,
+          journaling: true
+        } as DailyLog['completedActions']
+      });
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 4000);
+    } catch (error) {
+      setSaveError('Não foi possível salvar o diário. Verifique sua conexão e tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSave = () => {
@@ -365,11 +375,14 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
 
         <button 
            onClick={handleSave}
+           disabled={isSaving}
            className="w-full bg-[#18245C] text-white py-7 rounded-[3rem] font-black text-xs uppercase tracking-[0.4em] flex items-center justify-center gap-4 shadow-xl hover:bg-[#203078] active:scale-95 transition-all group overflow-hidden relative"
         >
            <div className="absolute inset-0 bg-magic-gold/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-           <Save size={20} className="relative z-10" /> <span className="relative z-10">Eternizar Registro no Akasha</span>
+           <Save size={20} className="relative z-10" /> <span className="relative z-10">{isSaving ? 'Salvando registro...' : 'Eternizar Registro no Akasha'}</span>
         </button>
+
+        {saveError && <p role="alert" className="text-sm text-rose-700 text-center">{saveError}</p>}
 
         {setView && (
           <NextStepGuide 
@@ -379,7 +392,7 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
             nextStepName="Portal do Guia"
             nextStepLabel="Bússola da Alma"
             onNavigate={() => setView(AppView.GUIDANCE)}
-            message="Diário atualizado com sucesso! Siga para o Portal do Guia para receber oráculos e receitas sagradas."
+            message="Salve seu registro antes de avançar ao Portal do Guia."
           />
         )}
       </div>
@@ -401,6 +414,7 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
 
             <div className="flex flex-col w-full gap-3">
               <button 
+                disabled={isSaving}
                 onClick={() => {
                   setShowConfirmSave(false);
                   executeSave();
@@ -429,7 +443,7 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
             </div>
             <div className="flex-1">
               <p className="text-[10px] font-black uppercase tracking-widest text-aura-emerald">Registro Selado</p>
-              <p className="text-xs text-ethereal-100 italic leading-snug">Jornada atualizada e Alma ouvida no Akasha! ✨</p>
+              <p className="text-xs text-ethereal-100 italic leading-snug">Registro do diário salvo na sua conta.</p>
             </div>
             <button 
               onClick={() => setShowSuccessToast(false)}

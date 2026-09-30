@@ -5,7 +5,7 @@ import { auth } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
 interface DisclaimerScreenProps {
-  onAccept: (email: string) => void;
+  onAccept: (email: string) => Promise<void>;
   isLoggedIn?: boolean;
 }
 
@@ -34,7 +34,7 @@ const DisclaimerScreen: React.FC<DisclaimerScreenProps> = ({ onAccept, isLoggedI
     try {
       // Sign In only
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      onAccept(email.trim());
+      await onAccept(email.trim());
     } catch (err: any) {
       console.error("Auth error:", err);
       let errMsg = 'Erro ao processar autenticação.';
@@ -46,6 +46,19 @@ const DisclaimerScreen: React.FC<DisclaimerScreenProps> = ({ onAccept, isLoggedI
         errMsg = err.message;
       }
       setError(errMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAcceptExistingAccount = async () => {
+    if (loading) return;
+    setLoading(true);
+    setError('');
+    try {
+      await onAccept(auth.currentUser?.email || '');
+    } catch (err) {
+      setError('Não foi possível salvar a aceitação. Verifique sua conexão e tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -92,11 +105,14 @@ const DisclaimerScreen: React.FC<DisclaimerScreenProps> = ({ onAccept, isLoggedI
               </p>
 
               <button 
-                onClick={() => onAccept(auth.currentUser?.email || '')}
+                onClick={handleAcceptExistingAccount}
+                disabled={loading}
                 className="w-full bg-white text-nature-950 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-3 shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                Aceitar e Prosseguir <ArrowRight size={18} />
+                {loading ? <Loader2 size={18} className="animate-spin" /> : <>Aceitar e Prosseguir <ArrowRight size={18} /></>}
               </button>
+
+              {error && <p role="alert" className="text-rose-400 text-[10px] text-center font-bold">{error}</p>}
 
               <button 
                 type="button"

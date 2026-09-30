@@ -22,7 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface SettingsProps {
   userProfile: UserProfile;
-  onUpdateProfile: (profile: Partial<UserProfile>) => void;
+  onUpdateProfile: (profile: Partial<UserProfile>) => Promise<void>;
   setView: (view: AppView) => void;
   onResetJourney: () => void;
 }
@@ -32,15 +32,26 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [tempProfile, setTempProfile] = useState({
     name: userProfile.name,
     email: userProfile.email || '',
     phone: userProfile.phone || ''
   });
 
-  const handleSave = () => {
-    onUpdateProfile(tempProfile);
-    setIsEditing(false);
+  const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      await onUpdateProfile(tempProfile);
+      setIsEditing(false);
+    } catch (error) {
+      setSaveError('Não foi possível salvar o perfil. Tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -148,11 +159,13 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
             {isEditing && (
               <button 
                 onClick={handleSave}
+                disabled={isSaving}
                 className="w-full bg-magic-gold text-nature-950 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                Salvar Alterações
+                {isSaving ? 'Salvando...' : 'Salvar Alterações'}
               </button>
             )}
+            {saveError && <p role="alert" className="text-sm text-rose-300">{saveError}</p>}
           </div>
         </div>
 
@@ -395,7 +408,7 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
               <div className="space-y-2">
                 <h3 className="text-xl font-serif text-white italic">Reiniciar Senda?</h3>
                 <p className="text-xs text-ethereal-300 leading-relaxed">
-                  Tem certeza de que deseja reiniciar sua jornada de reconexão? Todos os seus dados e diários anteriores serão apagados para um novo ciclo. <strong className="text-white">Todas as mensagens da Egrégora serão preservadas intactas.</strong>
+                  Tem certeza de que deseja reiniciar sua jornada? O progresso e os registros do diário serão apagados. Sua conta e as publicações da comunidade continuarão disponíveis. Para excluir todos os dados associados à conta, use a opção de solicitação de exclusão.
                 </p>
               </div>
 

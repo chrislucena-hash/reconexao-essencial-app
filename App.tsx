@@ -18,12 +18,12 @@ import { AppView, UserProfile, DailyLog, JourneyProgress } from './types';
 import { INITIAL_JOURNEY } from './constants';
 import { unlockMobileAudio } from './services/audioService';
 import { Compass, Sparkles, X, Flame, Loader2 } from 'lucide-react';
-import { doc, setDoc, collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { doc, setDoc, collection, onSnapshot, query, orderBy, limit, getDocs, writeBatch } from 'firebase/firestore';
 import { db, auth } from './firebase';
 import { syncUserWithBackend, upsertJournalEntry } from './services/backendService';
 
 const AppContent: React.FC = () => {
-  const { user, userProfile: fbProfile, loading: fbLoading } = useFirebase();
+  const { user, userProfile: fbProfile, loading: fbLoading, error: profileSyncError } = useFirebase();
   const [currentView, setCurrentView] = useState<AppView>(AppView.WELCOME);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: 'Buscador',
@@ -32,23 +32,25 @@ const AppContent: React.FC = () => {
     hasSeenWarning: false,
     isOnPath: false,
   });
-  const [logs, setLogs] = useState<DailyLog[]>(() => {
-    try {
-      const saved = localStorage.getItem('reconexao_daily_logs');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [journeyProgress, setJourneyProgress] = useState<JourneyProgress>(() => {
-    try {
-      const saved = localStorage.getItem('soul_journey_progress');
-      return saved ? JSON.parse(saved) : { currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null };
-    } catch {
-      return { currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null };
-    }
+  // Wait for the signed-in account's Firestore snapshot. Shared local keys could
+  // otherwise show a previous account's diary or progress before sync finishes.
+  const [logs, setLogs] = useState<DailyLog[]>([]);
+  const [journeyProgress, setJourneyProgress] = useState<JourneyProgress>({
+    currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null
   });
   const [showNavNudge, setShowNavNudge] = useState(false);
+  const [logsSyncError, setLogsSyncError] = useState(false);
+  const [journeySyncError, setJourneySyncError] = useState(false);
+
+  useEffect(() => {
+    setUserProfile({
+      name: 'Buscador',
+      startDate: null,
+      awakeningScore: 0,
+      hasSeenWarning: false,
+      isOnPath: false,
+    });
+  }, [user?.uid]);
 
   // Global mobile audio unlock on first user gesture (iOS Safari & Android Chrome)
   useEffect(() => {
@@ -96,24 +98,34 @@ const AppContent: React.FC = () => {
   // Sync logs from Firebase
   useEffect(() => {
     if (user) {
+      setLogs([]);
       const logsRef = collection(db, 'users', user.uid, 'logs');
       const q = query(logsRef, orderBy('date', 'desc'), limit(30));
       const unsubscribe = onSnapshot(q, (snapshot) => {
+        setLogsSyncError(false);
         const fetchedLogs = snapshot.docs.map(doc => doc.data() as DailyLog);
         setLogs(fetchedLogs);
         try {
           localStorage.setItem('reconexao_daily_logs', JSON.stringify(fetchedLogs));
         } catch (e) {}
+      }, (error) => {
+        console.error('Diary sync failed:', error);
+        setLogsSyncError(true);
       });
       return () => unsubscribe();
     }
+    setLogs([]);
+    setLogsSyncError(false);
+    try { localStorage.removeItem('reconexao_daily_logs'); } catch (e) {}
   }, [user]);
 
   // Sync journey progress from Firebase
   useEffect(() => {
     if (user) {
+      setJourneyProgress({ currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null });
       const progressRef = doc(db, 'users', user.uid, 'journey', 'progress');
       const unsubscribe = onSnapshot(progressRef, (docSnap) => {
+        setJourneySyncError(false);
         if (docSnap.exists()) {
           const fetchedProgress = docSnap.data() as JourneyProgress;
           setJourneyProgress(fetchedProgress);
@@ -128,24 +140,24 @@ const AppContent: React.FC = () => {
             localStorage.removeItem('soul_journey_progress');
           } catch (e) {}
         }
+      }, (error) => {
+        console.error('Journey sync failed:', error);
+        setJourneySyncError(true);
       });
       return () => unsubscribe();
     }
+    setJourneyProgress({ currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null });
+    setJourneySyncError(false);
+    try { localStorage.removeItem('soul_journey_progress'); } catch (e) {}
   }, [user]);
 
   const handleUpdateJourneyProgress = async (newProgress: JourneyProgress) => {
+    if (!user) throw new Error('Entre na sua conta para salvar a jornada.');
+    await setDoc(doc(db, 'users', user.uid, 'journey', 'progress'), newProgress);
     setJourneyProgress(newProgress);
     try {
       localStorage.setItem('soul_journey_progress', JSON.stringify(newProgress));
     } catch (e) {}
-
-    if (user) {
-      try {
-        await setDoc(doc(db, 'users', user.uid, 'journey', 'progress'), newProgress);
-      } catch (err) {
-        console.error("Error saving journey progress:", err);
-      }
-    }
   };
 
   // Trigger nudge on view change
@@ -197,24 +209,17 @@ const AppContent: React.FC = () => {
       diagnosisHistory: updatedHistory
     };
 
+    if (!user) throw new Error('Entre na sua conta para salvar o questionário.');
+    await setDoc(doc(db, 'users', user.uid), { ...userProfile, ...updates }, { merge: true });
     setUserProfile(prev => ({ ...prev, ...updates }));
-
-    if (user) {
-      try {
-        await setDoc(doc(db, 'users', user.uid), { ...userProfile, ...updates }, { merge: true });
-      } catch (err) {
-        console.error("Error saving profile:", err);
-      }
-      syncUserWithBackend({ ...userProfile, ...updates }).catch(err => console.warn('Backend user sync failed:', err));
-    }
-
-    setTimeout(() => {
-      setCurrentView(AppView.JOURNEY);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 500);
+    syncUserWithBackend({ ...userProfile, ...updates }).catch(err => console.warn('Backend user sync failed:', err));
+    setCurrentView(AppView.JOURNEY);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSaveLog = async (log: DailyLog) => {
+    if (!user) throw new Error('Entre na sua conta para salvar o diário.');
+    await setDoc(doc(db, 'users', user.uid, 'logs', log.date), log);
     setLogs(prevLogs => {
       const updated = prevLogs.some(l => l.date === log.date)
         ? prevLogs.map(l => l.date === log.date ? log : l)
@@ -225,14 +230,7 @@ const AppContent: React.FC = () => {
       return updated;
     });
 
-    if (user) {
-      try {
-        await setDoc(doc(db, 'users', user.uid, 'logs', log.date), log);
-      } catch (err) {
-        console.error("Error saving log:", err);
-      }
-      upsertJournalEntry(log).catch(err => console.warn('Backend journal sync failed:', err));
-    }
+    upsertJournalEntry(log).catch(err => console.warn('Backend journal sync failed:', err));
   };
 
   const toggleDailyGoal = async (goalKey: keyof DailyLog['completedActions']) => {
@@ -255,6 +253,7 @@ const AppContent: React.FC = () => {
         reflection: '',
         energyLevel: 3,
         awarenessLevel: 3,
+        ratingsRecorded: false,
         completedActions: {
           purification: false,
           nourishment: false,
@@ -273,6 +272,8 @@ const AppContent: React.FC = () => {
       };
     }
 
+    if (!user) throw new Error('Entre na sua conta para salvar seus ritos.');
+    await setDoc(doc(db, 'users', user.uid, 'logs', today), newLog);
     setLogs(prevLogs => {
       const updated = prevLogs.some(l => l.date === today)
         ? prevLogs.map(l => l.date === today ? newLog : l)
@@ -283,13 +284,6 @@ const AppContent: React.FC = () => {
       return updated;
     });
 
-    if (user) {
-      try {
-        await setDoc(doc(db, 'users', user.uid, 'logs', today), newLog);
-      } catch (err) {
-        console.error("Error toggling goal:", err);
-      }
-    }
   };
 
   const handleAcceptDisclaimer = async (email: string) => {
@@ -306,49 +300,33 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const handleFirestoreError = (error: any, operationType: 'create' | 'update' | 'delete' | 'list' | 'get' | 'write', path: string) => {
-    const errInfo = {
-      error: error instanceof Error ? error.message : String(error),
-      operationType,
-      path,
-      authInfo: {
-        userId: auth.currentUser?.uid,
-        email: auth.currentUser?.email,
-        emailVerified: auth.currentUser?.emailVerified,
-        isAnonymous: auth.currentUser?.isAnonymous
-      }
-    };
-    console.error('Firestore operation warning: ', JSON.stringify(errInfo));
-  };
-
   const handleUpdateProfile = async (updates: Partial<UserProfile>) => {
+    const activeUser = user || auth.currentUser;
+    if (!activeUser) throw new Error('Entre na sua conta para salvar o perfil.');
+    await setDoc(doc(db, 'users', activeUser.uid), updates, { merge: true });
     setUserProfile(prev => ({ ...prev, ...updates }));
-    if (user) {
-      try {
-        await setDoc(doc(db, 'users', user.uid), updates, { merge: true });
-      } catch (err) {
-        handleFirestoreError(err, 'update', `users/${user.uid}`);
-      }
-      syncUserWithBackend({ ...userProfile, ...updates }).catch(err => console.warn('Backend user sync failed:', err));
-    }
+    syncUserWithBackend({ ...userProfile, ...updates }).catch(err => console.warn('Backend user sync failed:', err));
   };
 
   const [resetNotice, setResetNotice] = useState<string | null>(null);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
       const notice = sessionStorage.getItem('cycle_reset_notice');
       if (notice === 'true') {
         sessionStorage.removeItem('cycle_reset_notice');
-        setResetNotice("O seu ciclo foi recomeçado com sucesso! Suas informações anteriores foram apagadas para dar início a um novo ciclo. Todas as mensagens da Egrégora foram preservadas.");
+        setResetNotice("A jornada e os registros exibidos no diário foram reiniciados. Sua conta, publicações e possíveis cópias já sincronizadas com outros serviços não foram excluídas. Para excluir todos os dados, use a opção em Configurações.");
       }
     } catch (e) {}
   }, []);
 
   const handleResetJourney = async () => {
-    try {
-      sessionStorage.setItem('cycle_reset_notice', 'true');
-    } catch (e) {}
+    setResetError(null);
+    if (!user) {
+      setResetError('Entre na sua conta para reiniciar a jornada.');
+      return;
+    }
 
     const resetProfile: UserProfile = {
       name: 'Buscador',
@@ -359,70 +337,40 @@ const AppContent: React.FC = () => {
       isOnPath: false,
       favoriteActivities: [],
       diagnosisHistory: [],
-      role: 'client'
+      role: userProfile.role || 'client',
+      ...(userProfile.email ? { email: userProfile.email } : {}),
+      ...(userProfile.phone ? { phone: userProfile.phone } : {})
     };
 
-    if (userProfile.email) {
-      resetProfile.email = userProfile.email;
-    }
-    if (userProfile.phone) {
-      resetProfile.phone = userProfile.phone;
-    }
-
-    setUserProfile(resetProfile);
-    setLogs([]);
-    setJourneyProgress({ currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null });
-
-    // Clear local storage
     try {
-      localStorage.removeItem('reconexao_daily_logs');
-      localStorage.removeItem('soul_journey_progress');
-      localStorage.removeItem('userProfile_spiritual');
-      localStorage.removeItem('userLogs_spiritual');
-    } catch (e) {}
-
-    if (user) {
-      try {
-        const userPath = `users/${user.uid}`;
-        // Overwrite the user profile document on firestore (no merge to fully reset)
-        try {
-          await setDoc(doc(db, 'users', user.uid), resetProfile);
-        } catch (err) {
-          handleFirestoreError(err, 'write', userPath);
-        }
-
-        // Fetch and delete all logs collection documents
-        const { deleteDoc, doc: firestoreDoc, collection: firestoreCollection, getDocs } = await import('firebase/firestore');
-        const logsPath = `users/${user.uid}/logs`;
-        try {
-          const logsRef = firestoreCollection(db, 'users', user.uid, 'logs');
-          const logsSnap = await getDocs(logsRef);
-          for (const docSnap of logsSnap.docs) {
-            const logDocPath = `users/${user.uid}/logs/${docSnap.id}`;
-            try {
-              await deleteDoc(firestoreDoc(db, 'users', user.uid, 'logs', docSnap.id));
-            } catch (err) {
-              handleFirestoreError(err, 'delete', logDocPath);
-            }
-          }
-        } catch (err) {
-          handleFirestoreError(err, 'list', logsPath);
-        }
-
-        // Delete journey progress document from Firestore
-        const journeyDocPath = `users/${user.uid}/journey/progress`;
-        try {
-          await deleteDoc(firestoreDoc(db, 'users', user.uid, 'journey', 'progress'));
-        } catch (err) {
-          handleFirestoreError(err, 'delete', journeyDocPath);
-        }
-      } catch (err) {
-        console.error("Error resetting journey on firestore:", err);
+      const logsSnap = await getDocs(collection(db, 'users', user.uid, 'logs'));
+      if (logsSnap.size > 450) {
+        throw new Error('Too many diary records for a single reset batch');
       }
-    }
+      const batch = writeBatch(db);
+      batch.set(doc(db, 'users', user.uid), resetProfile);
+      batch.delete(doc(db, 'users', user.uid, 'journey', 'progress'));
+      logsSnap.docs.forEach(logDoc => batch.delete(logDoc.ref));
+      await batch.commit();
 
-    setCurrentView(AppView.WELCOME);
-    window.location.reload();
+      setUserProfile(resetProfile);
+      setLogs([]);
+      setJourneyProgress({ currentDay: 1, days: INITIAL_JOURNEY, lastCompletedDate: null });
+      try {
+        localStorage.removeItem('reconexao_daily_logs');
+        localStorage.removeItem('soul_journey_progress');
+        localStorage.removeItem('userProfile_spiritual');
+        localStorage.removeItem('userLogs_spiritual');
+        sessionStorage.setItem('cycle_reset_notice', 'true');
+      } catch (error) {
+        console.warn('Could not clear local journey cache:', error);
+      }
+      setCurrentView(AppView.WELCOME);
+      window.location.reload();
+    } catch (error) {
+      console.error('Error resetting journey:', error);
+      setResetError('Não foi possível reiniciar toda a jornada. Verifique sua conexão e tente novamente.');
+    }
   };
 
   if (fbLoading) {
@@ -494,23 +442,28 @@ const AppContent: React.FC = () => {
           </header>
         )}
 
+        {(profileSyncError || logsSyncError || journeySyncError) && user && (
+          <p role="alert" className="relative z-10 mx-2 mb-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+            Não foi possível carregar todos os seus dados. Verifique a conexão e reabra o app antes de continuar.
+          </p>
+        )}
         <div className="relative z-10 w-full flex-1 flex flex-col">{renderView()}</div>
         
         {/* Reset Notice Modal */}
-        {resetNotice && (
+        {(resetNotice || resetError) && (
           <div className="fixed inset-0 z-[100] bg-[#18245C]/60 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
             <div className="bg-white border border-[#18245C]/10 w-full max-w-sm rounded-2xl p-8 flex flex-col items-center text-center space-y-6 shadow-2xl">
               <div className="w-16 h-16 bg-[#A268D7]/10 rounded-full flex items-center justify-center text-[#A268D7] border border-[#A268D7]/20">
                 <Sparkles size={32} />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-serif text-[#18245C] font-semibold">Novo Ciclo Iniciado</h3>
+                <h3 className="text-xl font-serif text-[#18245C] font-semibold">{resetError ? 'Não foi possível reiniciar' : 'Novo Ciclo Iniciado'}</h3>
                 <p className="text-sm text-[#4A506B] leading-relaxed">
-                  {resetNotice}
+                  {resetError || resetNotice}
                 </p>
               </div>
               <button 
-                onClick={() => setResetNotice(null)}
+                onClick={() => { setResetNotice(null); setResetError(null); }}
                 className="w-full brand-gradient-btn py-4 rounded-xl font-bold text-xs uppercase tracking-widest shadow-md hover:opacity-95 transition-opacity"
               >
                 Compreendi

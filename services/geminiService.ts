@@ -72,76 +72,6 @@ async function generateContentWithModelFallback(
 }
 
 // Default High-Quality Portuguese Fallbacks
-const DEFAULT_DAILY_INSIGHT: DailyInsight = {
-  oracleMessage: "Olhe para dentro. Nas profundezas do seu silêncio habita a verdade imutável do seu ser.",
-  dailyExercise: "Pressione suavemente a ponta da língua no palato e respire pelo nariz de forma lenta por cinco ciclos.",
-  dailyRitual: {
-    type: "Meditação",
-    title: "Ritual do Alvorecer Cósmico",
-    elements: ["Copo de água morna", "Espaço silencioso"],
-    process: [
-      "Ao acordar, sente-se ereto em silêncio.",
-      "Beba o copo de água morna agradecendo por mais um dia no templo.",
-      "Respire fundo por 5 minutos visualizando uma luz dourada no peito."
-    ],
-    purpose: "Ancorar a presença e a paz no início do dia."
-  },
-  shadowPrompt: "Qual medo ou sombra do passado estou permitindo que controle minhas escolhas de hoje?"
-};
-
-const DEFAULT_DAILY_CONTENT: DailyContent = {
-  motivation: "Sua saúde é o seu altar. Trate o seu templo físico com a reverência que ele merece hoje.",
-  dailyChallenge: "Mastigue cada garfada pelo menos 30 vezes e coma em absoluto silêncio.",
-  menu: [
-    {
-      title: "Creme de Abacate Ancestral",
-      type: "Desjejum",
-      ingredients: ["1/2 abacate maduro", "Suco de 1/2 limão", "1 colher de sopa de mel silvestre", "Sementes de girassol torradas"],
-      instructions: [
-        "Amasse o abacate com um garfo até ficar homogêneo.",
-        "Misture o suco de limão e o mel incorporando levemente.",
-        "Finalize com sementes de girassol por cima para dar textura e energia."
-      ],
-      prepTime: "5 min"
-    },
-    {
-      title: "Escondidinho de Mandioca com Frango Desfiado",
-      type: "Almoço",
-      ingredients: ["300g de mandioca cozida", "150g de peito de frango cozido e desfiado", "Cebola, alho, cúrcuma e sal marinho", "Azeite de oliva extra virgem"],
-      instructions: [
-        "Amasse a mandioca cozida com um pouco da água do cozimento até formar um purê macio.",
-        "Refogue o frango desfiado com cebola, alho, cúrcuma e sal no azeite.",
-        "Em um refratário, coloque o frango refogado e cubra com o purê de mandioca.",
-        "Leve ao forno por 15 minutos para dourar levemente."
-      ],
-      prepTime: "25 min"
-    },
-    {
-      title: "Sopa de Abóbora com Gengibre",
-      type: "Jantar",
-      ingredients: ["400g de abóbora cabotiá picada", "1 pedaço pequeno de gengibre fresco ralado", "1 cebola picada", "Sal marinho e azeite de oliva"],
-      instructions: [
-        "Refogue a cebola e o gengibre ralado com azeite em uma panela média.",
-        "Adicione a abóbora picada, cubra com água filtrada e cozinhe até ficar bem macia.",
-        "Bata tudo no liquidificador até obter um creme sedoso.",
-        "Sirva quente com um fio de azeite extra virgem."
-      ],
-      prepTime: "20 min"
-    }
-  ]
-};
-
-const DEFAULT_FERMENTATION_RECIPE: Recipe = {
-  title: "Salada com Chucrute Pronto",
-  type: "Receita com Fermentado",
-  ingredients: ["Chucrute pronto para consumo", "Folhas de sua preferência", "Tomate", "Azeite a gosto"],
-  instructions: [
-    "Lave as folhas e o tomate.",
-    "Monte a salada e acrescente o chucrute pronto.",
-    "Siga as instruções de conservação da embalagem e sirva com azeite, se desejar."
-  ]
-};
-
 const DEFAULT_PURIFICATION_TIPS: string[] = [
   "Faça pausas ao longo do dia e observe como você se sente.",
   "Beba água conforme sua sede e necessidades individuais.",
@@ -149,82 +79,6 @@ const DEFAULT_PURIFICATION_TIPS: string[] = [
   "Anote dúvidas sobre alimentação ou sintomas para conversar com um profissional de saúde.",
   "Escolha um momento tranquilo para comer com atenção."
 ];
-
-const DEFAULT_RECIPE_OPTIONS: Record<string, Recipe[]> = {
-  "Desjejum": [
-    {
-      title: "Panqueca de Banana e Linhaça",
-      type: "Desjejum",
-      ingredients: ["1 banana madura amassada", "2 colheres de sopa de farinha de linhaça", "1 ovo (ou 1 colher de chia hidratada)", "Canela em pó a gosto", "Óleo de coco para grelhar"],
-      instructions: [
-        "Misture bem a banana amassada, a linhaça e a canela.",
-        "Aqueça uma frigideira com um pouco de óleo de coco.",
-        "Coloque porções da massa e grelhe dos dois lados até dourar."
-      ],
-      prepTime: "8 min"
-    },
-    {
-      title: "Vitamina de Amêndoas e Frutas Vermelhas",
-      type: "Desjejum",
-      ingredients: ["200ml de leite de amêndoas caseiro", "1/2 xícara de morangos ou mirtilos", "1 colher de sopa de sementes de chia", "Mel a gosto"],
-      instructions: [
-        "Bata todos os ingredientes no liquidificador até obter uma bebida cremosa.",
-        "Sirva gelado, decorado com algumas sementes extras."
-      ],
-      prepTime: "5 min"
-    }
-  ],
-  "Almoço": [
-    {
-      title: "Tigela Nutritiva de Quinoa com Legumes",
-      type: "Almoço",
-      ingredients: ["1 xícara de quinoa cozida", "1/2 xícara de grão-de-bico cozido", "Abobrinha e cenoura grelhadas no azeite", "Sementes de abóbora tostadas", "Sal marinho e cúrcuma"],
-      instructions: [
-        "Misture a quinoa cozida quente com os legumes grelhados.",
-        "Adicione o grão-de-bico temperado com cúrcuma e azeite.",
-        "Finalize com sementes de abóbora."
-      ],
-      prepTime: "20 min"
-    },
-    {
-      title: "Filé de Peixe com Purê de Mandioquinha",
-      type: "Almoço",
-      ingredients: ["1 filé de peixe grelhado no azeite", "200g de mandioquinha cozida e espremida", "Alho-poró picado", "Sal marinho e noz-moscada"],
-      instructions: [
-        "Refogue o alho-poró no azeite e misture à mandioquinha espremida com um pouco de água para formar o purê.",
-        "Grelhe o peixe temperado com limão e sal.",
-        "Sirva o peixe acompanhado do purê."
-      ],
-      prepTime: "25 min"
-    }
-  ],
-  "Jantar": [
-    {
-      title: "Sopa Creme de Abobrinha com Ervas",
-      type: "Jantar",
-      ingredients: ["2 abobrinhas médias picadas", "1 cebola pequena", "Dentes de alho amassados", "Hortelã fresca e manjericão", "Azeite de oliva e sal"],
-      instructions: [
-        "Cozinhe a abobrinha com cebola e alho em pouca água até amolecer.",
-        "Bata no liquidificador com as ervas frescas e azeite.",
-        "Sirva quente com sementes por cima."
-      ],
-      prepTime: "15 min"
-    }
-  ]
-};
-
-const DEFAULT_ALCHEMIST_RECIPE = {
-  name: "Alquimia da Floresta",
-  desc: "Uma fusão harmônica e revigorante de elementos naturais para nutrir o corpo físico e expandir o corpo sutil.",
-  ingredients: ["Ingredientes fornecidos pelo buscador", "Ervas finas (manjericão ou alecrim)", "Fio de azeite extra virgem", "Sal marinho e cúrcuma"],
-  instructions: [
-    "Respire profundamente e conecte-se com a energia dos ingredientes à sua frente.",
-    "Refogue os ingredientes de forma consciente em fogo baixo com azeite e cúrcuma.",
-    "Tempere e adicione as ervas finas ao final, apreciando os aromas e sabores.",
-    "Agradeça ao templo físico e consuma com atenção plena."
-  ],
-  spiritualNote: "Reserve este momento para preparar e apreciar a refeição com presença."
-};
 
 // In-Memory Daily Cache
 interface CacheEntry<T> {
@@ -270,7 +124,7 @@ export async function generateDailyInsight(): Promise<DailyInsight | null> {
       return await response.json();
     } catch (error) {
       console.warn("Client error generating daily insight:", error);
-      return DEFAULT_DAILY_INSIGHT;
+      return null;
     }
   }
 
@@ -280,7 +134,7 @@ export async function generateDailyInsight(): Promise<DailyInsight | null> {
     return dailyCache.insight.data;
   }
 
-  if (!ai) return DEFAULT_DAILY_INSIGHT;
+  if (!ai) return null;
   try {
     const response = await generateContentWithModelFallback((model) => ({
       model,
@@ -317,7 +171,7 @@ export async function generateDailyInsight(): Promise<DailyInsight | null> {
   } catch (error) {
     console.warn("[Gemini API] Using high-quality default daily insight fallback.");
   }
-  return DEFAULT_DAILY_INSIGHT;
+  return null;
 }
 
 export async function analyzeSoulJourney(logs: DailyLog[]): Promise<string> {
@@ -330,7 +184,7 @@ export async function analyzeSoulJourney(logs: DailyLog[]): Promise<string> {
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
-      return data.feedback || "O silêncio é o solo onde a verdade floresce.";
+      return data.feedback || "A reflexão automática está indisponível no momento.";
     } catch (error) {
       console.warn("Client error in analyzeSoulJourney:", error);
       return "Seus registros estão salvos. A reflexão automática está indisponível no momento.";
@@ -338,7 +192,7 @@ export async function analyzeSoulJourney(logs: DailyLog[]): Promise<string> {
   }
 
   // Server-side
-  if (!ai) return "Sua jornada é sagrada.";
+  if (!ai) return "A reflexão automática está indisponível no momento.";
   try {
     const context = JSON.stringify(logs.slice(-5));
     const response = await generateContentWithModelFallback((model) => ({
@@ -347,10 +201,10 @@ export async function analyzeSoulJourney(logs: DailyLog[]): Promise<string> {
     }));
     return response.text && !containsUnsupportedHealthAdvice(response.text)
       ? response.text
-      : "O silêncio é o solo onde a verdade floresce.";
+      : "A reflexão automática está indisponível no momento.";
   } catch (error) { 
     console.warn("[Gemini API] Using default soul journey response.");
-    return "Sua jornada é sagrada."; 
+    return "A reflexão automática está indisponível no momento.";
   }
 }
 
@@ -417,7 +271,7 @@ export async function generateDailyContent(): Promise<DailyContent | null> {
       return await response.json();
     } catch (error) {
       console.warn("Client error generating daily content:", error);
-      return DEFAULT_DAILY_CONTENT;
+      return null;
     }
   }
 
@@ -427,7 +281,7 @@ export async function generateDailyContent(): Promise<DailyContent | null> {
     return dailyCache.content.data;
   }
 
-  if (!ai) return DEFAULT_DAILY_CONTENT;
+  if (!ai) return null;
   try {
     const response = await generateContentWithModelFallback((model) => ({
       model,
@@ -469,7 +323,7 @@ export async function generateDailyContent(): Promise<DailyContent | null> {
   } catch (error) {
     console.warn("[Gemini API] Using fallback for daily content.");
   }
-  return DEFAULT_DAILY_CONTENT;
+  return null;
 }
 
 export async function generateRecipeOptions(mealType: string): Promise<Recipe[]> {
@@ -484,7 +338,7 @@ export async function generateRecipeOptions(mealType: string): Promise<Recipe[]>
       return await response.json();
     } catch (error) {
       console.warn("Client error in generateRecipeOptions:", error);
-      return DEFAULT_RECIPE_OPTIONS[mealType] || [];
+      return [];
     }
   }
 
@@ -494,7 +348,7 @@ export async function generateRecipeOptions(mealType: string): Promise<Recipe[]>
     return dailyCache.recipeOptions[mealType].data;
   }
 
-  if (!ai) return DEFAULT_RECIPE_OPTIONS[mealType] || [];
+  if (!ai) return [];
   try {
     const response = await generateContentWithModelFallback((model) => ({
       model,
@@ -527,7 +381,7 @@ export async function generateRecipeOptions(mealType: string): Promise<Recipe[]>
   } catch (error) {
     console.warn(`[Gemini API] Using default recipe options fallback for ${mealType}.`);
   }
-  return DEFAULT_RECIPE_OPTIONS[mealType] || [];
+  return [];
 }
 
 export async function generateFermentationRecipe(): Promise<Recipe | null> {
@@ -548,7 +402,7 @@ export async function generateFermentationRecipe(): Promise<Recipe | null> {
     return dailyCache.fermentation.data;
   }
 
-  if (!ai) return DEFAULT_FERMENTATION_RECIPE;
+  if (!ai) return null;
   try {
     const response = await generateContentWithModelFallback((model) => ({
       model,
@@ -575,7 +429,7 @@ export async function generateFermentationRecipe(): Promise<Recipe | null> {
   } catch (error) {
     console.warn("[Gemini API] Using fallback for fermentation recipe.");
   }
-  return DEFAULT_FERMENTATION_RECIPE;
+  return null;
 }
 
 export async function generatePurificationTips(): Promise<string[]> {
@@ -594,46 +448,6 @@ export async function generatePurificationTips(): Promise<string[]> {
   return DEFAULT_PURIFICATION_TIPS;
 }
 
-export function getDynamicAlchemistFallback(ingredientsStr: string): any {
-  const rawList = (ingredientsStr || "")
-    .split(/[,;\n]+/)
-    .map(i => i.trim())
-    .filter(i => i.length > 0);
-  
-  const userIngredients = rawList.length > 0 ? rawList : ["ingredientes selecionados"];
-  
-  const firstIngredient = userIngredients[0];
-  const capitalizedFirst = firstIngredient.charAt(0).toUpperCase() + firstIngredient.slice(1);
-  const name = `Alquimia de ${capitalizedFirst} do Templo`;
-  
-  const desc = `Uma preparação personalizada feita com ${userIngredients.slice(0, 3).join(', ')}${userIngredients.length > 3 ? ' e outros ingredientes' : ''}, para apreciar o preparo com atenção.`;
-  
-  const ingredients = [
-    ...userIngredients.map(i => i.charAt(0).toUpperCase() + i.slice(1)),
-    "Fio de azeite de oliva extra virgem ou óleo de coco prensado a frio",
-    "Ervas sagradas do jardim (manjericão, hortelã, sálvia ou alecrim)",
-    "Uma pitada de sal marinho integral, cúrcuma ou gengibre ralado"
-  ];
-  
-  const instructions = [
-    "Respire profundamente três vezes, acalme a mente e expresse gratidão aos elementos da natureza antes do preparo.",
-    `Prepare os ingredientes principais de forma consciente e intencional: ${userIngredients.map(i => i.toLowerCase()).join(', ')}.`,
-    "Misture os ingredientes com delicadeza, cozinhando-os adequadamente quando necessário.",
-    "Adicione temperos de sua preferência e aprecie o aroma.",
-    "Agradeça ao seu templo biológico e consuma o alimento com presença absoluta e atenção plena a cada sabor."
-  ];
-  
-  const spiritualNote = "Use o preparo como um momento de pausa e atenção plena.";
-  
-  return {
-    name,
-    desc,
-    ingredients,
-    instructions,
-    spiritualNote
-  };
-}
-
 export async function generateAlchemistRecipe(ingredients: string): Promise<any | null> {
   if (typeof window !== "undefined") {
     try {
@@ -646,12 +460,12 @@ export async function generateAlchemistRecipe(ingredients: string): Promise<any 
       return await response.json();
     } catch (error) {
       console.warn("Client error in generateAlchemistRecipe:", error);
-      return getDynamicAlchemistFallback(ingredients);
+      return null;
     }
   }
 
   // Server-side
-  if (!ai) return getDynamicAlchemistFallback(ingredients);
+  if (!ai) return null;
   try {
     const response = await generateContentWithModelFallback((model) => ({
       model,
@@ -679,7 +493,7 @@ export async function generateAlchemistRecipe(ingredients: string): Promise<any 
   } catch (error) {
     console.warn("[Gemini API] Using dynamic alchemist fallback.");
   }
-  return getDynamicAlchemistFallback(ingredients);
+  return null;
 }
 
 export async function generateSpeech(text: string, instruction?: string): Promise<string | null> {

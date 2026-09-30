@@ -45,7 +45,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { 
   generateDailyInsight, 
   generateSpeech, 
-  generateAlchemistRecipe,
   generateDailyContent,
   generateRecipeOptions,
   generateFermentationRecipe,
@@ -124,36 +123,20 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
   const [activeSubTab, setActiveSubTab] = useState<'jornada' | 'autocura' | 'saude-intestinal'>('jornada');
   const [content, setContent] = useState<DailyContent | null>(null);
   const [insight, setInsight] = useState<DailyInsight | null>(null);
+  const [insightIsCurated, setInsightIsCurated] = useState(false);
+  const [contentIsCurated, setContentIsCurated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
-  const [ingredientsInput, setIngredientsInput] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("reconexao_alchemist_input") || "";
-    }
-    return "";
-  });
-  const [alchemistRecipe, setAlchemistRecipe] = useState<any | null>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("reconexao_alchemist_recipe");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.error("Error parsing cached alchemist recipe:", e);
-        }
-      }
-    }
-    return null;
-  });
-  const [loadingAlchemist, setLoadingAlchemist] = useState(false);
   
   // New States
   const [recipeOptions, setRecipeOptions] = useState<Recipe[]>([]);
+  const [recipeOptionsError, setRecipeOptionsError] = useState<string | null>(null);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [selectedMealIdx, setSelectedMealIdx] = useState<number | null>(null);
   const [refreshingIdx, setRefreshingIdx] = useState<number | null>(null);
   const [fermentationRecipe, setFermentationRecipe] = useState<Recipe | null>(null);
+  const [fermentationIsCurated, setFermentationIsCurated] = useState(false);
   const [purificationTips, setPurificationTips] = useState<string[]>([]);
   const [loadingExtras, setLoadingExtras] = useState(false);
   const [fermentationRefreshError, setFermentationRefreshError] = useState(false);
@@ -290,11 +273,15 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
         ]);
         setInsight(insightData || DEFAULT_DAILY_INSIGHT);
         setContent(dailyContent || DEFAULT_DAILY_CONTENT);
+        setInsightIsCurated(!insightData);
+        setContentIsCurated(!dailyContent);
         
         // Robust recipe check to prevent rendering crashes if the API returns non-recipe objects
         if (ferment && typeof ferment === 'object' && ferment.title && Array.isArray(ferment.ingredients) && Array.isArray(ferment.instructions)) {
           setFermentationRecipe(ferment);
+          setFermentationIsCurated(false);
         } else {
+          setFermentationIsCurated(true);
           setFermentationRecipe({
             title: "Salada com Chucrute Pronto",
             type: "Receita com Fermentado",
@@ -323,6 +310,8 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
         console.error("Error loading guidance:", error);
         setInsight(DEFAULT_DAILY_INSIGHT);
         setContent(DEFAULT_DAILY_CONTENT);
+        setInsightIsCurated(true);
+        setContentIsCurated(true);
         setFermentationRecipe({
           title: "Salada com Chucrute Pronto",
           type: "Receita com Fermentado",
@@ -333,6 +322,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
             "Siga as instruções de conservação da embalagem e sirva com azeite, se desejar."
           ]
         });
+        setFermentationIsCurated(true);
         setPurificationTips([
           "Faça pausas ao longo do dia e observe como você se sente.",
           "Beba água conforme sua sede e necessidades individuais.",
@@ -527,32 +517,23 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
     setIsPlaying(false);
   };
 
-  const handleAlchemistSearch = async () => {
-    if (!ingredientsInput.trim()) return;
-    setLoadingAlchemist(true);
-    try {
-      localStorage.setItem("reconexao_alchemist_input", ingredientsInput);
-      const recipe = await generateAlchemistRecipe(ingredientsInput);
-      setAlchemistRecipe(recipe);
-      if (recipe) {
-        localStorage.setItem("reconexao_alchemist_recipe", JSON.stringify(recipe));
-      } else {
-        localStorage.removeItem("reconexao_alchemist_recipe");
-      }
-    } catch (error) {
-      console.error("Error transmuting ingredients:", error);
-    } finally {
-      setLoadingAlchemist(false);
-    }
-  };
-
   const handleOpenRefresh = async (index: number, mealType: string) => {
     setRefreshingIdx(index);
     setSelectedMealIdx(index);
-    const options = await generateRecipeOptions(mealType);
-    setRecipeOptions(options);
-    setShowOptionsModal(true);
-    setRefreshingIdx(null);
+    setRecipeOptionsError(null);
+    try {
+      const options = await generateRecipeOptions(mealType);
+      if (options.length === 0) {
+        setRecipeOptionsError('Outras receitas estão indisponíveis no momento.');
+        return;
+      }
+      setRecipeOptions(options);
+      setShowOptionsModal(true);
+    } catch (error) {
+      setRecipeOptionsError('Outras receitas estão indisponíveis no momento.');
+    } finally {
+      setRefreshingIdx(null);
+    }
   };
 
   const selectNewRecipe = (recipe: Recipe) => {
@@ -571,6 +552,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
       const ferment = await generateFermentationRecipe();
       if (ferment && typeof ferment === 'object' && ferment.title && Array.isArray(ferment.ingredients) && Array.isArray(ferment.instructions)) {
         setFermentationRecipe(ferment);
+        setFermentationIsCurated(false);
       } else {
         setFermentationRefreshError(true);
       }
@@ -646,7 +628,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
             </div>
 
             <div className="space-y-4 pt-2">
-              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-aura-gold">Mensagem do Oráculo</span>
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-aura-gold">{insightIsCurated ? 'Sugestão fixa de reflexão' : 'Mensagem do dia'}</span>
               <p className="text-lg sm:text-xl font-serif text-[#18245C] leading-relaxed italic px-2">
                 "{insight?.oracleMessage || content.motivation}"
               </p>
@@ -658,7 +640,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
             <section className="p-8 glass-mystic rounded-[3rem] border border-aura-gold/30 bg-aura-gold/5 space-y-4 shadow-xl">
               <div className="flex items-center gap-3 text-aura-gold">
                 <Zap size={22} className="animate-pulse" />
-                <h4 className="text-[10px] font-black uppercase tracking-[0.3em]">Exercício de Prana Diário</h4>
+                <h4 className="text-[10px] font-black uppercase tracking-[0.3em]">{insightIsCurated ? 'Exercício sugerido pelo app' : 'Exercício do dia'}</h4>
               </div>
               <p className="text-xs text-[#4A506B] leading-relaxed italic font-light">
                 {insight.dailyExercise}
@@ -678,7 +660,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                 <Footprints size={32} />
              </div>
              <div className="space-y-2">
-                <h4 className="text-[10px] font-black text-aura-emerald uppercase tracking-[0.3em]">Desafio de Presença</h4>
+                <h4 className="text-[10px] font-black text-aura-emerald uppercase tracking-[0.3em]">{contentIsCurated ? 'Sugestão fixa de presença' : 'Desafio de Presença'}</h4>
                 <p className="text-xs text-[#4A506B] leading-relaxed italic">
                   {content.dailyChallenge}
                 </p>
@@ -711,6 +693,8 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
            </div>
            
            <div className="space-y-8">
+             {contentIsCurated && <p className="px-2 text-xs text-[#4A506B]">Receitas fixas do app; a geração de novas opções está indisponível no momento.</p>}
+             {recipeOptionsError && <p role="alert" className="px-2 text-xs text-rose-700">{recipeOptionsError}</p>}
              {content.menu.map((recipe, index) => (
                <section key={index} className="relative glass-mystic rounded-[3.5rem] border border-white/5 overflow-hidden group transition-all shadow-2xl">
                   {refreshingIdx === index && (
@@ -836,7 +820,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                  <div className="p-6 glass-mystic rounded-[2rem] border border-aura-violet/30 bg-aura-violet/10 text-center space-y-4 animate-in fade-in">
                     <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-aura-violet">
                        <Bell size={14} className="animate-bounce" />
-                       <span>Notificação Ativada para o Fim da Pausa</span>
+                       <span>Temporizador de pausa em andamento</span>
                     </div>
                     <div className="text-4xl font-mono font-black text-white tracking-widest">
                        {formatFastingTimeLeft(fastingTimeLeft)}
@@ -850,7 +834,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                        />
                     </div>
                     <p className="text-[10px] text-ethereal-400 italic">
-                       Ao terminar a pausa de {fastingWindow} minutos, você receberá uma notificação.
+                       Mantenha o app aberto para ver o aviso ao fim da pausa de {fastingWindow} minutos.
                     </p>
                  </div>
               )}
@@ -953,15 +937,15 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                          <p className="text-[10px] font-black text-aura-emerald uppercase tracking-widest">Saúde Intestinal</p>
                       </div>
                    </div>
-                   <button 
+                   {fermentationIsCurated && <button
                      onClick={handleRefreshFerment}
-                     title="Atualizar receita"
-                     aria-label="Atualizar receita"
+                     title="Tentar carregar receita online"
+                     aria-label="Tentar carregar receita online"
                      className="p-3 bg-white/5 rounded-2xl border border-white/10 text-ethereal-500 hover:text-white transition-all disabled:opacity-50"
                      disabled={loadingExtras}
                    >
                      {loadingExtras ? <Loader2 size={18} className="animate-spin" /> : <RotateCcw size={18} />}
-                   </button>
+                   </button>}
                 </div>
                 {fermentationRefreshError && (
                   <p className="px-2 text-xs text-rose-300" role="alert">
@@ -975,7 +959,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                       <div className="flex items-center gap-2">
                          <span className="text-[10px] font-black text-aura-emerald uppercase tracking-widest">Receita com fermentado pronto</span>
                          <span className="flex items-center gap-1 bg-aura-emerald/20 px-2 py-0.5 rounded-md border border-aura-emerald/30 text-[8px] font-black text-aura-emerald uppercase tracking-widest">
-                            <ShieldCheck size={10} /> Sugestão de receita
+                            <ShieldCheck size={10} /> {fermentationIsCurated ? 'Receita fixa do app' : 'Sugestão de receita'}
                          </span>
                       </div>
                       <h4 className="text-2xl font-serif text-white italic">{fermentationRecipe.title}</h4>
@@ -1152,7 +1136,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
               <header className="p-8 border-b border-[#18245C]/10 flex justify-between items-center bg-[#18245C]/5">
                  <div>
                     <h4 className="text-2xl font-serif text-[#18245C] italic">Portal de Escolhas</h4>
-                    <p className="text-[10px] font-black text-aura-gold uppercase tracking-widest">5 Alquimias Diferentes</p>
+                    <p className="text-[10px] font-black text-aura-gold uppercase tracking-widest">{recipeOptions.length} {recipeOptions.length === 1 ? 'opção disponível' : 'opções disponíveis'}</p>
                  </div>
                  <button onClick={() => setShowOptionsModal(false)} className="p-3 bg-[#18245C]/5 rounded-2xl text-[#18245C] hover:bg-[#18245C]/10 transition-all">
                     <X size={24} />

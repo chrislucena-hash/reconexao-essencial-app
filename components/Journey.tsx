@@ -28,15 +28,18 @@ import NextStepGuide from './NextStepGuide';
 
 interface JourneyProps {
   progress: JourneyProgress;
-  onUpdateProgress: (progress: JourneyProgress) => void;
+  onUpdateProgress: (progress: JourneyProgress) => Promise<void>;
   onResetJourney: () => void;
   setView?: (view: AppView) => void;
 }
 
 const Journey: React.FC<JourneyProps> = ({ progress, onUpdateProgress, onResetJourney, setView }) => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  const toggleDay = (dayNum: number) => {
+  const toggleDay = async (dayNum: number) => {
+    if (isSaving) return;
     const today = new Date().toISOString().split('T')[0];
     const dayToToggle = progress.days.find(d => d.day === dayNum);
     if (!dayToToggle) return;
@@ -48,12 +51,20 @@ const Journey: React.FC<JourneyProps> = ({ progress, onUpdateProgress, onResetJo
     
     const firstUncompleted = updatedDays.find(d => !d.completed)?.day || 21;
     
-    onUpdateProgress({
-      ...progress,
-      days: updatedDays,
-      currentDay: firstUncompleted,
-      lastCompletedDate: isCompleting ? today : progress.lastCompletedDate
-    });
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      await onUpdateProgress({
+        ...progress,
+        days: updatedDays,
+        currentDay: firstUncompleted,
+        lastCompletedDate: isCompleting ? today : progress.lastCompletedDate
+      });
+    } catch (error) {
+      setSaveError('Não foi possível salvar o progresso. Tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const resetJourney = () => {
@@ -136,6 +147,7 @@ const Journey: React.FC<JourneyProps> = ({ progress, onUpdateProgress, onResetJo
 
         <button 
           onClick={() => toggleDay(currentDayData.day)}
+          disabled={isSaving}
           className={`w-full py-6 rounded-[2.5rem] font-black text-[10px] uppercase tracking-[0.4em] transition-all flex items-center justify-center gap-3 shadow-xl ${
             currentDayData.completed 
             ? 'bg-aura-emerald/20 text-aura-emerald border border-aura-emerald/30 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-400/30' 
@@ -148,6 +160,7 @@ const Journey: React.FC<JourneyProps> = ({ progress, onUpdateProgress, onResetJo
             <>ATIVAR PORTAL DO DIA <ChevronRight size={18} /></>
           )}
         </button>
+        {saveError && <p role="alert" className="text-sm text-rose-300 text-center">{saveError}</p>}
       </div>
 
       {/* Journey Map */}
@@ -163,7 +176,7 @@ const Journey: React.FC<JourneyProps> = ({ progress, onUpdateProgress, onResetJo
               <button 
                 key={day.day}
                 onClick={() => toggleDay(day.day)}
-                disabled={isLocked}
+                disabled={isLocked || isSaving}
                 className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 transition-all border ${
                   isCurrent 
                     ? 'bg-magic-gold/20 border-magic-gold shadow-[0_0_15px_rgba(212,175,55,0.3)]' 
@@ -214,7 +227,7 @@ const Journey: React.FC<JourneyProps> = ({ progress, onUpdateProgress, onResetJo
             <div className="space-y-2">
               <h3 className="text-xl font-serif text-white italic">Reiniciar Senda de 21 Dias?</h3>
               <p className="text-xs text-ethereal-300 leading-relaxed">
-                Tem certeza de que deseja reiniciar sua senda? Todo o progresso obtido até agora e os diários deste ciclo serão apagados. <strong className="text-white">Todas as mensagens da Egrégora serão preservadas intactas.</strong>
+                Tem certeza de que deseja reiniciar sua senda? O progresso e os registros do diário serão apagados. Sua conta e as publicações da comunidade permanecerão disponíveis.
               </p>
             </div>
 

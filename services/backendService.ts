@@ -86,8 +86,8 @@ function toJournalPayload(log: DailyLog) {
 
   return {
     entryDate: log.date,
-    energyLevel: log.energyLevel,
-    presenceLevel: log.awarenessLevel,
+    energyLevel: log.ratingsRecorded === false ? null : log.energyLevel,
+    presenceLevel: log.ratingsRecorded === false ? null : log.awarenessLevel,
     meals,
     reflections: reflections.emanacoesAlmaText || reflections.sincronicidadesText ? reflections : null,
   };
@@ -108,6 +108,7 @@ function toDailyLog(entry: BackendJournalEntry): DailyLog {
     reflection: entry.reflections?.emanacoesAlmaText || '',
     energyLevel: entry.energyLevel ?? 3,
     awarenessLevel: entry.presenceLevel ?? 3,
+    ratingsRecorded: entry.energyLevel != null && entry.presenceLevel != null,
     synchronicities: entry.reflections?.sincronicidadesText || undefined,
     foodRecord,
     completedActions: {

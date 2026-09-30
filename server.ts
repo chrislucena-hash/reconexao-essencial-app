@@ -20,6 +20,29 @@ async function startServer() {
   // Middleware to parse JSON bodies
   app.use(express.json());
 
+  // Capacitor serves local assets from these origins. Remote content requests
+  // need CORS, including the JSON POST preflight used by community moderation.
+  const nativeOrigins = new Set(['capacitor://localhost', 'http://localhost', 'https://localhost']);
+  app.use('/api', (req, res, next) => {
+    const origin = req.get('Origin');
+    if (origin && nativeOrigins.has(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.vary('Origin');
+    }
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
+    next();
+  });
+
+  app.get('/api/health', (_req, res) => res.json({
+    status: 'ok',
+    dynamicContentConfigured: Boolean(process.env.GEMINI_API_KEY || process.env.API_KEY),
+  }));
+
   // API Routes
   app.get("/api/daily-insight", async (req, res) => {
     try {

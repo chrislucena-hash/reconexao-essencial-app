@@ -6,7 +6,7 @@ on:
       version_code:
         description: 'Código numérico maior que o último enviado ao Play Console'
         required: true
-        default: '1'
+        default: '9'
         type: string
 
 permissions:
@@ -59,6 +59,33 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Verify native content API
+        run: |
+          node --input-type=module <<'NODE'
+          const base = process.env.VITE_CONTENT_API_BASE_URL?.replace(/\/+$/, '');
+          if (!base || !base.startsWith('https://')) {
+            throw new Error('Set VITE_CONTENT_API_BASE_URL to the deployed HTTPS content server');
+          }
+          for (const origin of ['capacitor://localhost', 'http://localhost']) {
+            const response = await fetch(`${base}/api/health`, {
+              headers: { Origin: origin },
+              signal: AbortSignal.timeout(20000),
+            });
+            const health = await response.json();
+            if (!response.ok || health.status !== 'ok' || health.dynamicContentConfigured !== true || response.headers.get('access-control-allow-origin') !== origin) {
+              throw new Error(`Content API health/CORS check failed for ${origin}`);
+            }
+            const preflight = await fetch(`${base}/api/moderate-content`, {
+              method: 'OPTIONS',
+              headers: { Origin: origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'content-type' },
+              signal: AbortSignal.timeout(20000),
+            });
+            if (preflight.status !== 204 || preflight.headers.get('access-control-allow-origin') !== origin) {
+              throw new Error(`Content API POST preflight failed for ${origin}`);
+            }
+          }
+          NODE
 
       - name: Validate and sync Android
         run: |

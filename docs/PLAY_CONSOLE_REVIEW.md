@@ -102,6 +102,39 @@ fallbacks apresentados como geração e a infraestrutura antes de publicar.
 Uma inspeção estática não substitui testar o AAB instalado pela Play com
 uma conta de revisão e observar cada ação e seu estado após reiniciar o app.
 
+### Correções no código para a próxima compilação (30/09/2026)
+
+Na branch `codex/mobile-quality-fixes-20260930`, Diário, questionário, perfil,
+metas e jornada só confirmam salvamento depois da resposta do Firestore. O
+reinício usa um único lote para perfil, progresso e registros do diário; se o
+lote falhar, o app mostra erro sem informar que os dados foram apagados. A
+confirmação esclarece que conta, publicações e possíveis cópias no backend
+permanecem. A sincronização adicional com o backend ainda é independente.
+
+Falhas da API de conteúdo deixam de retornar mensagens ou receitas fixas como
+se fossem geradas. Quando o Guia usa sugestões incluídas no app, elas são
+identificadas como fixas; outras opções de receita mostram indisponibilidade.
+Marcar uma meta sem preencher o Diário deixa de contar notas automáticas 3/5
+de energia e presença como avaliações da pessoa. A troca de conta deixa de
+reaproveitar temporariamente o diário e o progresso salvos localmente por
+outra conta; falhas de leitura do Firestore mostram um aviso. O fluxo iOS passa a receber
+`VITE_CONTENT_API_BASE_URL` e o padrão de disparo manual aponta para
+`1.0.7 (8)`; o padrão Android passa a `versionCode 9`, porque o pacote 8 já
+foi gerado. O servidor de conteúdo agora responde a `/api/health` e autoriza
+as origens locais do Capacitor; ambos os workflows exigem que o servidor HTTPS
+esteja publicado e aceite essas origens antes de empacotar.
+
+Estas alterações **ainda exigem** teste instalado antes de publicação: salvar
+e reabrir Diário, questionário, metas, perfil e jornada; testar falha de rede;
+usar o Guia com API disponível e indisponível; conferir os botões da
+Comunidade; comparar ícone da ficha pt-BR com o launcher normal, redondo e
+adaptativo. A URL de conteúdo nativo precisa estar configurada e acessível.
+O loop de redirecionamento do backend descrito abaixo também precisa ser
+corrigido na infraestrutura. Em 30/09, a variável de repositório
+`VITE_CONTENT_API_BASE_URL` não estava cadastrada no GitHub, e o endpoint
+`/api/v1/health` do backend ainda devolvia `301` para si mesmo. Nenhum novo
+APK, AAB ou IPA foi criado por estas alterações até esse teste.
+
 ### Pacote v8 preparado em 29/09/2026
 
 A [execução 36601017680 do GitHub Actions](https://github.com/chrislucena-hash/reconexao-essencial-app/actions/runs/36601017680)

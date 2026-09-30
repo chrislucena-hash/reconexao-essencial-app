@@ -720,7 +720,7 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
             <div className="space-y-2">
               <h3 className="text-xl font-serif text-white italic">Recomeçar Novo Ciclo?</h3>
               <p className="text-xs text-ethereal-200 leading-relaxed">
-                Ao recomeçar o ciclo, suas informações e diários anteriores serão renovados para a sua nova caminhada. <strong className="text-white">Todas as mensagens da Egrégora serão mantidas e preservadas.</strong>
+                Ao recomeçar o ciclo, o progresso e os registros do diário serão apagados. Sua conta e as publicações da comunidade permanecerão disponíveis.
               </p>
             </div>
 

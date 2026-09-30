@@ -94,7 +94,7 @@ interface DiagnosisProps {
       lactoseCount: number;
       spiritualCount: number;
     }
-  ) => void;
+  ) => Promise<void>;
   userProfile: UserProfile;
   onBack?: () => void;
   setView?: (view: AppView) => void;
@@ -108,6 +108,8 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [step, setStep] = useState<'intro' | 'symptoms' | 'spiritual' | 'result'>('intro');
   const [userName, setUserName] = useState(userProfile.name && userProfile.name !== 'Buscador' ? userProfile.name : '');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const changeStep = (newStep: 'intro' | 'symptoms' | 'spiritual' | 'result') => {
     setStep(newStep);
@@ -121,14 +123,23 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
     return Math.round((unmarkedCount / totalSignals) * 100);
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    if (isSaving || !userName.trim()) return;
+    setIsSaving(true);
+    setSaveError(null);
     const score = calculateUnmarkedPercentage();
-    onComplete(score, userName.trim() || 'Buscador', selectedActivities, {
-      glutenCount: selectedGluten.length,
-      caseinCount: selectedCasein.length,
-      lactoseCount: selectedLactose.length,
-      spiritualCount: selectedSpiritual.length
-    });
+    try {
+      await onComplete(score, userName.trim(), selectedActivities, {
+        glutenCount: selectedGluten.length,
+        caseinCount: selectedCasein.length,
+        lactoseCount: selectedLactose.length,
+        spiritualCount: selectedSpiritual.length
+      });
+    } catch (error) {
+      setSaveError('Não foi possível salvar o questionário. Tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const toggleItem = (id: string, list: string[], setList: (l: string[]) => void) => {
@@ -411,11 +422,13 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
 
           <button 
             onClick={handleComplete}
-            disabled={!userName.trim()}
+            disabled={!userName.trim() || isSaving}
             className="w-full bg-[#E9B44C] text-[#18245C] py-6 rounded-3xl font-bold shadow-lg flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
           >
-            Confirmar Essência e Avançar para a Senda <Sparkles size={22} />
+            {isSaving ? 'Salvando registro...' : 'Confirmar Essência e Avançar para a Senda'} <Sparkles size={22} />
           </button>
+
+          {saveError && <p role="alert" className="text-sm text-rose-700 text-center">{saveError}</p>}
 
           <p className="text-[9px] text-[#4A506B] text-center leading-relaxed italic px-2 opacity-80">
             Este registro não diagnostica condições de saúde. Procure avaliação profissional antes de restringir alimentos ou se houver sintomas persistentes.
@@ -428,7 +441,7 @@ const Diagnosis: React.FC<DiagnosisProps> = ({ onComplete, userProfile, onBack, 
             nextStepName="Portal da Senda"
             nextStepLabel="Avançar para a Senda"
             onNavigate={handleComplete}
-            message="Seu registro de percepções foi concluído. Avance agora para o Portal da Senda dos 21 Dias de Reconexão."
+            message="Confirme o registro de percepções para avançar ao Portal da Senda."
           />
         </div>
       </div>
