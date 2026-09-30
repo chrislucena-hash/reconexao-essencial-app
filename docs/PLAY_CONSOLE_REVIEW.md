@@ -132,7 +132,7 @@ adaptativo. A URL de conteúdo nativo precisa estar configurada e acessível.
 O loop de redirecionamento do backend descrito abaixo também precisa ser
 corrigido na infraestrutura. Em 30/09, a variável de repositório
 `VITE_CONTENT_API_BASE_URL` não estava cadastrada no GitHub, e o endpoint
-`/api/v1/health` do backend ainda devolvia `301` para si mesmo. Nenhum novo
+`/health` do backend ainda devolvia `301` para si mesmo. Nenhum novo
 APK, AAB ou IPA foi criado por estas alterações até esse teste.
 
 Após a escolha de manter a identidade visual já usada na ficha e no iPhone,
@@ -177,7 +177,7 @@ da Play Store assinada pelo Google; verifique o AAB na faixa de testes. O v8
 **não foi enviado ao Play Console**. Compare o código 8 com o maior código já
 carregado no Console antes de qualquer envio.
 
-**Bloqueio atual:** em 29/09/2026, `https://api.reconexaoessencial.com.br/api/v1/health`
+**Bloqueio atual:** em 30/09/2026, `https://api.reconexaoessencial.com.br/health`
 respondia `301` com `Location` igual à própria URL. O app não consegue usar o
 backend enquanto houver esse loop. Verifique o modo SSL/TLS e os redirecionamentos
 do subdomínio `api` no Cloudflare e no servidor de origem; com certificado válido
