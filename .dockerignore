@@ -1,0 +1,13 @@
+.git
+.github
+.env*
+node_modules
+dist
+android
+ios
+backend
+docs
+migrated_prompt_history
+*.jks
+*.p12
+*.mobileprovision

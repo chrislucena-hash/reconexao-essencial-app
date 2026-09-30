@@ -316,7 +316,7 @@ const AppContent: React.FC = () => {
       const notice = sessionStorage.getItem('cycle_reset_notice');
       if (notice === 'true') {
         sessionStorage.removeItem('cycle_reset_notice');
-        setResetNotice("A jornada e os registros exibidos no diário foram reiniciados. Sua conta, publicações e possíveis cópias já sincronizadas com outros serviços não foram excluídas. Para excluir todos os dados, use a opção em Configurações.");
+        setResetNotice("A jornada e os registros exibidos no diário foram reiniciados. Sua conta, publicações e possíveis cópias já sincronizadas com outros serviços não foram excluídas. Para solicitar a exclusão da conta e dos dados, use a opção em Configurações.");
       }
     } catch (e) {}
   }, []);

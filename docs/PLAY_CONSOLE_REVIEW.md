@@ -135,6 +135,29 @@ corrigido na infraestrutura. Em 30/09, a variável de repositório
 `/api/v1/health` do backend ainda devolvia `301` para si mesmo. Nenhum novo
 APK, AAB ou IPA foi criado por estas alterações até esse teste.
 
+Após a escolha de manter a identidade visual já usada na ficha e no iPhone,
+os ícones Android normal, redondo e adaptativo foram reconstruídos a partir de
+`ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png`, que mostra
+o coração luminoso, fundo cósmico e o nome. O PNG local
+`assets/play-store/icon-512.png` e os ícones web também usam essa arte. A ficha
+pt-BR vista na rejeição parece usar a mesma identidade; confirme o arquivo
+efetivamente publicado, as fichas traduzidas e o ícone instalado de **cada
+faixa ativa**. Se alguma faixa ainda instalar o X do Capacitor, substitua o
+bundle antigo pela nova versão antes de pedir análise.
+
+O servidor Node agora pode ser empacotado pelo `Dockerfile` e foi testado
+localmente. Antes de expô-lo à internet, proteja os endpoints de geração e
+moderação contra uso não autorizado; CORS não substitui autenticação. Depois,
+publique-o em um serviço HTTPS que aceite containers, configure `GEMINI_API_KEY` no servidor e
+`VITE_CONTENT_API_BASE_URL` nas Variables do GitHub com apenas a origem HTTPS,
+sem `/api` no final. Verifique `GET /api/health` (incluindo
+`dynamicContentConfigured: true`) e o preflight `OPTIONS /api/moderate-content`
+com `Origin: capacitor://localhost` e `Origin: http://localhost`. A nova
+verificação dos workflows impede criar um pacote nativo com essa API ausente.
+O servidor FastAPI usado por `VITE_API_BASE_URL` é separado e ainda precisa
+ter o loop 301 resolvido. Depois do deploy, faça o teste instalado com conta
+de revisão antes de gerar/enviar iOS build 8 ou novo Android versionCode.
+
 ### Pacote v8 preparado em 29/09/2026
 
 A [execução 36601017680 do GitHub Actions](https://github.com/chrislucena-hash/reconexao-essencial-app/actions/runs/36601017680)
