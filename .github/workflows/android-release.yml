@@ -61,6 +61,10 @@ jobs:
 
       - name: Verify FastAPI backend
         run: python3 scripts/verify_mobile_backend.py
+        env:
+          # Enquanto o proxy Cloudflare estiver em loop, verifica direto na origem.
+          # Apague a variável do repositório quando o domínio público responder 200.
+          MOBILE_BACKEND_ORIGIN_IP: ${{ vars.MOBILE_BACKEND_ORIGIN_IP }}
 
       - name: Validate and sync Android
         run: |
