@@ -2,8 +2,9 @@ from app.core.exceptions import ApiException
 from app.core.security import AuthContext
 from app.models.journal import JournalEntry, JournalMeal, JournalReflections
 from app.models.progress import EvolutionSnapshot
-from app.repositories import auth_repository, journal_repository, progress_repository
+from app.repositories import journal_repository, progress_repository
 from app.schemas.journal import JournalEntryPayload, JournalEntryUpsertRequest
+from app.services import auth_service
 
 
 def list_entries(auth_context: AuthContext, *, entry_date: str | None = None) -> list[JournalEntryPayload]:
@@ -69,10 +70,7 @@ def _sync_snapshot_from_entry(entry: JournalEntry) -> None:
 
 
 def _get_user(auth_context: AuthContext):
-    user = auth_repository.get_user_by_firebase_uid(auth_context.user_id)
-    if user is None:
-        raise ApiException(status_code=404, code="user_not_found", message="Authenticated user was not found.")
-    return user
+    return auth_service.ensure_user(auth_context)
 
 
 def _to_payload(entry: JournalEntry) -> JournalEntryPayload:

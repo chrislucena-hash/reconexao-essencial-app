@@ -1,13 +1,14 @@
 from app.core.exceptions import ApiException
 from app.core.security import AuthContext
 from app.models.assessments import AssessmentAnswer
-from app.repositories import assessment_repository, auth_repository
+from app.repositories import assessment_repository
 from app.schemas.assessments import (
     AssessmentQuestionPayload,
     AssessmentSubmissionPayload,
     AssessmentSubmissionUpsertRequest,
     AssessmentTemplatePayload,
 )
+from app.services import auth_service
 
 
 def list_templates() -> list[AssessmentTemplatePayload]:
@@ -84,10 +85,7 @@ def delete_submission(submission_id: str, auth_context: AuthContext) -> dict[str
 
 
 def _get_user(auth_context: AuthContext):
-    user = auth_repository.get_user_by_firebase_uid(auth_context.user_id)
-    if user is None:
-        raise ApiException(status_code=404, code="user_not_found", message="Authenticated user was not found.")
-    return user
+    return auth_service.ensure_user(auth_context)
 
 
 def _validate_question_codes(template_slug: str, question_codes: list[str]) -> None:

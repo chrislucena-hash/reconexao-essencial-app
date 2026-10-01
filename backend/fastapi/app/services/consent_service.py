@@ -2,6 +2,7 @@ from app.core.exceptions import ApiException
 from app.core.security import AuthContext
 from app.repositories import auth_repository
 from app.schemas.consents import ConsentPayload, ConsentUpsertRequest
+from app.services import auth_service
 
 
 def get_consent(consent_type: str, auth_context: AuthContext) -> ConsentPayload:
@@ -25,10 +26,7 @@ def upsert_consent(payload: ConsentUpsertRequest, auth_context: AuthContext) -> 
 
 
 def _get_user(auth_context: AuthContext):
-    user = auth_repository.get_user_by_firebase_uid(auth_context.user_id)
-    if user is None:
-        raise ApiException(status_code=404, code="user_not_found", message="Authenticated user was not found.")
-    return user
+    return auth_service.ensure_user(auth_context)
 
 
 def _to_payload(consent) -> ConsentPayload:

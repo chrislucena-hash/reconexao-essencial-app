@@ -1,8 +1,9 @@
 from app.core.exceptions import ApiException
 from app.core.security import AuthContext
 from app.models.progress import EvolutionSnapshot
-from app.repositories import auth_repository, progress_repository
+from app.repositories import progress_repository
 from app.schemas.progress import EvolutionSnapshotPayload, EvolutionSnapshotUpsertRequest
+from app.services import auth_service
 
 
 def list_series(auth_context: AuthContext) -> list[EvolutionSnapshotPayload]:
@@ -47,10 +48,7 @@ def delete_snapshot(snapshot_id: str, auth_context: AuthContext) -> dict[str, st
 
 
 def _get_user(auth_context: AuthContext):
-    user = auth_repository.get_user_by_firebase_uid(auth_context.user_id)
-    if user is None:
-        raise ApiException(status_code=404, code="user_not_found", message="Authenticated user was not found.")
-    return user
+    return auth_service.ensure_user(auth_context)
 
 
 def _to_payload(snapshot: EvolutionSnapshot) -> EvolutionSnapshotPayload:

@@ -1,8 +1,9 @@
 from app.core.exceptions import ApiException
 from app.core.security import AuthContext
 from app.models.fasting import FastingSession
-from app.repositories import auth_repository, fasting_repository
+from app.repositories import fasting_repository
 from app.schemas.fasting import FASTING_LABEL_TO_HOURS, FastingSessionPayload, FastingSessionUpsertRequest
+from app.services import auth_service
 
 
 def list_sessions(auth_context: AuthContext) -> list[FastingSessionPayload]:
@@ -49,10 +50,7 @@ def delete_session(session_id: str, auth_context: AuthContext) -> dict[str, str]
 
 
 def _get_user(auth_context: AuthContext):
-    user = auth_repository.get_user_by_firebase_uid(auth_context.user_id)
-    if user is None:
-        raise ApiException(status_code=404, code="user_not_found", message="Authenticated user was not found.")
-    return user
+    return auth_service.ensure_user(auth_context)
 
 
 def _to_payload(session: FastingSession) -> FastingSessionPayload:

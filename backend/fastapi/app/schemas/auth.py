@@ -7,7 +7,7 @@ from app.schemas.common import BaseSchema
 
 class RegistrationRequest(BaseSchema):
     firebaseUid: str
-    email: EmailStr
+    email: EmailStr | None = None
     displayName: str | None = None
     photoUrl: str | None = None
     phoneNumber: str | None = None
@@ -27,7 +27,7 @@ class PasswordResetRequest(BaseSchema):
 class AuthUserPayload(BaseSchema):
     id: str
     firebaseUid: str
-    email: EmailStr
+    email: str
     displayName: str | None = None
     photoUrl: str | None = None
     phoneNumber: str | None = None

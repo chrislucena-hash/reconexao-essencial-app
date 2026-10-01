@@ -26,21 +26,27 @@ def sync_user(payload: RegistrationRequest, auth_context: AuthContext) -> AuthUs
             message="firebaseUid does not match the authenticated user.",
             field="firebaseUid",
         )
+    email = auth_context.email or (str(payload.email) if payload.email else None)
+    payload = payload.model_copy(update={"email": email or _fallback_email(auth_context)})
     return register_user(payload)
 
 
-def get_current_user(auth_context: AuthContext) -> AuthUserPayload:
+def ensure_user(auth_context: AuthContext) -> AuthUser:
     user = auth_repository.get_user_by_firebase_uid(auth_context.user_id)
     if user is None:
         user = auth_repository.create_or_update_user(
             firebase_uid=auth_context.user_id,
-            email=auth_context.email or f"{auth_context.user_id}@unknown.local",
+            email=auth_context.email or _fallback_email(auth_context),
             display_name=auth_context.display_name,
             photo_url=auth_context.photo_url,
             phone_number=None,
             email_verified=bool(auth_context.email),
         )
-    return _to_payload(user)
+    return user
+
+
+def get_current_user(auth_context: AuthContext) -> AuthUserPayload:
+    return _to_payload(ensure_user(auth_context))
 
 
 def update_current_user(payload: RegistrationRequest, auth_context: AuthContext) -> AuthUserPayload:
@@ -67,6 +73,10 @@ def request_password_reset(_: PasswordResetRequest) -> MessagePayload:
     return MessagePayload(
         message="Password reset should be handled by Firebase Auth in the current frontend flow.",
     )
+
+
+def _fallback_email(auth_context: AuthContext) -> str:
+    return f"{auth_context.user_id}@users.reconexaoessencial.com.br"
 
 
 def _to_payload(user: AuthUser) -> AuthUserPayload:

@@ -1,7 +1,19 @@
 import { auth } from '../firebase';
 import { DailyLog, UserProfile, hasRecordedRatings } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+const PRODUCTION_API_BASE_URL = 'https://api.reconexaoessencial.com.br/api/v1';
+const REQUEST_TIMEOUT_MS = 15000;
+
+// Android e iOS bloqueiam HTTP sem TLS; no build de produção só aceitamos HTTPS.
+function resolveApiBaseUrl(): string {
+  const configured = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (!import.meta.env.PROD) return configured || 'http://localhost:8000/api/v1';
+  if (configured?.startsWith('https://')) return configured;
+  if (configured) console.warn(`VITE_API_BASE_URL ignorada no build de produção (não é HTTPS): ${configured}`);
+  return PRODUCTION_API_BASE_URL;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 interface ApiErrorItem {
   code: string;
@@ -53,10 +65,20 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(buildUrl(path), {
-    ...options,
-    headers,
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let response: Response;
+  try {
+    response = await fetch(buildUrl(path), {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+  } catch {
+    throw new Error('Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.');
+  } finally {
+    clearTimeout(timeout);
+  }
 
   let envelope: ApiEnvelope<T>;
   try {
