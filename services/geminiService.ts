@@ -4,13 +4,19 @@ import { DailyLog, Ritual, DailyInsight, DailyContent, Recipe } from "../types";
 
 const CONTENT_API_BASE_URL = (import.meta.env?.VITE_CONTENT_API_BASE_URL || "").replace(/\/+$/, "");
 
-function fetchContentApi(path: string, options?: RequestInit): Promise<Response> {
+async function fetchContentApi(path: string, options?: RequestInit): Promise<Response> {
   // The native WebView has no Node server at /api. A remote content server must
   // be configured explicitly; otherwise callers use their local fallback.
   if (Capacitor.isNativePlatform() && !CONTENT_API_BASE_URL) {
     throw new Error("Content API is not configured for the native app");
   }
-  return fetch(`${CONTENT_API_BASE_URL}${path}`, options);
+  const { auth } = await import('../firebase');
+  const user = auth.currentUser;
+  if (!user) throw new Error("Sign in is required for the content API");
+  const token = await user.getIdToken();
+  const headers = new Headers(options?.headers);
+  headers.set('Authorization', `Bearer ${token}`);
+  return fetch(`${CONTENT_API_BASE_URL}${path}`, { ...options, headers });
 }
 
 // Only initialize Gemini API client when running on the server (node/express context)

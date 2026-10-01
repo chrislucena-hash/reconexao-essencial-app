@@ -1,5 +1,7 @@
 import express from "express";
 import path from "path";
+import { initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import {
   generateDailyInsight, 
   generateDailyContent, 
@@ -16,9 +18,14 @@ import {
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT || 3000);
+  const firebaseProjectId = process.env.FIREBASE_PROJECT_ID;
+  if (!firebaseProjectId) {
+    throw new Error('FIREBASE_PROJECT_ID is required for the content API');
+  }
+  const firebaseApp = initializeApp({ projectId: firebaseProjectId });
 
   // Middleware to parse JSON bodies
-  app.use(express.json());
+  app.use(express.json({ limit: '32kb' }));
 
   // Capacitor serves local assets from these origins. Remote content requests
   // need CORS, including the JSON POST preflight used by community moderation.
@@ -28,7 +35,7 @@ async function startServer() {
     if (origin && nativeOrigins.has(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
       res.vary('Origin');
     }
     if (req.method === 'OPTIONS') {
@@ -41,7 +48,24 @@ async function startServer() {
   app.get('/api/health', (_req, res) => res.json({
     status: 'ok',
     dynamicContentConfigured: Boolean(process.env.GEMINI_API_KEY || process.env.API_KEY),
+    authenticationConfigured: true,
   }));
+
+  // The Gemini key stays on this server; only signed-in app users may spend it.
+  app.use('/api', async (req, res, next) => {
+    const match = /^Bearer ([^\s]+)$/.exec(req.get('Authorization') || '');
+    if (!match) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+    try {
+      await getAuth(firebaseApp).verifyIdToken(match[1]);
+      next();
+    } catch (error) {
+      console.warn('Content API rejected an invalid Firebase ID token');
+      res.status(401).json({ error: 'Invalid or expired authentication' });
+    }
+  });
 
   // API Routes
   app.get("/api/daily-insight", async (req, res) => {

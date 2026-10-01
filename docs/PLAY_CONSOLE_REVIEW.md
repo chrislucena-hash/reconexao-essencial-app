@@ -202,6 +202,26 @@ e permitir a origem da WebView no CORS do servidor. Não coloque a chave Gemini
 em variável `VITE_*`: ela deve existir somente no servidor. O build web deixou
 de substituir chaves Gemini dentro do JavaScript distribuído.
 
+### Publicação segura da API de conteúdo (01/10/2026)
+
+O servidor Node precisa de `GEMINI_API_KEY` e `FIREBASE_PROJECT_ID` no ambiente
+de hospedagem. O segundo valor deve ser o projeto Firebase usado pelo app.
+A chave Gemini fica apenas no servidor; o app envia o ID token da conta logada
+em `Authorization: Bearer ...`, e o servidor o verifica com Firebase Admin.
+`/api/health` é público, mas as demais rotas `/api/...` exigem token válido.
+Não configure `FIREBASE_AUTH_EMULATOR_HOST` na produção.
+
+Depois de implantar o Dockerfile em um host HTTPS, verifique que
+`/api/health` retorna `dynamicContentConfigured: true` e
+`authenticationConfigured: true`, que uma requisição anônima a
+`/api/daily-content` retorna 401 e que um usuário real consegue carregar
+conteúdo e publicar na comunidade. Os workflows Android e iOS verificam o
+backend FastAPI sem redirecionamento, o health check da API de conteúdo, o
+CORS com `Authorization` e a rejeição de anônimos antes de compilar. Defina
+a variável GitHub `VITE_CONTENT_API_BASE_URL` com a origem
+HTTPS, sem `/api` no final. Configure também limites de uso no provedor para
+evitar consumo excessivo da API Gemini por contas autenticadas.
+
 ## Declaração de apps de saúde
 
 Em **Política → Conteúdo do app → Apps de saúde**, declare as funções da versão enviada:
