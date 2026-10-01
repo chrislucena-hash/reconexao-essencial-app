@@ -21,16 +21,14 @@ app rejeitado](https://support.google.com/googleplay/android-developer/answer/24
 também pede a correção em todas as faixas pertinentes, não apenas na nova
 versão de teste.
 
-Há uma segunda diferença visual a resolver: o arquivo
-[`assets/play-store/icon-512.png`](../assets/play-store/icon-512.png) e os
-ícones nativos v7/v8 mostram o coração em fundo azul escuro **sem texto nem
-textura cósmica**. Esse arquivo ainda não é o ícone da ficha mostrado na
-captura. Escolha uma identidade final e aplique-a em todas as fichas
-(padrão, personalizadas e traduzidas) e no pacote Android. Se a escolha for o
-ícone nativo atual, envie o PNG deste repositório à ficha; se for manter a
-arte cósmica da ficha, prepare os ícones nativos a partir da arte original e
-gere um novo AAB. Instale esse AAB por uma faixa de teste e compare o launcher
-normal, redondo e adaptativo com a ficha visível ao mesmo testador.
+Os AABs v7/v8 mostram um coração em fundo azul escuro **sem texto nem textura
+cósmica**, diferente da ficha apresentada. Para a próxima compilação, a arte
+cósmica da ficha foi mantida como identidade: o PNG local da Play e os ícones
+Android normal, redondo e adaptativo foram gerados a partir da arte já usada no
+iPhone. Essa correção está no código, mas ainda não em um pacote instalado pela
+Play. Confira todas as fichas (padrão, personalizadas e traduzidas), instale o
+novo AAB por uma faixa de teste e compare o launcher normal, redondo e
+adaptativo com a ficha visível ao mesmo testador.
 
 O código desta revisão remove os vídeos/fotos de demonstração da comunidade,
 liga o compartilhamento, abre os detalhes do diário, mostra estados de
@@ -235,7 +233,7 @@ Confira todas as outras opções disponíveis antes de salvar. Não marque "Meu 
 
 ## Identidade do app
 
-O nome instalado em Android é **Reconexão Essencial**, com pacote `com.reconexaoessencial`. Use esse mesmo nome em todas as fichas e traduções. A evidência de 29/09 confirma que o ícone da ficha pt-BR é a arte cósmica com texto, enquanto o pacote analisado mostrou o X padrão. Os AABs v7/v8 já substituíram o X por um coração sem texto, mas a arte da ficha ainda não corresponde à arte de 512 × 512 versionada neste repositório. Resolva essa diferença escolhendo a identidade final descrita acima. Confira também fichas personalizadas, capturas e **cada pacote ativo**; a captura do launcher não identifica o código de versão.
+O nome instalado em Android é **Reconexão Essencial**, com pacote `com.reconexaoessencial`. Use esse mesmo nome em todas as fichas e traduções. A evidência de 29/09 confirma que o ícone da ficha pt-BR é a arte cósmica com texto, enquanto o pacote analisado mostrou o X padrão. Os AABs v7/v8 substituíram o X por um coração sem texto; a próxima compilação usará a arte cósmica já versionada neste branch. Confira as fichas personalizadas, capturas e **cada pacote ativo**; a captura do launcher não identifica o código de versão analisado.
 
 ## Descrição sugerida para a ficha principal
 
