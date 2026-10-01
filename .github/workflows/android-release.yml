@@ -90,6 +90,7 @@ jobs:
           assert 'export const AI_ENABLED = false;' in Path('features.ts').read_text(encoding='utf-8'), 'AI must remain disabled for this release'
           assert b'/api/daily-content' not in javascript, 'AI content endpoint found in mobile bundle'
           assert b'/api/moderate-content' not in javascript, 'AI moderation endpoint found in mobile bundle'
+          assert b'gemini-3.6-flash' not in javascript, 'AI model found in mobile bundle'
           PY
           npx cap sync android
 
@@ -128,6 +129,7 @@ jobs:
           assert 'export const AI_ENABLED = false;' in open('../features.ts', encoding='utf-8').read(), 'AI must remain disabled for this release'
           assert b'/api/daily-content' not in javascript, 'AI content endpoint found in APK'
           assert b'/api/moderate-content' not in javascript, 'AI moderation endpoint found in APK'
+          assert b'gemini-3.6-flash' not in javascript, 'AI model found in APK'
           PY
 
       - name: Upload signed AAB

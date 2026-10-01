@@ -25,7 +25,7 @@ async function fetchContentApi(path: string, options?: RequestInit): Promise<Res
 const serverApiKey = typeof window === "undefined"
   ? process.env.GEMINI_API_KEY || process.env.API_KEY
   : undefined;
-const ai = serverApiKey ? new GoogleGenAI({
+const ai = AI_ENABLED && serverApiKey ? new GoogleGenAI({
   apiKey: serverApiKey,
   httpOptions: {
     headers: {
