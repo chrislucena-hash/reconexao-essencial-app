@@ -53,6 +53,8 @@ import {
 import { DailyInsight, DailyContent, Recipe, AppView } from '../types';
 import { playVoicePassage as playVoicePassageService, stopAllAudio, unlockMobileAudio } from '../services/audioService';
 import NextStepGuide from './NextStepGuide';
+import { AI_ENABLED } from '../features';
+import { CURATED_DAILY_CHALLENGE } from '../curatedContent';
 
 const DEFAULT_DAILY_INSIGHT: DailyInsight = {
   oracleMessage: "Olhe para dentro. Nas profundezas do seu silêncio habita a verdade imutável do seu ser.",
@@ -73,7 +75,7 @@ const DEFAULT_DAILY_INSIGHT: DailyInsight = {
 
 const DEFAULT_DAILY_CONTENT: DailyContent = {
   motivation: "Sua saúde é o seu altar. Trate o seu templo físico com a reverência que ele merece hoje.",
-  dailyChallenge: "Mastigue cada garfada pelo menos 30 vezes e coma em absoluto silêncio.",
+  dailyChallenge: CURATED_DAILY_CHALLENGE,
   menu: [
     {
       title: "Creme de Abacate Ancestral",
@@ -120,6 +122,7 @@ interface GuidanceProps {
 }
 
 const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
+  const speechAvailable = typeof window !== 'undefined' && 'speechSynthesis' in window;
   const [activeSubTab, setActiveSubTab] = useState<'jornada' | 'autocura' | 'saude-intestinal'>('jornada');
   const [content, setContent] = useState<DailyContent | null>(null);
   const [insight, setInsight] = useState<DailyInsight | null>(null);
@@ -263,6 +266,28 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
 
   useEffect(() => {
     const load = async () => {
+      if (!AI_ENABLED) {
+        setInsight(DEFAULT_DAILY_INSIGHT);
+        setContent(DEFAULT_DAILY_CONTENT);
+        setInsightIsCurated(true);
+        setContentIsCurated(true);
+        setFermentationRecipe({
+          title: "Salada com Chucrute Pronto",
+          type: "Receita com Fermentado",
+          ingredients: ["Chucrute pronto para consumo", "Folhas de sua preferência", "Tomate", "Azeite a gosto"],
+          instructions: ["Lave as folhas e o tomate.", "Monte a salada e acrescente o chucrute pronto.", "Siga as instruções de conservação da embalagem e sirva com azeite, se desejar."]
+        });
+        setFermentationIsCurated(true);
+        setPurificationTips([
+          "Faça pausas ao longo do dia e observe como você se sente.",
+          "Beba água conforme sua sede e necessidades individuais.",
+          "Inclua alimentos variados nas refeições, respeitando suas preferências e orientações profissionais.",
+          "Anote dúvidas sobre alimentação ou sintomas para conversar com um profissional de saúde.",
+          "Escolha um momento tranquilo para comer com atenção."
+        ]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         const [insightData, dailyContent, ferment, tips] = await Promise.all([
@@ -338,7 +363,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
   }, []);
 
   useEffect(() => {
-    if (insight?.dailyExercise) {
+    if (AI_ENABLED && insight?.dailyExercise) {
       const text = `Exercício bioenergético do dia: ${insight.dailyExercise}`;
       if (!audioCacheRef.current[text]) {
         generateSpeech(text).then((audio) => {
@@ -489,6 +514,12 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
     }
 
     setIsPlaying(true);
+
+    if (!AI_ENABLED) {
+      await playVoicePassageService(null, text);
+      setIsPlaying(false);
+      return;
+    }
 
     // Reprodução instantânea se o áudio já estiver em cache
     const cached = audioCacheRef.current[text];
@@ -645,12 +676,12 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
               <p className="text-xs text-[#4A506B] leading-relaxed italic font-light">
                 {insight.dailyExercise}
               </p>
-              <button
+              {(AI_ENABLED || speechAvailable) && <button
                 onClick={() => playGuidance(`Exercício bioenergético do dia: ${insight.dailyExercise}`)}
                 className="mt-2 text-[9px] font-black text-aura-gold uppercase tracking-widest flex items-center gap-2 hover:underline"
               >
-                <Volume2 size={14} /> Ouvir Instruções do Exercício
-              </button>
+                <Volume2 size={14} /> {AI_ENABLED ? 'Ouvir instruções do exercício' : 'Ouvir com voz do dispositivo'}
+              </button>}
             </section>
           )}
 
@@ -693,7 +724,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
            </div>
            
            <div className="space-y-8">
-             {contentIsCurated && <p className="px-2 text-xs text-[#4A506B]">Receitas fixas do app; a geração de novas opções está indisponível no momento.</p>}
+             {contentIsCurated && <p className="px-2 text-xs text-[#4A506B]">Receitas incluídas no app.</p>}
              {recipeOptionsError && <p role="alert" className="px-2 text-xs text-rose-700">{recipeOptionsError}</p>}
              {content.menu.map((recipe, index) => (
                <section key={index} className="relative glass-mystic rounded-[3.5rem] border border-white/5 overflow-hidden group transition-all shadow-2xl">
@@ -720,7 +751,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                          <h4 className="text-2xl font-serif text-[#18245C] leading-snug">{recipe.title}</h4>
                        </div>
                        <div className="flex gap-2">
-                         <button 
+                         {AI_ENABLED && <button
                            onClick={() => handleOpenRefresh(index, recipe.type)} 
                            className="p-3 bg-[#18245C]/5 text-[#18245C] hover:bg-[#18245C]/10 rounded-2xl border border-[#18245C]/10 transition-all active:scale-90 flex items-center gap-1.5"
                            title="Outras opções de receitas"
@@ -728,7 +759,7 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                          >
                            <RotateCcw size={18} />
                            <span className="text-[8px] font-black text-aura-gold uppercase tracking-widest">Outras Opções</span>
-                         </button>
+                         </button>}
                           <button onClick={() => handleShare(recipe)} title="Compartilhar receita" aria-label="Compartilhar receita" className="p-3 bg-[#18245C]/5 text-[#18245C] hover:bg-[#18245C]/10 rounded-2xl border border-[#18245C]/10 transition-all"><Share2 size={18} /></button>
                        </div>
                      </div>
@@ -933,11 +964,11 @@ const Guidance: React.FC<GuidanceProps> = ({ setView }) => {
                          <Activity size={20} />
                       </div>
                       <div>
-                         <h3 className="text-2xl font-serif text-white italic">Alquimia Viva</h3>
+                         <h3 className="text-2xl font-serif text-[#18245C] italic">Alquimia Viva</h3>
                          <p className="text-[10px] font-black text-aura-emerald uppercase tracking-widest">Saúde Intestinal</p>
                       </div>
                    </div>
-                   {fermentationIsCurated && <button
+                   {AI_ENABLED && fermentationIsCurated && <button
                      onClick={handleRefreshFerment}
                      title="Tentar carregar receita online"
                      aria-label="Tentar carregar receita online"

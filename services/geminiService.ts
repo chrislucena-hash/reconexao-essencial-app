@@ -1,10 +1,12 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { Capacitor } from "@capacitor/core";
 import { DailyLog, Ritual, DailyInsight, DailyContent, Recipe } from "../types";
+import { AI_ENABLED } from "../features";
 
 const CONTENT_API_BASE_URL = (import.meta.env?.VITE_CONTENT_API_BASE_URL || "").replace(/\/+$/, "");
 
 async function fetchContentApi(path: string, options?: RequestInit): Promise<Response> {
+  if (!AI_ENABLED) throw new Error("AI features are disabled in this release");
   // The native WebView has no Node server at /api. A remote content server must
   // be configured explicitly; otherwise callers use their local fallback.
   if (Capacitor.isNativePlatform() && !CONTENT_API_BASE_URL) {

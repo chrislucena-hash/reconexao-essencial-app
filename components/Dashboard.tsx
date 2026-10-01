@@ -1,7 +1,7 @@
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { analyzeSoulJourney, generateDailyContent } from '../services/geminiService';
-import { DailyLog, UserProfile, AppView, DailyContent, JourneyProgress, hasRecordedRatings } from '../types';
+import React, { useState, useMemo } from 'react';
+import { DailyLog, UserProfile, AppView, JourneyProgress, hasRecordedRatings } from '../types';
+import { CURATED_DAILY_CHALLENGE } from '../curatedContent';
 import { RITUALS, INITIAL_JOURNEY } from '../constants.tsx';
 import NextStepGuide from './NextStepGuide';
 import { 
@@ -24,10 +24,6 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, setView, journeyProgress }) => {
-  const [insight, setInsight] = useState<string | null>(null);
-  const [loadingInsight, setLoadingInsight] = useState(false);
-  const [dailyContent, setDailyContent] = useState<DailyContent | null>(null);
-  const [loadingContent, setLoadingContent] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [goalError, setGoalError] = useState<string | null>(null);
   const [isSavingGoal, setIsSavingGoal] = useState(false);
@@ -71,39 +67,17 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
     return currentDayData ? currentDayData.task : INITIAL_JOURNEY[0].task;
   }, [journeyProgress]);
 
-  useEffect(() => {
-    const fetchContent = async () => {
-      setLoadingContent(true);
-      const content = await generateDailyContent();
-      setDailyContent(content);
-      setLoadingContent(false);
-    };
-    fetchContent();
-  }, []);
-
   const todaysGoals = useMemo(() => {
     return RITUALS;
   }, []);
 
-  const totalGoals = todaysGoals.length + 1 + (dailyContent ? 1 : 0);
+  const totalGoals = todaysGoals.length + 2;
   const completedCount = todaysGoals.filter(g => todayLog?.completedActions[g.id as keyof DailyLog['completedActions']]).length 
     + (todayLog?.completedActions.journeyTask ? 1 : 0)
-    + (dailyContent && todayLog?.completedActions.dailyChallenge ? 1 : 0);
+    + (todayLog?.completedActions.dailyChallenge ? 1 : 0);
 
   const isAlignmentConfirmed = todayLog?.completedActions.alignmentConfirmed;
   const allTasksDone = completedCount >= totalGoals;
-
-  useEffect(() => {
-    const fetchInsight = async () => {
-      if (logs.length >= 2 && !insight) {
-        setLoadingInsight(true);
-        const result = await analyzeSoulJourney(logs);
-        setInsight(result);
-        setLoadingInsight(false);
-      }
-    };
-    fetchInsight();
-  }, [logs]);
 
   return (
     <div className="p-2 sm:p-6 pb-24 sm:pb-32 max-w-2xl mx-auto space-y-8 sm:space-y-12 animate-in fade-in relative w-full">
@@ -225,7 +199,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
         </section>
       )}
 
-      {/* Gráfico e Insight */}
+      {/* Gráfico e reflexão incluída no app */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <section className="relative flex flex-col items-center justify-center p-10 glass-mystic rounded-[4rem] border border-[#18245C]/10 bg-gradient-to-br from-[#A268D7]/10 via-[#18245C]/5 to-[#2E7D68]/10 shadow-sm overflow-hidden group">
           <div className="relative w-48 h-48 flex items-center justify-center">
@@ -270,9 +244,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
           </div>
           <CompassIcon size={32} className="text-[#A268D7]" />
           <div className="space-y-2">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#A268D7]">O Oráculo Diz</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#A268D7]">Reflexão incluída no app</h3>
             <p className="text-lg text-[#18245C] font-serif italic leading-relaxed">
-              {loadingInsight ? "Sintonizando..." : insight ? `"${insight}"` : "Sua jornada de autoconhecimento segue no seu ritmo."}
+              Sua jornada de autoconhecimento segue no seu ritmo.
             </p>
           </div>
         </section>
@@ -329,7 +303,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
           {/* Desafio de Presença */}
           <button 
             onClick={() => handleToggleGoal('dailyChallenge')}
-            disabled={isSavingGoal || !dailyContent}
+            disabled={isSavingGoal}
             className={`group relative p-8 rounded-[3rem] flex items-center gap-6 border transition-all duration-300 text-left overflow-hidden ${
               todayLog?.completedActions.dailyChallenge 
                 ? 'bg-[#2E7D68]/15 border-[#2E7D68]/40 shadow-sm' 
@@ -350,7 +324,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
                 Desafio de Presença
               </span>
               <span className="text-xs text-[#4A506B] leading-relaxed block mt-1.5 font-medium tracking-wide">
-                {loadingContent ? "Carregando desafio..." : dailyContent?.dailyChallenge || 'Desafio indisponível no momento.'}
+                {CURATED_DAILY_CHALLENGE}
               </span>
             </div>
             <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${

@@ -28,6 +28,7 @@ import {
 import { DailyLog, UserProfile, JourneyProgress, AppView, hasRecordedRatings } from '../types';
 import { motion } from 'framer-motion';
 import NextStepGuide from './NextStepGuide';
+import { AI_ENABLED } from '../features';
 
 interface EvolutionReportProps {
   logs: DailyLog[];
@@ -725,7 +726,7 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
         </>
       )}
 
-      {setView && (
+      {setView && AI_ENABLED && (
         <NextStepGuide 
           currentStepName="Portal da Evolução"
           stepNumber={6}

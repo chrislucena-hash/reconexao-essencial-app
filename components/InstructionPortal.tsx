@@ -1,5 +1,6 @@
 import React from 'react';
 import { Compass, Home, ClipboardList, Sparkles, Heart, Users, ArrowRight, ZapOff, Flame, Instagram } from 'lucide-react';
+import { AI_ENABLED } from '../features';
 
 interface InstructionPortalProps {
   onProceed: () => void;
@@ -12,7 +13,7 @@ const InstructionPortal: React.FC<InstructionPortalProps> = ({ onProceed }) => {
     { icon: ClipboardList, label: 'Portal do Diário', desc: 'Espaço para registrar suas experiências e percepções.' },
     { icon: Sparkles, label: 'Portal do Guia', desc: 'Ideias de atenção plena e alimentação consciente.' },
     { icon: Heart, label: 'Portal do Autocuidado', desc: 'Práticas guiadas de meditação e relaxamento.' },
-    { icon: Users, label: 'Portal da Egrégora', desc: 'Egrégora de luz onde centelhas divinas se reconhecem.' },
+    ...(AI_ENABLED ? [{ icon: Users, label: 'Portal da Egrégora', desc: 'Egrégora de luz onde centelhas divinas se reconhecem.' }] : []),
   ];
 
   return (

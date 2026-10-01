@@ -21,6 +21,7 @@ import { Compass, Sparkles, X, Flame, Loader2 } from 'lucide-react';
 import { doc, setDoc, collection, onSnapshot, query, orderBy, limit, getDocs, writeBatch } from 'firebase/firestore';
 import { db, auth } from './firebase';
 import { syncUserWithBackend, upsertJournalEntry } from './services/backendService';
+import { AI_ENABLED } from './features';
 
 const AppContent: React.FC = () => {
   const { user, userProfile: fbProfile, loading: fbLoading, error: profileSyncError } = useFirebase();
@@ -403,7 +404,9 @@ const AppContent: React.FC = () => {
       case AppView.GUIDANCE:
         return <Guidance setView={setCurrentView} />;
       case AppView.COMMUNITY:
-        return <Community setView={setCurrentView} onResetJourney={handleResetJourney} />;
+        return AI_ENABLED
+          ? <Community setView={setCurrentView} onResetJourney={handleResetJourney} />
+          : <Dashboard userProfile={userProfile} logs={logs} onToggleGoal={toggleDailyGoal} setView={setCurrentView} journeyProgress={journeyProgress} />;
       case AppView.JOURNEY:
         return <Journey progress={journeyProgress} onUpdateProgress={handleUpdateJourneyProgress} onResetJourney={handleResetJourney} setView={setCurrentView} />;
       case AppView.EVOLUTION:

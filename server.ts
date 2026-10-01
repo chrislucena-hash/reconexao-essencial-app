@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
+import { AI_ENABLED } from "./features";
 import {
   generateDailyInsight, 
   generateDailyContent, 
@@ -47,9 +48,17 @@ async function startServer() {
 
   app.get('/api/health', (_req, res) => res.json({
     status: 'ok',
-    dynamicContentConfigured: Boolean(process.env.GEMINI_API_KEY || process.env.API_KEY),
+    dynamicContentConfigured: AI_ENABLED && Boolean(process.env.GEMINI_API_KEY || process.env.API_KEY),
     authenticationConfigured: true,
   }));
+
+  app.use('/api', (_req, res, next) => {
+    if (!AI_ENABLED) {
+      res.status(503).json({ error: 'AI features are disabled in this release' });
+      return;
+    }
+    next();
+  });
 
   // The Gemini key stays on this server; only signed-in app users may spend it.
   app.use('/api', async (req, res, next) => {

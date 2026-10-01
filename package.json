@@ -6,12 +6,13 @@
   "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "build:mobile": "vite build",
     "start": "node dist/server.cjs",
     "lint": "tsc --noEmit",
-    "android:sync": "npm run build && cap sync android",
+    "android:sync": "npm run build:mobile && cap sync android",
     "android:open": "cap open android",
     "android:run": "cap run android",
-    "ios:sync": "npm run build && cap sync ios",
+    "ios:sync": "npm run build:mobile && cap sync ios",
     "ios:open": "cap open ios"
   },
   "dependencies": {

@@ -1,5 +1,35 @@
 # Reenvio ao Google Play: Reconexão Essencial
 
+## Candidato sem IA (01/10/2026)
+
+Para a próxima compilação Android e iOS, `features.ts` fixa `AI_ENABLED = false`.
+O app não solicita análises pessoais, receitas, dicas nem áudio ao serviço de IA.
+O Início oferece uma reflexão e um desafio incluídos no app; o Guia mostra
+sugestões fixas identificadas como tal. Os botões para gerar outras receitas
+ficam ocultos. As práticas com voz usam a síntese do dispositivo quando
+disponível; a disponibilidade e a voz variam conforme o aparelho. A Comunidade
+e seus links de navegação ficam ocultos nesta versão, pois publicar depende
+de moderação por IA. Os dados já publicados não são apagados.
+
+Os workflows de Android e iOS usam `npm run build:mobile` e não exigem mais
+`VITE_CONTENT_API_BASE_URL` nem o servidor Node de conteúdo. Ambos **ainda
+verificam o `/health` do backend FastAPI**, necessário para login e dados. Se
+`api.reconexaoessencial.com.br`
+continuar em redirecionamento para si mesmo, a compilação de release falhará
+antes de empacotar; resolva o acesso HTTPS do domínio. O ajuste de DNS/SSL
+pendente é independente de usar IA.
+
+Antes de enviar para produção: gere novos pacotes a partir desta revisão,
+instale Android via faixa de teste e iOS via TestFlight, confirme conteúdo
+fixo, síntese de voz ou leitura visual, ausência da Comunidade, persistência
+dos dados e correspondência do ícone instalado com a ficha. Revise a ficha da
+loja para que ela não prometa geração por IA ou recursos ocultos nesta versão.
+Os números de versão devem superar os últimos já enviados em cada loja.
+
+As seções datadas abaixo registram diagnósticos e requisitos de versões
+anteriores; as instruções sobre publicar a API Node não se aplicam a este
+candidato sem IA.
+
 ## Nova rejeição de 29/09/2026: identidade e interface
 
 O Play Console apontou **ícone instalado diferente da ficha pt-BR** e
