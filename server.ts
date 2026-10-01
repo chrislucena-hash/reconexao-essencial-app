@@ -1,7 +1,9 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
-import { 
+import { initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import { AI_ENABLED } from "./features";
+import {
   generateDailyInsight, 
   generateDailyContent, 
   generateFermentationRecipe, 
@@ -16,10 +18,63 @@ import {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT || 3000);
+  const firebaseProjectId = process.env.FIREBASE_PROJECT_ID;
+  if (!firebaseProjectId) {
+    throw new Error('FIREBASE_PROJECT_ID is required for the content API');
+  }
+  const firebaseApp = initializeApp({ projectId: firebaseProjectId });
 
   // Middleware to parse JSON bodies
-  app.use(express.json());
+  app.use(express.json({ limit: '32kb' }));
+
+  // Capacitor serves local assets from these origins. Remote content requests
+  // need CORS, including the JSON POST preflight used by community moderation.
+  const nativeOrigins = new Set(['capacitor://localhost', 'http://localhost', 'https://localhost']);
+  app.use('/api', (req, res, next) => {
+    const origin = req.get('Origin');
+    if (origin && nativeOrigins.has(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.vary('Origin');
+    }
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
+    next();
+  });
+
+  app.get('/api/health', (_req, res) => res.json({
+    status: 'ok',
+    dynamicContentConfigured: AI_ENABLED && Boolean(process.env.GEMINI_API_KEY || process.env.API_KEY),
+    authenticationConfigured: true,
+  }));
+
+  app.use('/api', (_req, res, next) => {
+    if (!AI_ENABLED) {
+      res.status(503).json({ error: 'AI features are disabled in this release' });
+      return;
+    }
+    next();
+  });
+
+  // The Gemini key stays on this server; only signed-in app users may spend it.
+  app.use('/api', async (req, res, next) => {
+    const match = /^Bearer ([^\s]+)$/.exec(req.get('Authorization') || '');
+    if (!match) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+    try {
+      await getAuth(firebaseApp).verifyIdToken(match[1]);
+      next();
+    } catch (error) {
+      console.warn('Content API rejected an invalid Firebase ID token');
+      res.status(401).json({ error: 'Invalid or expired authentication' });
+    }
+  });
 
   // API Routes
   app.get("/api/daily-insight", async (req, res) => {
@@ -145,6 +200,7 @@ async function startServer() {
 
   // Vite integration
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",

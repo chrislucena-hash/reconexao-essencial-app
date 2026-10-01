@@ -4,6 +4,7 @@ import { generateSpeech } from '../services/geminiService';
 import { playVoicePassage as playVoicePassageService, stopAllAudio, unlockMobileAudio } from '../services/audioService';
 import { AppView } from '../types';
 import NextStepGuide from './NextStepGuide';
+import { AI_ENABLED } from '../features';
 
 export interface HealingPortal {
   id: string;
@@ -34,7 +35,7 @@ const HEALING_PORTALS: HealingPortal[] = [
     id: 'conscious-breath',
     category: 'breathing',
     hasVoice: false,
-    title: 'Respiração de Autocura (4-4-8)',
+    title: 'Respiração Consciente (4-4-8)',
     badge: 'Respiração Guiada por Sinos',
     desc: 'Pranayama rítmico acompanhado por sinos tibetanos e orbe de luz. Isento de voz falada para silenciar a mente.',
     icon: Wind,
@@ -44,7 +45,7 @@ const HEALING_PORTALS: HealingPortal[] = [
       breathing: "Inale a luz divina (4 tempos)...",
       feeling: "Retenha a energia no seu centro de força (4 tempos)...",
       affirming: "Solte suavemente, liberando tensões (8 tempos)...",
-      checking: "Permaneça na quietude. Seu ritmo respiratório restaurou o equilíbrio da sua energia vital."
+      checking: "Permaneça na quietude e observe como você se sente."
     },
     durations: {
       breathing: 4,
@@ -59,14 +60,14 @@ const HEALING_PORTALS: HealingPortal[] = [
     hasVoice: false,
     title: 'Pranayama do Equilíbrio Vital',
     badge: 'Respiração Rítmica',
-    desc: 'Respiração quadrada harmônica em 5 tempos para acalmar o sistema nervoso e estabilizar batimentos.',
+    desc: 'Respiração ritmada em 5 tempos para praticar a atenção ao momento presente.',
     icon: Activity,
     color: 'text-emerald-400',
     steps: {
       instruction: "Sente-se confortavelmente com a coluna ereta. Prepare-se para a respiração de equilíbrio prânico.",
       breathing: "Inale vitalidade e serenidade...",
       feeling: "Retenha o ar com leveza no peito...",
-      affirming: "Exale e dissipe toda ansiedade...",
+      affirming: "Exale com suavidade, respeitando seu conforto...",
       checking: "Sinta a desaceleração benéfica do seu corpo. Sinta o fluxo da paz interior."
     },
     durations: {
@@ -82,15 +83,15 @@ const HEALING_PORTALS: HealingPortal[] = [
     hasVoice: true,
     title: 'Meditação: Reintegração Emocional',
     badge: 'Meditação Guiada por Voz',
-    desc: 'Condução meditativa por voz calma e amorosa para dissolver ansiedade, medos e mágoas no abraço da luz.',
+    desc: 'Meditação guiada para acolher emoções e fazer uma pausa de reflexão.',
     icon: Heart,
     color: 'text-rose-400',
     steps: {
       instruction: "Acolha este momento com profunda serenidade. Feche os olhos, solte os ombros e permita que esta voz calma conduza sua alma a um estado de amor incondicional.",
       breathing: "Inale suavemente uma luz dourada e amorosa. Permita que ela envolva seu peito e ilumine cada batimento do seu coração.",
       feeling: "Retenha essa luz com doçura. Acolha qualquer preocupação com compaixão, sentindo-se protegido no abraço do divino.",
-      affirming: "Ao exalar lentamente, liberte o passado. Decrete em seu coração: 'Eu sou paz, eu sou luz, eu acolho minha cura'.",
-      checking: "Sinta a harmonia profunda restabelecida em seu ser. Suas emoções agora repousam em serena quietude."
+      affirming: "Ao exalar lentamente, observe o momento presente e repita, se quiser: 'Eu me acolho com gentileza'.",
+      checking: "Perceba como você se sente agora, sem exigir uma mudança nas emoções."
     },
     durations: {
       breathing: 5,
@@ -105,15 +106,15 @@ const HEALING_PORTALS: HealingPortal[] = [
     hasVoice: true,
     title: 'Meditação: Presença da Centelha',
     badge: 'Escaneamento do Templo',
-    desc: 'Escaneamento meditativo por voz doce e serena para purificar o campo físico e revitalizar suas células.',
+    desc: 'Exercício guiado de atenção às sensações do corpo.',
     icon: Sparkles,
     color: 'text-indigo-400',
     steps: {
       instruction: "Realizaremos um escaneamento meditado do seu templo físico. Permita que a voz amorosa guie a energia cristalina por todo o seu corpo.",
       breathing: "Inale uma luz violeta e purificadora. Sinta-a relaxar sua mente, pescoço e coluna, dissolvendo tensões.",
-      feeling: "Mantenha a atenção amorosa em seus órgãos e células, sentindo a centelha divina regenerar seu organismo.",
-      affirming: "Exale a rigidez e o cansaço. Afirme com ternura: 'Habito este corpo com saúde plena, paz e glória'.",
-      checking: "Perceba seu templo físico radiante, leve e reenergizado. Sua biologia ressoa na frequência perfeita do amor."
+      feeling: "Mantenha a atenção nas sensações do corpo, sem julgá-las.",
+      affirming: "Ao exalar, lembre-se: 'Posso cuidar de mim com gentileza'.",
+      checking: "Observe o que percebeu durante a prática."
     },
     durations: {
       breathing: 5,
@@ -149,17 +150,17 @@ const HEALING_PORTALS: HealingPortal[] = [
     id: 'self-hypnosis',
     category: 'hypnosis',
     hasVoice: true,
-    title: 'Autohipnose: Reprogramação da Biologia',
+    title: 'Relaxamento Guiado',
     badge: 'Autohipnose Guiada',
-    desc: 'Indução profunda conduzida por voz serena e afetuosa para reprogramar o subconsciente com comandos de cura.',
+    desc: 'Exercício de imaginação guiada e atenção ao momento presente.',
     icon: Moon,
     color: 'text-purple-400',
     steps: {
       instruction: "Relaxe profundamente. Deixe minha voz conduzir suavemente sua mente consciente até um estado de transe sereno e acolhedor.",
       breathing: "A cada respiração, você afunda o dobro em um estado de paz absoluta... soltando o controle e permitindo que seu subconsciente atue.",
-      feeling: "Em transe profundo, observe a luz da autocura reescrevendo memórias e restaurando a perfeita harmonia do seu ser.",
-      affirming: "Instale o comando hipnótico: 'Minhas células se regeneram agora. Eu aceito minha saúde e vitalidade plenamente'.",
-      checking: "O comando de autocura está gravado em seu subconsciente. Você desperta sentindo-se renovado, forte e profundamente em paz."
+      feeling: "Imagine uma luz acolhedora e observe as sensações que surgem.",
+      affirming: "Repita, se desejar: 'Posso fazer uma pausa e me acolher'.",
+      checking: "Ao terminar, observe como você se sente."
     },
     durations: {
       breathing: 6,
@@ -172,17 +173,17 @@ const HEALING_PORTALS: HealingPortal[] = [
     id: 'self-hypnosis-sleep',
     category: 'hypnosis',
     hasVoice: true,
-    title: 'Autohipnose: Indução ao Sono Profundo',
+    title: 'Relaxamento antes de dormir',
     badge: 'Autohipnose Guiada',
-    desc: 'Sessão de hipnose tranquila por voz calma para desacelerar a mente, eliminar estresse e induzir um sono reparador.',
+    desc: 'Áudio calmo para um momento de pausa antes de dormir.',
     icon: Flame,
     color: 'text-orange-400',
     steps: {
       instruction: "Desligue-se das preocupações do dia. Permita que esta voz amorosa descanse seus pensamentos e conduza seu ser ao sono sagrado.",
       breathing: "Inale o silêncio da noite. A cada expiração, suas pálpebras ficam mais pesadas e seu corpo relaxa profundamente.",
       feeling: "Sua mente desacelera... os pensamentos se desfazem suavemente no ar, deixando apenas a paz acolhedora do ambiente.",
-      affirming: "Grave em seu subconsciente: 'Eu me entrego ao descanso. Meu sono restaura meu corpo, minha alma e minha mente'.",
-      checking: "Mergulhe no sono reparador. Seu corpo se cura enquanto você descansa na segurança do universo."
+      affirming: "Repita, se desejar: 'Posso descansar no meu próprio ritmo'.",
+      checking: "Descanse se desejar, respeitando as necessidades do seu corpo."
     },
     durations: {
       breathing: 6,
@@ -303,6 +304,7 @@ interface WellnessProps {
 }
 
 const Wellness: React.FC<WellnessProps> = ({ setView }) => {
+  const speechAvailable = typeof window !== 'undefined' && 'speechSynthesis' in window;
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'breathing' | 'meditation' | 'hypnosis'>('all');
   const [loading, setLoading] = useState(false);
   const [ritualStep, setRitualStep] = useState<'idle' | 'preparing' | 'instruction' | 'breathing' | 'feeling' | 'affirming' | 'checking' | 'completed'>('idle');
@@ -449,7 +451,7 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
     let audioData = base64;
     
     // If preloaded audio was missing or failed, try on-demand AI speech generation
-    if (!audioData) {
+    if (AI_ENABLED && !audioData) {
       try {
         const prompt = "Você é uma pessoa real falando em português do Brasil de forma fluida, natural, expressiva e acolhedora. Fale com tom humano caloroso, pronúncia perfeita e ritmo espontâneo de conversa.";
         const freshAudio = await generateSpeech(textToSpeak, prompt);
@@ -555,28 +557,27 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
     setCountdown(null);
     setBreathingPhase("");
     setCurrentCycle(0);
+    preloadedAudioRef.current = { instruction: '', breathing: '', feeling: '', affirming: '', checking: '' };
 
     try {
       if (portal.hasVoice) {
-        // MEDITAÇÕES & AUTOHIPNOSES:
-        // Pre-generate audio passages sequentially during 'preparing' screen to prevent rate limits!
-        const calmLovingPrompt = "Você é uma pessoa real falando português do Brasil de forma fluida, acolhedora, humana e expressiva. Fale com voz natural, tom caloroso e cadência espontânea de conversa, sem arrastar as palavras e sem pausas artificiais.";
+        if (AI_ENABLED) {
+          const calmLovingPrompt = "Você é uma pessoa real falando português do Brasil de forma fluida, acolhedora, humana e expressiva. Fale com voz natural, tom caloroso e cadência espontânea de conversa, sem arrastar as palavras e sem pausas artificiais.";
+          const instructionAudio = await generateSpeech(portal.steps.instruction, calmLovingPrompt);
+          const breathingAudio = await generateSpeech(portal.steps.breathing, calmLovingPrompt);
+          const feelingAudio = await generateSpeech(portal.steps.feeling, calmLovingPrompt);
+          const affirmingAudio = await generateSpeech(portal.steps.affirming, calmLovingPrompt);
+          const checkingAudio = await generateSpeech(portal.steps.checking, calmLovingPrompt);
 
-        const instructionAudio = await generateSpeech(portal.steps.instruction, calmLovingPrompt);
-        const breathingAudio = await generateSpeech(portal.steps.breathing, calmLovingPrompt);
-        const feelingAudio = await generateSpeech(portal.steps.feeling, calmLovingPrompt);
-        const affirmingAudio = await generateSpeech(portal.steps.affirming, calmLovingPrompt);
-        const checkingAudio = await generateSpeech(portal.steps.checking, calmLovingPrompt);
-
-        if (!ritualActiveRef.current) return;
-
-        preloadedAudioRef.current = {
-          instruction: instructionAudio || "",
-          breathing: breathingAudio || "",
-          feeling: feelingAudio || "",
-          affirming: affirmingAudio || "",
-          checking: checkingAudio || "",
-        };
+          if (!ritualActiveRef.current) return;
+          preloadedAudioRef.current = {
+            instruction: instructionAudio || "",
+            breathing: breathingAudio || "",
+            feeling: feelingAudio || "",
+            affirming: affirmingAudio || "",
+            checking: checkingAudio || "",
+          };
+        }
 
         setLoading(false);
 
@@ -622,7 +623,7 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
 
           // Sub-step: Exale / Afirmação
           setRitualStep('affirming');
-          setBreathingPhase("Afirmação & Cura");
+          setBreathingPhase("Afirmação & Presença");
           playBell();
           if (ritualActiveRef.current) {
             playVoicePassage(preloadedAudioRef.current.affirming, portal.steps.affirming);
@@ -637,7 +638,7 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
         // Phase 3: Closing / Retorno
         if (!ritualActiveRef.current) return;
         setRitualStep('checking');
-        setBreathingPhase("Selo de Cura");
+        setBreathingPhase("Pausa Final");
         setCountdown(null);
         playBell();
         if (ritualActiveRef.current) {
@@ -733,10 +734,11 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
       <header className="px-4 text-center space-y-3">
         <div className="flex items-center justify-center gap-2 text-magic-gold">
           <Stars size={16} />
-          <p className="text-[10px] font-black uppercase tracking-[0.5em]">Portal de Cura & Meditação</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.5em]">Portal de Autocuidado & Meditação</p>
           <Stars size={16} />
         </div>
-        <h2 className="text-4xl font-serif text-[#18245C] tracking-tighter italic leading-none">Santuário de Autocura</h2>
+        <h2 className="text-4xl font-serif text-[#18245C] tracking-tighter italic leading-none">Santuário de Autocuidado</h2>
+        <p className="text-xs text-[#4A506B]">Práticas de atenção e relaxamento. Faça apenas o que for confortável e interrompa se sentir desconforto.</p>
       </header>
 
       <div className="px-4 space-y-8">
@@ -745,8 +747,8 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
             {/* Mensagem Inspiradora */}
             <div className="p-8 glass-mystic border border-magic-gold/20 rounded-[2.5rem] text-center relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-magic-gold/5 blur-[50px] pointer-events-none" />
-              <p className="text-xs text-ethereal-100 italic leading-relaxed relative z-10 font-light">
-                "A cura não é algo que você busca fora, mas a paz que você <span className="text-magic-gold font-bold">permite</span> despertar em sua própria alma."
+              <p className="text-xs text-[#4A506B] italic leading-relaxed relative z-10 font-light">
+                "Reserve um momento para se ouvir com <span className="text-magic-gold font-bold">gentileza</span> e presença."
               </p>
             </div>
 
@@ -764,7 +766,7 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
                   className={`px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
                     selectedCategory === cat.id
                       ? 'bg-magic-gold text-nature-950 shadow-[0_0_20px_rgba(212,175,55,0.4)] scale-105'
-                      : 'bg-white/5 text-ethereal-300 hover:bg-white/10 hover:text-white border border-white/10'
+                      : 'bg-[#18245C]/5 text-[#4A506B] hover:bg-[#18245C]/10 hover:text-[#18245C] border border-[#18245C]/10'
                   }`}
                 >
                   {cat.label}
@@ -775,30 +777,30 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
             {/* Grid de Portais */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredPortals.map(portal => (
-                <div key={portal.id} className="glass-mystic p-7 rounded-[3rem] border border-white/10 space-y-5 hover:border-magic-gold/50 transition-all group shadow-2xl relative overflow-hidden bg-gradient-to-br from-white/[0.02] to-transparent flex flex-col justify-between">
+                <div key={portal.id} className="glass-mystic p-7 rounded-[3rem] border border-[#18245C]/10 space-y-5 hover:border-magic-gold/50 transition-all group shadow-2xl relative overflow-hidden bg-gradient-to-br from-white/[0.02] to-transparent flex flex-col justify-between">
                   <div className={`absolute -top-10 -left-10 w-40 h-40 ${portal.color.replace('text-', 'bg-')}/10 blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
                   
                   <div className="space-y-4">
                     <div className="flex items-center gap-4">
-                      <div className={`p-4 rounded-[1.8rem] bg-white/5 ${portal.color} group-hover:scale-110 transition-transform duration-700 shadow-inner border border-white/15 relative`}>
+                      <div className={`p-4 rounded-[1.8rem] bg-[#18245C]/5 ${portal.color} group-hover:scale-110 transition-transform duration-700 shadow-inner border border-[#18245C]/10 relative`}>
                         <portal.icon size={28} className="relative z-10" />
                       </div>
                       <div>
                         <span className="text-[9px] font-black uppercase tracking-widest text-magic-gold/80 block">
                           {portal.badge}
                         </span>
-                        <h4 className="text-xl font-serif text-white font-bold tracking-tight drop-shadow-md">{portal.title}</h4>
+                        <h4 className="text-xl font-serif text-[#18245C] font-bold tracking-tight">{portal.title}</h4>
                       </div>
                     </div>
                     
-                    <p className="text-[11px] text-ethereal-300 italic leading-relaxed px-1">{portal.desc}</p>
+                    <p className="text-[11px] text-[#4A506B] italic leading-relaxed px-1">{portal.desc}</p>
                   </div>
 
                   <div className="space-y-3 pt-2">
-                    <div className="flex items-center justify-between text-[9px] text-ethereal-300 px-1 font-semibold">
+                    <div className="flex items-center justify-between text-[9px] text-[#4A506B] px-1 font-semibold">
                       {portal.hasVoice ? (
                         <span className="flex items-center gap-1.5 text-magic-gold">
-                          <Headphones size={12} className="animate-pulse" /> Voz Calma & Amorosa (Sem Delay)
+                          {AI_ENABLED || speechAvailable ? <Headphones size={12} /> : <Eye size={12} />} {AI_ENABLED ? 'Voz guiada' : speechAvailable ? 'Voz do dispositivo' : 'Instruções na tela'}
                         </span>
                       ) : (
                         <span className="flex items-center gap-1.5 text-emerald-400">
@@ -815,12 +817,12 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
                       {loading && activePortal?.id === portal.id ? (
                         <>
                           <Loader2 size={16} className="animate-spin" />
-                          <span>Sintonizando Voz...</span>
+                          <span>Preparando prática...</span>
                         </>
                       ) : (
                         <>
                           <span>Iniciar Prática</span>
-                          {portal.hasVoice ? <Volume2 size={15} /> : <Wind size={15} />}
+                          {portal.hasVoice && (AI_ENABLED || speechAvailable) ? <Volume2 size={15} /> : <Wind size={15} />}
                         </>
                       )}
                     </button>
@@ -859,22 +861,22 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
             <div className="space-y-6 relative z-10 max-w-sm">
               <div className="space-y-2">
                 <p className="text-[10px] font-black text-magic-gold uppercase tracking-[0.4em]">
-                  {activePortal?.hasVoice ? "Voz Guiada de Luz" : "Ritmo Sagrado da Respiração"}
+                  {activePortal?.hasVoice ? (AI_ENABLED ? "Voz Guiada de Luz" : speechAvailable ? "Voz do dispositivo" : "Instruções na tela") : "Ritmo Sagrado da Respiração"}
                 </p>
                 <h3 className="text-3xl font-serif text-[#18245C] italic tracking-tight">
-                  {ritualStep === 'preparing' && "Sintonizando Voz..."}
+                  {ritualStep === 'preparing' && "Preparando prática..."}
                   {ritualStep === 'instruction' && "Ouça a Condução"}
                   {ritualStep === 'breathing' && (currentCycle > 0 ? `Ciclo ${currentCycle}: ${breathingPhase}` : "Inale a Luz")}
                   {ritualStep === 'feeling' && (currentCycle > 0 ? `Ciclo ${currentCycle}: ${breathingPhase}` : "Integre a Paz")}
-                  {ritualStep === 'affirming' && (currentCycle > 0 ? `Ciclo ${currentCycle}: ${breathingPhase}` : "Afirme a Cura")}
+                  {ritualStep === 'affirming' && (currentCycle > 0 ? `Ciclo ${currentCycle}: ${breathingPhase}` : "Afirmação de Presença")}
                   {ritualStep === 'checking' && "Integração Final"}
-                  {ritualStep === 'completed' && "Cura Consolidada"}
+                  {ritualStep === 'completed' && "Prática Concluída"}
                 </h3>
               </div>
               
               <div className="min-h-[110px] flex flex-col items-center justify-center px-2">
                 <p className="text-sm text-[#4A506B] italic leading-relaxed font-light mb-3 text-center">
-                  {ritualStep === 'preparing' && "Sintonizando a voz calma e amorosa do guia espiritual. Aguarde apenas um instante..."}
+                  {ritualStep === 'preparing' && (AI_ENABLED ? "Preparando a narração da prática." : speechAvailable ? "A prática começará em instantes com a voz do dispositivo." : "A prática começará em instantes com instruções na tela.")}
                   {activePortal && ritualStep !== 'completed' && ritualStep !== 'preparing' && activePortal.steps[ritualStep as keyof typeof activePortal.steps]}
                   {ritualStep === 'completed' && "Sua alma e seu templo físico agora ressoam em perfeita sintonia e paz. Vá em luz."}
                 </p>
@@ -902,7 +904,7 @@ const Wellness: React.FC<WellnessProps> = ({ setView }) => {
 
         {setView && (
           <NextStepGuide 
-            currentStepName="Portal de Cura"
+            currentStepName="Portal de Autocuidado"
             stepNumber={5}
             totalSteps={7}
             nextStepName="Portal da Evolução"

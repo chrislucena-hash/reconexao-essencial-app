@@ -1,22 +1,11 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, Image as ImageIcon, Video as VideoIcon, X, Send, Sparkles, Edit3, Save, MoreVertical, Camera, Play, Pause, Star, ShieldAlert, Loader2, Trash2, Flag, MessageSquare } from 'lucide-react';
+import { Heart, MessageCircle, Share2, X, Send, Sparkles, Edit3, Save, MoreVertical, Camera, Star, ShieldAlert, Loader2, Trash2, MessageSquare } from 'lucide-react';
 import { CommunityPost, Comment, AppView } from '../types';
 import { moderateContent } from '../services/geminiService';
 import { useFirebase } from './FirebaseProvider';
 import NextStepGuide from './NextStepGuide';
 import { collection, onSnapshot, query, orderBy, limit, addDoc, deleteDoc, doc, updateDoc, increment, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-
-const MOCK_POSTS: CommunityPost[] = [];
-
-const MOMENTS = [
-  { id: 'm1', author: 'Guia', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=100&auto=format&fit=crop', video: 'https://www.w3schools.com/html/movie.mp4' },
-  { id: 'm2', author: 'Ana', avatar: 'https://picsum.photos/50/50?random=10', video: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-  { id: 'm3', author: 'João', avatar: 'https://picsum.photos/50/50?random=2', video: 'https://www.w3schools.com/html/movie.mp4' },
-  { id: 'm4', author: 'Bia', avatar: 'https://picsum.photos/50/50?random=30', video: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-];
-
-type FilterType = 'recent' | 'liked' | 'following';
 
 interface CommunityProps {
   setView?: (view: AppView) => void;
@@ -26,17 +15,13 @@ interface CommunityProps {
 const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
   const { user, userProfile } = useFirebase();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
-  const [activeFilter, setActiveFilter] = useState<FilterType>('recent');
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+  const [postsError, setPostsError] = useState(false);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
-  const [followedAuthors, setFollowedAuthors] = useState<Set<string>>(new Set());
   const [newPost, setNewPost] = useState('');
-  const [newCaption, setNewCaption] = useState('');
-  const [activeMoment, setActiveMoment] = useState<typeof MOMENTS[0] | null>(null);
-  const [isPaused, setIsPaused] = useState(false);
-  const [showIndicator, setShowIndicator] = useState(false);
   const [isModerating, setIsModerating] = useState(false);
   const [moderationError, setModerationError] = useState<string | null>(null);
-  const [reportedPosts, setReportedPosts] = useState<Set<string>>(new Set());
+  const [hiddenPosts, setHiddenPosts] = useState<Set<string>>(new Set());
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   
@@ -58,9 +43,6 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
     setTimeout(() => setCommunityToast(null), 4000);
   };
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Sync tempName when userProfile is loaded
@@ -86,6 +68,8 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
   };
 
   useEffect(() => {
+    setIsLoadingPosts(true);
+    setPostsError(false);
     const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(50));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedPosts = snapshot.docs.map(doc => ({
@@ -93,8 +77,12 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
         ...doc.data()
       })) as CommunityPost[];
       setPosts(fetchedPosts);
+      setIsLoadingPosts(false);
+      setPostsError(false);
     }, (error) => {
       handleFirestoreError(error, 'list', 'posts');
+      setIsLoadingPosts(false);
+      setPostsError(true);
     });
     return () => unsubscribe();
   }, [user]);
@@ -139,7 +127,7 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
       const commentData = {
         author: userProfile?.name || 'Buscador',
         authorId: user.uid,
-        avatar: userProfile?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.name || 'Buscador')}&background=random`,
+        avatar: userProfile?.photoURL || '',
         text: newCommentText.trim(),
         timestamp: Date.now()
       };
@@ -170,23 +158,15 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
       triggerToast('Voz removida com sucesso.', 'success');
     } catch (error) {
       handleFirestoreError(error, 'delete_comment', `posts/${activeCommentsPost.id}/comments/${commentId}`);
+      triggerToast('Não foi possível excluir a mensagem. Tente novamente.', 'error');
     }
   };
   
   const filteredPosts = useMemo(() => {
     return posts
-      .filter(post => !reportedPosts.has(post.id))
+      .filter(post => !hiddenPosts.has(post.id))
       .sort((a, b) => b.timestamp - a.timestamp);
-  }, [posts, reportedPosts]);
-
-  const toggleFollow = (authorName: string) => {
-    setFollowedAuthors(prev => {
-      const next = new Set(prev);
-      if (next.has(authorName)) next.delete(authorName);
-      else next.add(authorName);
-      return next;
-    });
-  };
+  }, [posts, hiddenPosts]);
 
   const toggleLike = async (postId: string) => {
     const isLiked = likedPosts.has(postId);
@@ -203,20 +183,13 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
       });
     } catch (error) {
       handleFirestoreError(error, 'update_like', `posts/${postId}`);
-    }
-  };
-
-  const handleVideoToggle = () => {
-    if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play();
-        setIsPaused(false);
-      } else {
-        videoRef.current.pause();
-        setIsPaused(true);
-      }
-      setShowIndicator(true);
-      setTimeout(() => setShowIndicator(false), 800);
+      setLikedPosts(prev => {
+        const next = new Set(prev);
+        if (isLiked) next.add(postId);
+        else next.delete(postId);
+        return next;
+      });
+      triggerToast('Não foi possível registrar sua reação. Tente novamente.', 'error');
     }
   };
 
@@ -290,12 +263,14 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
   // Name Change Handler
   const handleSaveName = async () => {
     if (!tempName.trim() || !user) return;
-    setIsEditingName(false);
     try {
       const userDocRef = doc(db, 'users', user.uid);
       await setDoc(userDocRef, { name: tempName.trim() }, { merge: true });
+      setIsEditingName(false);
+      triggerToast('Nome atualizado.');
     } catch (error) {
       handleFirestoreError(error, 'set_name', `users/${user.uid}`);
+      triggerToast('Não foi possível atualizar o nome. Tente novamente.', 'error');
     }
   };
 
@@ -316,7 +291,7 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
       const postData = {
         author: userProfile?.name || 'Buscador',
         authorId: user.uid,
-        avatar: userProfile?.photoURL || `https://ui-avatars.com/api/?name=${userProfile?.name || 'Buscador'}&background=random`,
+        avatar: userProfile?.photoURL || '',
         content: newPost,
         likes: 0,
         comments: 0,
@@ -325,16 +300,50 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
 
       await addDoc(collection(db, 'posts'), postData);
       setNewPost('');
+      triggerToast('Publicação enviada.');
     } catch (error) {
       handleFirestoreError(error, 'create_post', 'posts');
+      triggerToast('Não foi possível publicar. Tente novamente.', 'error');
     } finally {
       setIsModerating(false);
     }
   };
 
-  const reportPost = (postId: string) => {
-    setReportedPosts(prev => new Set(prev).add(postId));
+  const hidePost = (postId: string) => {
+    setHiddenPosts(prev => new Set(prev).add(postId));
     setActiveMenuId(null);
+    triggerToast('Publicação ocultada nesta sessão.');
+  };
+
+  const handleSharePost = async (post: CommunityPost) => {
+    const text = `${post.content}\n\n— Reconexão Essencial`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Reconexão Essencial', text });
+        return;
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const field = document.createElement('textarea');
+        field.value = text;
+        field.style.position = 'fixed';
+        field.style.opacity = '0';
+        document.body.appendChild(field);
+        field.select();
+        const copied = document.execCommand('copy');
+        field.remove();
+        if (!copied) throw new Error('Clipboard unavailable');
+      }
+      triggerToast('Texto da publicação copiado para compartilhar.');
+    } catch {
+      triggerToast('Compartilhamento indisponível neste dispositivo.', 'error');
+    }
   };
 
   const deletePost = async (postId: string) => {
@@ -343,48 +352,18 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
       setActiveMenuId(null);
     } catch (error) {
       handleFirestoreError(error, 'delete_post', `posts/${postId}`);
+      triggerToast('Não foi possível excluir a publicação. Tente novamente.', 'error');
     }
   };
 
   return (
     <div className="p-4 pt-safe pb-safe-nav max-w-2xl mx-auto space-y-10 animate-in fade-in">
       <header className="flex flex-col items-center text-center gap-2">
-        <h2 className="text-4xl font-serif text-white tracking-tighter italic leading-tight">Egrégora</h2>
+        <h2 className="text-4xl font-serif text-reconexao-navy tracking-tighter italic leading-tight">Egrégora</h2>
         <p className="text-ethereal-300 text-xs italic max-w-lg leading-relaxed">
           Junte-se a outras centelhas divinas para aumentar a nossa egrégora. Troquem informações para ajudarem uns aos outros. Somos todos um.
         </p>
       </header>
-
-      {/* Moments Bar */}
-      <section className="flex items-center gap-5 overflow-x-auto no-scrollbar py-4 px-2">
-        <div className="flex flex-col items-center gap-2 shrink-0">
-          <button 
-            onClick={() => videoInputRef.current?.click()}
-            className="w-16 h-16 rounded-full glass-mystic border-2 border-dashed border-magic-gold/30 flex items-center justify-center text-magic-gold hover:border-magic-gold transition-all active:scale-95 shadow-[0_0_20px_rgba(212,175,55,0.1)] group"
-          >
-            <Camera size={24} className="group-hover:scale-110 transition-transform" />
-          </button>
-          <span className="text-[8px] font-black text-ethereal-500 uppercase tracking-widest">Ritual</span>
-        </div>
-
-        {MOMENTS.map((moment) => (
-          <div 
-            key={moment.id} 
-            onClick={() => {
-              setActiveMoment(moment);
-              setIsPaused(false);
-            }}
-            className="flex flex-col items-center gap-2 shrink-0 cursor-pointer group"
-          >
-            <div className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-magic-gold via-indigo-500 to-rose-400 group-hover:scale-110 transition-transform duration-500 shadow-lg">
-              <div className="w-full h-full rounded-full border-2 border-ethereal-950 overflow-hidden">
-                <img src={moment.avatar} className="w-full h-full object-cover" alt={moment.author} />
-              </div>
-            </div>
-            <span className="text-[8px] font-black text-white uppercase tracking-widest group-hover:text-magic-gold transition-colors">{moment.author}</span>
-          </div>
-        ))}
-      </section>
 
       {/* New Post Input */}
       <div className="glass-mystic p-6 sm:p-8 rounded-[3rem] shadow-2xl border border-white/5 space-y-6 relative overflow-hidden group">
@@ -392,22 +371,24 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
         
         {/* User Identity Setup */}
         <div className="flex items-center gap-4 border-b border-white/5 pb-4">
-          <div className="relative group cursor-pointer shrink-0" onClick={() => avatarInputRef.current?.click()}>
+          <button type="button" aria-label="Alterar foto de perfil" className="relative group cursor-pointer shrink-0" onClick={() => avatarInputRef.current?.click()}>
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-magic-gold/40 shadow-lg relative bg-white/5 flex items-center justify-center">
               {isUploadingAvatar ? (
                 <Loader2 size={20} className="animate-spin text-magic-gold" />
               ) : (
-                <img 
-                  src={userProfile?.photoURL || (userProfile?.name ? `https://ui-avatars.com/api/?name=${userProfile.name}&background=random` : 'https://picsum.photos/50/50?random=99')} 
-                  className="w-full h-full object-cover transition-all group-hover:scale-105" 
-                  alt="Avatar" 
-                />
+                userProfile?.photoURL ? (
+                  <img src={userProfile.photoURL} className="w-full h-full object-cover transition-all group-hover:scale-105" alt="Sua foto" />
+                ) : (
+                  <span className="text-xl font-bold text-magic-gold" aria-label="Sem foto de perfil">
+                    {(userProfile?.name || 'B').charAt(0).toLocaleUpperCase('pt-BR')}
+                  </span>
+                )
               )}
             </div>
             <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
               <Camera size={14} className="text-white" />
             </div>
-          </div>
+          </button>
           
           <div className="flex-1 min-w-0">
             <p className="text-[8px] font-black text-magic-gold uppercase tracking-[0.2em]">Sua Identidade Sagrada</p>
@@ -458,10 +439,7 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
           />
         </div>
 
-        <div className="flex justify-between items-center border-t border-white/5 pt-6">
-          <div className="flex gap-3">
-            <button className="p-4 text-ethereal-400 hover:text-magic-gold bg-white/5 hover:bg-white/10 rounded-2xl transition-all" onClick={() => avatarInputRef.current?.click()} title="Mudar Foto"><ImageIcon size={22} /></button>
-          </div>
+        <div className="flex justify-end items-center border-t border-white/5 pt-6">
           <button 
             onClick={handlePost}
             disabled={!newPost.trim() || isModerating}
@@ -481,9 +459,9 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
           </button>
         </div>
         {moderationError && (
-          <div className="mt-4 p-4 bg-rose-950/30 border border-rose-500/30 rounded-2xl flex items-center gap-3 animate-in slide-in-from-top-2">
-            <ShieldAlert size={18} className="text-rose-400 shrink-0" />
-            <p className="text-[10px] text-rose-200 font-medium italic leading-relaxed">
+          <div className="mt-4 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 animate-in slide-in-from-top-2" role="alert">
+            <ShieldAlert size={18} className="text-rose-700 shrink-0" />
+            <p className="text-[10px] text-rose-700 font-medium italic leading-relaxed">
               Sua emanação não pôde ser enviada: {moderationError}
             </p>
           </div>
@@ -493,29 +471,38 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
 
       {/* Posts List */}
       <div className="space-y-12">
+        {isLoadingPosts && (
+          <div className="glass-mystic rounded-3xl border border-white/10 p-8 text-center text-ethereal-300 text-sm" role="status">
+            Carregando publicações...
+          </div>
+        )}
+        {postsError && (
+          <div className="glass-mystic rounded-3xl border border-rose-200 p-8 text-center text-rose-700 text-sm" role="alert">
+            Não foi possível carregar a comunidade. Verifique sua conexão e tente novamente.
+          </div>
+        )}
+        {!isLoadingPosts && !postsError && filteredPosts.length === 0 && (
+          <div className="glass-mystic rounded-3xl border border-white/10 p-8 text-center text-ethereal-300 text-sm">
+            Ainda não há publicações para mostrar.
+          </div>
+        )}
         {filteredPosts.map(post => (
           <div key={post.id} className="glass-mystic rounded-[4rem] shadow-2xl border border-white/5 overflow-hidden animate-in slide-up relative">
             <div className="p-8 flex items-center justify-between">
               <div className="flex items-center gap-5">
                 <div className="relative">
                   <div className="absolute inset-0 bg-magic-gold/20 blur-md rounded-full" />
-                  <img src={post.avatar} className="relative w-14 h-14 rounded-full object-cover border-2 border-magic-gold/30 shadow-lg" alt={post.author} />
+                  {post.avatar ? (
+                    <img src={post.avatar} className="relative w-14 h-14 rounded-full object-cover border-2 border-magic-gold/30 shadow-lg" alt={post.author} />
+                  ) : (
+                    <span className="relative w-14 h-14 rounded-full border-2 border-magic-gold/30 bg-white/10 flex items-center justify-center text-magic-gold font-bold text-xl" aria-label={post.author}>
+                      {post.author?.charAt(0).toLocaleUpperCase('pt-BR') || 'B'}
+                    </span>
+                  )}
                 </div>
                 <div>
                   <div className="flex items-center gap-3">
                     <h4 className="font-serif text-lg text-white font-bold italic">{post.author}</h4>
-                    {post.authorId !== user?.uid && post.author !== 'Guia Essência' && (
-                      <button 
-                        onClick={() => toggleFollow(post.author)}
-                        className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${
-                          followedAuthors.has(post.author) 
-                            ? 'bg-white text-nature-950' 
-                            : 'bg-white/5 text-magic-gold border border-magic-gold/30 hover:bg-white/10'
-                        }`}
-                      >
-                        {followedAuthors.has(post.author) ? 'Conectado' : 'Conectar'}
-                      </button>
-                    )}
                   </div>
                   <div className="flex items-center gap-2 text-[8px] text-ethereal-500 font-black uppercase tracking-[0.2em] mt-1">
                     <Star size={10} className="text-magic-gold" /> {new Date(post.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -540,10 +527,10 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
                       </button>
                     ) : (
                       <button 
-                        onClick={() => reportPost(post.id)}
+                        onClick={() => hidePost(post.id)}
                         className="w-full px-6 py-4 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-magic-gold hover:bg-magic-gold/10 transition-all"
                       >
-                        <Flag size={16} /> Reportar
+                        <X size={16} /> Ocultar nesta sessão
                       </button>
                     )}
                   </div>
@@ -591,75 +578,17 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
                   <MessageCircle size={24} /> {post.comments} <span className="hidden sm:inline">Vozes</span>
                 </button>
               </div>
-              <button className="text-ethereal-700 hover:text-white transition-all p-3"><Share2 size={22} /></button>
+              <button onClick={() => handleSharePost(post)} className="text-ethereal-700 hover:text-white transition-all p-3" title="Compartilhar publicação" aria-label="Compartilhar publicação"><Share2 size={22} /></button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Moment Immersive Player */}
-      {activeMoment && (
-        <div className="fixed inset-0 z-[300] bg-black flex flex-col animate-in fade-in duration-500">
-          <div className="absolute top-0 inset-x-0 p-8 flex justify-between items-center z-[310] bg-gradient-to-b from-black/80 to-transparent">
-            <div className="flex items-center gap-4">
-              <img src={activeMoment.avatar} className="w-12 h-12 rounded-full border-2 border-magic-gold shadow-lg" alt="" />
-              <span className="text-white font-bold text-sm tracking-[0.3em] uppercase italic">{activeMoment.author}</span>
-            </div>
-            <button onClick={() => { setActiveMoment(null); setIsPaused(false); }} className="text-white p-3 hover:bg-white/10 rounded-full transition-all">
-              <X size={32} />
-            </button>
-          </div>
-          
-          <div className="flex-1 relative flex items-center justify-center cursor-pointer" onClick={handleVideoToggle}>
-            <video 
-              ref={videoRef}
-              src={activeMoment.video} 
-              autoPlay 
-              loop 
-              playsInline
-              className="w-full h-full object-cover max-w-lg"
-            />
-            
-            {/* Spiritual Interaction Indicator */}
-            <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-700 ${showIndicator ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
-              <div className="p-10 rounded-full bg-magic-gold/20 backdrop-blur-md border border-magic-gold/40 shadow-[0_0_40px_rgba(212,175,55,0.4)]">
-                {isPaused ? (
-                  <Pause size={48} className="text-magic-gold animate-pulse" />
-                ) : (
-                  <Play size={48} className="text-magic-gold" />
-                )}
-              </div>
-            </div>
-
-            {/* Permanent Pause Indicator */}
-            {isPaused && !showIndicator && (
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-full bg-black/30 backdrop-blur-sm border border-white/10 pointer-events-none animate-in fade-in duration-700">
-                  <Play size={40} className="text-white/80" />
-               </div>
-            )}
-          </div>
-
-          <div className="absolute bottom-0 inset-x-0 p-12 bg-gradient-to-t from-black/80 to-transparent flex flex-col gap-6 text-white text-center z-[310]">
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40 animate-pulse">Toque no fluxo para contemplar ou repousar</p>
-            <div className="flex justify-center gap-12">
-               <button className="flex flex-col items-center gap-2 group">
-                 <div className="p-5 rounded-full bg-white/10 group-active:scale-90 transition-transform group-hover:bg-magic-gold/20"><Heart size={28} /></div>
-                 <span className="text-[10px] font-black uppercase tracking-widest">Emanar Luz</span>
-               </button>
-               <button className="flex flex-col items-center gap-2 group">
-                 <div className="p-5 rounded-full bg-white/10 group-active:scale-90 transition-transform group-hover:bg-indigo-400/20"><Share2 size={28} /></div>
-                 <span className="text-[10px] font-black uppercase tracking-widest">Partilhar</span>
-               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Interactive Comments Modal (Troca de Mensagens da Tribo) */}
       {activeCommentsPost && (
         <div className="fixed inset-0 z-[250] bg-black/80 backdrop-blur-md flex flex-col justify-end sm:justify-center p-0 sm:p-4 animate-in fade-in duration-300">
           <div 
-            className="w-full max-w-xl mx-auto glass-mystic border-t sm:border border-white/10 rounded-t-[2.5rem] sm:rounded-[3rem] shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom duration-300 bg-nature-950/95"
+            className="w-full max-w-xl mx-auto glass-mystic border-t sm:border border-reconexao-navy/10 rounded-t-[2.5rem] sm:rounded-[3rem] shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom duration-300 bg-white"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -698,11 +627,13 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
               ) : (
                 postComments.map((c) => (
                   <div key={c.id} className="flex items-start gap-3.5 group animate-in slide-up duration-200">
-                    <img 
-                      src={c.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.author)}&background=random`} 
-                      className="w-9 h-9 rounded-full object-cover border border-white/10 shrink-0 mt-0.5 shadow-md" 
-                      alt={c.author} 
-                    />
+                    {c.avatar ? (
+                      <img src={c.avatar} className="w-9 h-9 rounded-full object-cover border border-white/10 shrink-0 mt-0.5 shadow-md" alt={c.author} />
+                    ) : (
+                      <span className="w-9 h-9 rounded-full border border-white/10 bg-white/10 shrink-0 mt-0.5 flex items-center justify-center text-magic-gold font-bold" aria-label={c.author}>
+                        {c.author?.charAt(0).toLocaleUpperCase('pt-BR') || 'B'}
+                      </span>
+                    )}
                     <div className="flex-1 bg-white/5 border border-white/5 rounded-2xl p-4 space-y-1 relative">
                       <div className="flex justify-between items-center">
                         <span className="text-xs font-bold text-white font-serif italic">{c.author}</span>
@@ -730,14 +661,14 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
 
             {/* Moderation Error Alert */}
             {commentModerationError && (
-              <div className="px-6 py-3 bg-rose-950/40 border-t border-rose-500/30 flex items-center gap-2 text-rose-300 text-xs italic shrink-0">
+              <div className="px-6 py-3 bg-rose-50 border-t border-rose-200 flex items-center gap-2 text-rose-700 text-xs italic shrink-0" role="alert">
                 <ShieldAlert size={16} className="shrink-0" />
                 <span>{commentModerationError}</span>
               </div>
             )}
 
             {/* New Comment Input Field */}
-            <div className="p-4 sm:p-6 pb-safe border-t border-white/10 bg-nature-950 shrink-0">
+            <div className="p-4 sm:p-6 pb-safe border-t border-reconexao-navy/10 bg-reconexao-bg shrink-0">
               <div className="flex items-center gap-3">
                 <input 
                   type="text"
@@ -745,7 +676,7 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
                   onChange={(e) => setNewCommentText(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(); }}
                   placeholder="Escreva sua mensagem para a tribo..."
-                  className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-xs text-white placeholder:text-ethereal-600 outline-none focus:border-magic-gold/40 transition-all italic"
+                  className="flex-1 min-w-0 bg-white border border-reconexao-navy/10 rounded-2xl px-5 py-3.5 text-xs text-reconexao-navy placeholder:text-ethereal-600 outline-none focus:border-magic-gold/40 transition-all italic"
                 />
                 <button
                   onClick={handleAddComment}
@@ -789,7 +720,7 @@ const Community: React.FC<CommunityProps> = ({ setView, onResetJourney }) => {
             <div className="space-y-2">
               <h3 className="text-xl font-serif text-white italic">Recomeçar Novo Ciclo?</h3>
               <p className="text-xs text-ethereal-200 leading-relaxed">
-                Ao recomeçar o ciclo, suas informações e diários anteriores serão renovados para a sua nova caminhada. <strong className="text-white">Todas as mensagens da Egrégora serão mantidas e preservadas.</strong>
+                Ao recomeçar o ciclo, o progresso e os registros do diário serão apagados. Sua conta e as publicações da comunidade permanecerão disponíveis.
               </p>
             </div>
 

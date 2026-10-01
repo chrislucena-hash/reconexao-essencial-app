@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   Line, 
   XAxis, 
@@ -25,9 +25,10 @@ import {
   Apple,
   Moon
 } from 'lucide-react';
-import { DailyLog, UserProfile, JourneyProgress, AppView } from '../types';
+import { DailyLog, UserProfile, JourneyProgress, AppView, hasRecordedRatings } from '../types';
 import { motion } from 'framer-motion';
 import NextStepGuide from './NextStepGuide';
+import { AI_ENABLED } from '../features';
 
 interface EvolutionReportProps {
   logs: DailyLog[];
@@ -36,113 +37,33 @@ interface EvolutionReportProps {
 }
 
 const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, setView }) => {
+  const [expandedLogDate, setExpandedLogDate] = useState<string | null>(null);
   const sortedLogs = useMemo(() => {
     return [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [logs]);
 
   const chartData = useMemo(() => {
-    const dataPoints: Array<{
-      date: string;
-      rawDate: string;
-      energy: number;
-      awareness: number;
-      symptoms: number;
-      vibration: number;
-      type: 'log' | 'diagnosis';
-    }> = [];
-
-    const latestDiag = userProfile.diagnosisHistory && userProfile.diagnosisHistory.length > 0
-      ? userProfile.diagnosisHistory[0] // diagnosisHistory is descending chronologically in App state, or ascending
-      : null;
-
-    // Get overall latest diagnosis symptom count
-    const sortedDiags = userProfile.diagnosisHistory
-      ? [...userProfile.diagnosisHistory].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      : [];
-    const currentDiag = sortedDiags.length > 0 ? sortedDiags[sortedDiags.length - 1] : null;
-    const currentSymptomsCount = currentDiag
-      ? (currentDiag.glutenCount || 0) + (currentDiag.caseinCount || 0) + (currentDiag.lactoseCount || 0) + (currentDiag.spiritualCount || 0)
-      : 0;
-
-    // 1. Adicionar pontos do histórico de diagnóstico (Teste do Corpo e da Alma)
-    if (userProfile.diagnosisHistory && userProfile.diagnosisHistory.length > 0) {
-      userProfile.diagnosisHistory.forEach(diag => {
-        const bodyMarked = (diag.glutenCount || 0) + (diag.caseinCount || 0) + (diag.lactoseCount || 0);
-        const spiritMarked = diag.spiritualCount || 0;
-        const totalSymptoms = bodyMarked + spiritMarked;
-        
-        // Boost por práticas ativas
-        const practiceBoost = Math.min(1.0, (diag.favoriteActivities?.length || 0) * 0.15);
-
-        // Total de sintomas físicos no teste: 17 gluten + 7 casein + 4 lactose = 28
-        const baseEnergy = ((28 - bodyMarked) / 28) * 4 + 1;
-        const computedEnergy = Math.max(1, Math.min(5, Math.round(baseEnergy + practiceBoost)));
-
-        // Total de sintomas espirituais: 6
-        const baseAwareness = ((6 - spiritMarked) / 6) * 4 + 1;
-        const computedAwareness = Math.max(1, Math.min(5, Math.round(baseAwareness + practiceBoost)));
-
-        // Densidade de sintomas na escala de 1 a 5
-        const computedSymptoms = Number(Math.min(5, Math.max(1, Math.round((totalSymptoms / 34) * 4 + 1))).toFixed(1));
-
-        const computedVibration = Number(((computedEnergy + computedAwareness) / 2).toFixed(1));
-
-        dataPoints.push({
-          date: new Date(diag.date.includes('T') ? diag.date : diag.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
-          rawDate: diag.date,
-          energy: computedEnergy,
-          awareness: computedAwareness,
-          symptoms: computedSymptoms,
-          vibration: computedVibration,
-          type: 'diagnosis'
-        });
-      });
-    }
-
-    // 2. Adicionar pontos dos registros diários (considerando presença, práticas e carga de sintomas)
-    sortedLogs.forEach(log => {
-      const completedPracticesCount = Object.values(log.completedActions || {}).filter(Boolean).length;
-      const practiceBoost = Math.min(1.2, (completedPracticesCount / 8) * 1.2);
-
-      let foodSymptomPenalty = 0;
-      if (log.foodRecord) {
-        const foodStr = `${log.foodRecord.breakfast} ${log.foodRecord.lunch} ${log.foodRecord.dinner} ${log.foodRecord.snacks}`.toLowerCase();
-        if (foodStr.includes('glúten') || foodStr.includes('leite') || foodStr.includes('lactose')) {
-          foodSymptomPenalty += 0.5;
-        }
-      }
-      
-      // Aumento de sintomas reduz a densidade vital da energia
-      const symptomDeduction = (currentSymptomsCount / 34) * 1.5 + foodSymptomPenalty;
-
-      const adjustedEnergy = Math.max(1, Math.min(5, Math.round((log.energyLevel || 3) - symptomDeduction + practiceBoost)));
-      const adjustedAwareness = Math.max(1, Math.min(5, Math.round((log.awarenessLevel || 3) - ((currentDiag?.spiritualCount || 0) / 6) * 0.8 + practiceBoost)));
-      const adjustedSymptoms = Number(Math.min(5, Math.max(1, Math.round(((currentSymptomsCount / 34) * 4 + 1) + foodSymptomPenalty))).toFixed(1));
-      const adjustedVibration = Number(((adjustedEnergy + adjustedAwareness) / 2).toFixed(1));
-
-      dataPoints.push({
+    // Exiba somente avaliações informadas no diário. Alimentos, práticas e o
+    // questionário são registros separados; não estimam energia ou sintomas.
+    return sortedLogs
+      .filter(hasRecordedRatings)
+      .map(log => ({
         date: new Date(log.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
-        rawDate: log.date + 'T12:00:00', // Offset para ordenar corretamente
-        energy: adjustedEnergy,
-        awareness: adjustedAwareness,
-        symptoms: adjustedSymptoms,
-        vibration: adjustedVibration,
-        type: 'log'
-      });
-    });
-
-    // Ordenar cronologicamente
-    return dataPoints.sort((a, b) => new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime());
-  }, [sortedLogs, userProfile.diagnosisHistory]);
+        rawDate: log.date,
+        energy: log.energyLevel,
+        awareness: log.awarenessLevel,
+        vibration: Number(((log.energyLevel + log.awarenessLevel) / 2).toFixed(1)),
+      }));
+  }, [sortedLogs]);
 
   const currentVibration = useMemo(() => {
     if (chartData.length === 0) return null;
     const lastPoint = chartData[chartData.length - 1];
     const avg = lastPoint.vibration;
-    if (avg >= 4.5) return { label: "Frequência Cristalina", color: "text-aura-teal" };
-    if (avg >= 3.5) return { label: "Frequência Elevada", color: "text-aura-violet" };
-    if (avg >= 2.5) return { label: "Frequência em Alinhamento", color: "text-aura-gold" };
-    return { label: "Frequência em Purificação", color: "text-aura-rose" };
+    if (avg >= 4.5) return { label: "Avaliação alta", color: "text-aura-teal" };
+    if (avg >= 3.5) return { label: "Avaliação positiva", color: "text-aura-violet" };
+    if (avg >= 2.5) return { label: "Avaliação intermediária", color: "text-aura-gold" };
+    return { label: "Avaliação baixa", color: "text-aura-rose" };
   }, [chartData]);
 
   const stats = useMemo(() => {
@@ -179,8 +100,8 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
     const firstDiag = sortedDiagnosis[0];
     const latestDiag = sortedDiagnosis[sortedDiagnosis.length - 1];
     
-    const firstCount = (firstDiag.glutenCount || 0) + (firstDiag.caseinCount || 0) + (firstDiag.lactoseCount || 0) + (firstDiag.spiritualCount || 0);
-    const latestCount = (latestDiag.glutenCount || 0) + (latestDiag.caseinCount || 0) + (latestDiag.lactoseCount || 0) + (latestDiag.spiritualCount || 0);
+    const firstCount = (firstDiag.glutenCount || 0) + (firstDiag.caseinCount || 0) + (firstDiag.lactoseCount || 0);
+    const latestCount = (latestDiag.glutenCount || 0) + (latestDiag.caseinCount || 0) + (latestDiag.lactoseCount || 0);
     
     const diff = latestCount - firstCount;
     const hasIncreased = latestCount > firstCount;
@@ -204,7 +125,8 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
         </div>
         <div className="space-y-2">
           <h3 className="text-2xl font-serif text-[#18245C] italic">O Livro está em branco</h3>
-          <p className="text-sm text-[#4A506B] italic">Comece a registrar sua jornada no Diário ou realize o Teste do Corpo e da Alma para ver sua evolução florescer.</p>
+          <p className="text-sm text-[#4A506B] italic">Registre sua energia e presença no Diário para acompanhar suas próprias avaliações. Respostas ao questionário não estimam essas notas.</p>
+          {symptomReduction && <p className="text-sm text-[#4A506B]">No questionário: {symptomReduction.latest} itens corporais marcados no registro mais recente. Este número não é um diagnóstico.</p>}
         </div>
       </div>
     );
@@ -237,7 +159,7 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
               <Sparkles size={16} className="text-[#E9B44C] mx-auto animate-pulse" />
               <p className="text-sm font-serif text-[#18245C] italic font-bold">Seu ponto de partida está traçado!</p>
               <p className="text-xs text-[#4A506B] leading-relaxed max-w-sm mx-auto">
-                As métricas abaixo e o gráfico de Fluxo Vibracional foram estimados com base no seu <strong className="text-[#18245C]">Teste do Corpo e da Alma</strong>. Registre seu dia no <strong className="text-[#18245C] font-semibold">Diário</strong> para acompanhar as oscilações diárias de sua energia e presença!
+                As notas de energia e presença vêm do que você informou no Diário. O questionário não estima essas notas.
               </p>
             </div>
           )}
@@ -306,28 +228,26 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                 <Activity size={18} />
               </div>
               <h3 className="text-xl font-serif text-[#18245C] italic font-bold">
-                {symptomReduction?.hasIncreased ? "Mapeamento e Evolução de Sintomas" : "Redução de Sintomas"}
+                Registros do questionário
               </h3>
             </div>
             <p className="text-xs text-[#4A506B] italic leading-relaxed">
-              {symptomReduction?.hasIncreased 
-                ? "Identificado um aumento na manifestação dos sintomas do templo. O surgimento de novas sensibilidades reflete densidade temporária ou processo ativo de purificação. A constância nos ritos e no alimento puro restabelecerá o alinhamento."
-                : "Acompanhe a diminuição da densidade e o aumento da sua frequência vibracional. Quanto mais alta sua energia e presença, menor a manifestação de sintomas de desequilíbrio."}
+              As quantidades abaixo mostram itens marcados no questionário em momentos diferentes. Elas não identificam causas, sensibilidades alimentares nem medem a gravidade dos sintomas. Se sintomas surgirem, persistirem ou piorarem, procure avaliação profissional.
             </p>
             {symptomReduction ? (
               <div className="grid grid-cols-3 gap-4 pt-2 relative z-10">
                 <div className="text-center space-y-1">
                   <p className="text-[8px] font-black text-[#18245C]/60 uppercase tracking-widest">Início</p>
-                  <p className="text-lg font-serif text-[#18245C] italic font-bold">{symptomReduction.first} {symptomReduction.first === 1 ? 'sintoma' : 'sintomas'}</p>
+                  <p className="text-lg font-serif text-[#18245C] italic font-bold">{symptomReduction.first} {symptomReduction.first === 1 ? 'item' : 'itens'}</p>
                 </div>
                 <div className="flex flex-col items-center justify-center">
                   {symptomReduction.percentChange > 0 ? (
                     <span className="text-[9px] font-bold text-[#2E7D68] uppercase tracking-widest">
-                      -{symptomReduction.percentChange}% em Sintomas
+                      -{symptomReduction.percentChange}% em itens
                     </span>
                   ) : symptomReduction.percentChange < 0 ? (
                     <span className="text-[9px] font-bold text-rose-700 uppercase tracking-widest">
-                      +{Math.abs(symptomReduction.percentChange)}% em Sintomas
+                      +{Math.abs(symptomReduction.percentChange)}% em itens
                     </span>
                   ) : (
                     <span className="text-[9px] font-bold text-[#4A506B] uppercase tracking-widest">
@@ -342,14 +262,14 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                     {symptomReduction.hasIncreased ? "Aumento Atual" : "Atual"}
                   </p>
                   <p className="text-lg font-serif text-[#18245C] italic font-bold">
-                    {symptomReduction.latest} {symptomReduction.latest === 1 ? 'sintoma' : 'sintomas'}
+                    {symptomReduction.latest} {symptomReduction.latest === 1 ? 'item' : 'itens'}
                   </p>
                 </div>
               </div>
             ) : (
               <div className="p-4 bg-[#18245C]/5 rounded-2xl border border-[#18245C]/10 text-center">
                 <p className="text-[10px] text-[#4A506B] italic">
-                  Nenhum teste do corpo e da alma realizado ainda para mapear sintomas de desequilíbrio.
+                  Nenhum questionário preenchido ainda.
                 </p>
               </div>
             )}
@@ -362,18 +282,16 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
               <h4 className="text-sm font-serif text-[#18245C] italic font-bold">Matriz de Evolução Consciente</h4>
             </div>
             <p className="text-xs text-[#4A506B] italic leading-relaxed">
-              Sua evolução considera quatro pilares interdependentes. Se os sintomas aumentaram, a vitalidade pondera essa densidade temporária, enquanto seu grau de presença e os ritos praticados trabalham para restaurar o fluxo vibracional.
+              Veja seus registros lado a lado. O aplicativo não atribui mudanças de energia ou presença aos alimentos, sintomas ou práticas.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <div className="p-3 bg-[#18245C]/5 rounded-2xl border border-[#18245C]/10 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[8px] font-black uppercase tracking-widest text-rose-700">1. Sintomas do Templo</span>
-                  <span className="text-[10px] font-bold text-[#18245C]">{symptomReduction ? `${symptomReduction.latest} identificados` : '0'}</span>
+                  <span className="text-[10px] font-bold text-[#18245C]">{symptomReduction ? `${symptomReduction.latest} marcados` : 'Sem registro'}</span>
                 </div>
                 <p className="text-[9px] text-[#4A506B] italic">
-                  {symptomReduction && symptomReduction.hasIncreased 
-                    ? "Aumento de sintomas atua como indicador de densidade a transmutar."
-                    : "Sintomas controlados promovem menor densidade biológica e espiritual."}
+                  Itens assinalados, sem diagnóstico ou interpretação causal.
                 </p>
               </div>
 
@@ -383,7 +301,7 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                   <span className="text-[10px] font-bold text-[#18245C]">{stats?.currentEnergy || 3}/5</span>
                 </div>
                 <p className="text-[9px] text-[#4A506B] italic">
-                  Energia recalibrada ponderando o peso dos sintomas e a purificação alimentar.
+                  Nota informada por você no Diário.
                 </p>
               </div>
 
@@ -403,7 +321,7 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                   <span className="text-[10px] font-bold text-[#18245C]">{stats?.totalRituals || 0} ritos</span>
                 </div>
                 <p className="text-[9px] text-[#4A506B] italic">
-                  Ritos ancorados que constroem a imunidade espiritual e a elevação vibracional.
+                  Contagem de práticas registradas, sem efeito clínico presumido.
                 </p>
               </div>
             </div>
@@ -445,7 +363,7 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
 
             <div className="p-4 bg-[#18245C]/5 rounded-2xl border border-[#18245C]/10">
               <p className="text-[10px] text-[#4A506B] italic leading-relaxed">
-                O Fluxo Vibracional é a síntese da sua jornada em uma escala de 1 (Densidade) a 5 (Sutileza). A linha dourada representa o seu estado de equilíbrio atual, a linha rosa tracejada monitora a densidade dos sintomas, integrando sua força vital e sua capacidade de estar presente no agora.
+                Energia e presença são as notas que você informou no Diário, de 1 a 5. A linha dourada mostra apenas a média dessas duas notas; sintomas são registrados separadamente.
               </p>
             </div>
 
@@ -494,8 +412,7 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                   const label = 
                     name === 'energy' ? 'Vitalidade (Energia)' : 
                     name === 'awareness' ? 'Presença (Consciência)' : 
-                    name === 'symptoms' ? 'Sintomas (Densidade)' :
-                    'Vibração (Média)';
+                    'Média das avaliações';
                   return [`Nível ${value}`, label];
                 }}
               />
@@ -533,15 +450,6 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
               />
               <Line 
                 type="monotone" 
-                dataKey="symptoms" 
-                stroke="#f43f5e" 
-                strokeWidth={2}
-                strokeDasharray="3 3"
-                dot={{ fill: '#f43f5e', r: 3 }}
-                activeDot={{ r: 5, stroke: '#fff', strokeWidth: 1.5 }}
-              />
-              <Line 
-                type="monotone" 
                 dataKey="vibration" 
                 stroke="#d4af37" 
                 strokeWidth={3.5} 
@@ -559,13 +467,13 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
       <section className="space-y-6">
         <div className="flex items-center gap-3 px-4">
           <Sparkles size={20} className="text-[#E9B44C]" />
-          <h3 className="text-2xl font-serif text-[#18245C] italic font-bold">Histórico de Alinhamento</h3>
+          <h3 className="text-2xl font-serif text-[#18245C] italic font-bold">Histórico de Respostas</h3>
         </div>
 
         {(!userProfile.diagnosisHistory || userProfile.diagnosisHistory.length === 0) ? (
           <div className="glass-mystic p-8 rounded-[3rem] border border-[#18245C]/10 space-y-4 text-center">
             <p className="text-xs text-[#4A506B] italic leading-relaxed">
-              Nenhum ciclo de teste foi gravado ainda. Realize o <strong className="text-[#18245C]">Teste do Corpo e da Alma</strong> na página inicial para registrar seu ponto de partida e acompanhar sua evolução.
+              Nenhuma resposta foi registrada ainda. Abra o <strong className="text-[#18245C]">Questionário de Percepções</strong> na página inicial para registrar o que você percebeu.
             </p>
           </div>
         ) : (
@@ -584,10 +492,10 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                       <Calendar size={10} />
                       {new Date(test.date.includes('T') ? test.date : test.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </span>
-                    <h4 className="text-[#18245C] font-serif text-md italic font-bold">Ciclo de Renovação Sagrada</h4>
+                    <h4 className="text-[#18245C] font-serif text-md italic font-bold">Registro do questionário</h4>
                   </div>
                   <div className="px-4 py-2 rounded-2xl bg-[#E9B44C]/10 border border-[#E9B44C]/20 flex flex-col items-center justify-center min-w-[70px]">
-                    <span className="text-[7px] font-black text-[#E9B44C] uppercase tracking-widest leading-none">Vitalidade</span>
+                    <span className="text-[7px] font-black text-[#E9B44C] uppercase tracking-widest leading-none">Itens não marcados</span>
                     <span className="text-lg font-bold text-[#18245C] leading-none mt-1">{test.score}%</span>
                   </div>
                 </div>
@@ -595,19 +503,19 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 bg-[#18245C]/5 rounded-2xl border border-[#18245C]/10 space-y-3">
                     <p className="text-[8px] font-black text-[#E9B44C] uppercase tracking-widest flex items-center gap-1">
-                      <Activity size={10} /> Sinais do Corpo (Sensibilidades)
+                      <Activity size={10} /> Itens corporais marcados
                     </p>
                     <div className="grid grid-cols-3 gap-1.5 text-center">
                       <div className="p-1.5 bg-white/50 rounded-xl border border-[#18245C]/10">
-                        <p className="text-[6px] font-bold text-[#4A506B] uppercase">Glúten</p>
+                        <p className="text-[6px] font-bold text-[#4A506B] uppercase">Grupo A</p>
                         <p className={`text-xs font-bold ${test.glutenCount > 0 ? 'text-rose-600' : 'text-[#2E7D68]'}`}>{test.glutenCount}</p>
                       </div>
                       <div className="p-1.5 bg-white/50 rounded-xl border border-[#18245C]/10">
-                        <p className="text-[6px] font-bold text-[#4A506B] uppercase">Caseína</p>
+                        <p className="text-[6px] font-bold text-[#4A506B] uppercase">Grupo B</p>
                         <p className={`text-xs font-bold ${test.caseinCount > 0 ? 'text-rose-600' : 'text-[#2E7D68]'}`}>{test.caseinCount}</p>
                       </div>
                       <div className="p-1.5 bg-white/50 rounded-xl border border-[#18245C]/10">
-                        <p className="text-[6px] font-bold text-[#4A506B] uppercase">Lactose</p>
+                        <p className="text-[6px] font-bold text-[#4A506B] uppercase">Grupo C</p>
                         <p className={`text-xs font-bold ${test.lactoseCount > 0 ? 'text-rose-600' : 'text-[#2E7D68]'}`}>{test.lactoseCount}</p>
                       </div>
                     </div>
@@ -619,8 +527,8 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                     </p>
                     <p className="text-[10px] text-[#4A506B] italic leading-snug">
                       {test.spiritualCount === 0 
-                        ? 'Alinhamento cristalino alcançado.' 
-                        : `Identificadas ${test.spiritualCount} áreas de resistência/sombra.`}
+                        ? 'Nenhum item de reflexão marcado.'
+                        : `${test.spiritualCount} item(ns) de reflexão marcado(s).`}
                     </p>
                   </div>
                 </div>
@@ -655,7 +563,7 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
             
             <div className="p-6 glass-mystic rounded-[2.5rem] border border-[#18245C]/10 space-y-4">
                <p className="text-xs text-[#4A506B] italic leading-relaxed">
-                 Correlacione sua nutrição com sua vibração. Observe como a presença ou ausência de glúten, laticínios e açúcares impacta sua vitalidade e clareza mental. O descanso do templo (jejum) é essencial para a regeneração.
+                 Este painel reúne seus registros de refeições, energia e presença. A exibição conjunta não identifica relações de causa e efeito nem recomenda restrições alimentares.
                </p>
                
                <div className="space-y-4 pt-2">
@@ -665,14 +573,14 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                        <span className="text-[9px] font-black text-[#E9B44C] uppercase tracking-widest">
                          {new Date(log.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                        </span>
-                       <div className="flex gap-2">
+                       {hasRecordedRatings(log) && <div className="flex gap-2">
                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${log.energyLevel >= 4 ? 'bg-[#2E7D68]/20 text-[#2E7D68]' : 'bg-rose-100 text-rose-700'}`}>
                            Energia: {log.energyLevel}
                          </span>
                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${log.awarenessLevel >= 4 ? 'bg-[#A268D7]/20 text-[#A268D7]' : 'bg-rose-100 text-rose-700'}`}>
                            Presença: {log.awarenessLevel}
                          </span>
-                       </div>
+                       </div>}
                      </div>
                      
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -693,21 +601,10 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                      {log.foodRecord?.fastingHours && log.foodRecord.fastingHours > 0 && (
                        <div className="flex items-center gap-2 px-3 py-1 bg-[#A268D7]/10 rounded-lg border border-[#A268D7]/20">
                          <Moon size={10} className="text-[#A268D7]" />
-                         <span className="text-[8px] font-bold text-[#A268D7] uppercase">Descanso do Templo: {log.foodRecord.fastingHours}h de Jejum</span>
+                         <span className="text-[8px] font-bold text-[#A268D7] uppercase">Intervalo registrado entre refeições: {log.foodRecord.fastingHours}h</span>
                        </div>
                      )}
                      
-                     {(log.foodRecord?.breakfast?.toLowerCase().includes('glúten') || 
-                       log.foodRecord?.breakfast?.toLowerCase().includes('leite') ||
-                       log.foodRecord?.lunch?.toLowerCase().includes('glúten') ||
-                       log.foodRecord?.lunch?.toLowerCase().includes('leite') ||
-                       log.foodRecord?.dinner?.toLowerCase().includes('glúten') ||
-                       log.foodRecord?.dinner?.toLowerCase().includes('leite')) && (
-                       <div className="flex items-center gap-2 px-3 py-1 bg-rose-100 rounded-lg border border-rose-200">
-                         <Activity size={10} className="text-rose-700" />
-                         <span className="text-[8px] font-bold text-rose-700 uppercase">Potencial Alérgeno Detectado</span>
-                       </div>
-                     )}
                    </div>
                  ))}
                </div>
@@ -736,10 +633,10 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                         {new Date(log.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}
                       </p>
                       <h4 className="text-[#18245C] font-serif text-lg italic font-bold">
-                        {log.reflection ? (log.reflection.length > 60 ? log.reflection.substring(0, 60) + '...' : log.reflection) : "Silêncio Sagrado"}
+                        {log.reflection ? (log.reflection.length > 60 ? log.reflection.substring(0, 60) + '...' : log.reflection) : log.completedActions.journaling ? 'Sem reflexão escrita' : 'Rito registrado'}
                       </h4>
                     </div>
-                    <div className="flex gap-2">
+                    {hasRecordedRatings(log) && <div className="flex gap-2">
                       <div className="flex items-center gap-1 px-2 py-1 bg-[#2E7D68]/10 rounded-lg border border-[#2E7D68]/20">
                         <Zap size={10} className="text-[#2E7D68]" />
                         <span className="text-[10px] font-bold text-[#18245C]">{log.energyLevel}</span>
@@ -748,7 +645,7 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                         <Eye size={10} className="text-[#A268D7]" />
                         <span className="text-[10px] font-bold text-[#18245C]">{log.awarenessLevel}</span>
                       </div>
-                    </div>
+                    </div>}
                   </div>
 
                   {log.synchronicities && (
@@ -768,10 +665,39 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
                          ))
                        }
                     </div>
-                    <button className="text-[9px] font-black text-[#18245C]/60 uppercase tracking-widest group-hover:text-[#18245C] transition-colors flex items-center gap-1">
-                      Ver Detalhes <ChevronRight size={12} />
+                    <button
+                      type="button"
+                      onClick={() => setExpandedLogDate(expandedLogDate === log.date ? null : log.date)}
+                      aria-expanded={expandedLogDate === log.date}
+                      className="text-[9px] font-black text-[#18245C]/60 uppercase tracking-widest group-hover:text-[#18245C] transition-colors flex items-center gap-1"
+                    >
+                      {expandedLogDate === log.date ? 'Ocultar detalhes' : 'Ver detalhes'} <ChevronRight size={12} />
                     </button>
                   </div>
+                  {expandedLogDate === log.date && (
+                    <div className="space-y-3 pt-4 border-t border-[#18245C]/10 text-xs text-[#4A506B]" role="region" aria-label={`Registro de ${log.date}`}>
+                      <p><strong className="text-[#18245C]">Reflexão:</strong> {log.reflection || 'Nenhuma reflexão registrada.'}</p>
+                      {log.shadowObservations && <p><strong className="text-[#18245C]">Observações:</strong> {log.shadowObservations}</p>}
+                      {log.spiritualPractices && Object.entries(log.spiritualPractices).some(([, value]) => !!value) && (
+                        <div>
+                          <strong className="text-[#18245C]">Práticas registradas:</strong>
+                          {log.spiritualPractices.morning && <p>Manhã: {log.spiritualPractices.morning}</p>}
+                          {log.spiritualPractices.afternoon && <p>Tarde: {log.spiritualPractices.afternoon}</p>}
+                          {log.spiritualPractices.evening && <p>Noite: {log.spiritualPractices.evening}</p>}
+                        </div>
+                      )}
+                      {log.foodRecord && (
+                        <div>
+                          <strong className="text-[#18245C]">Alimentação registrada:</strong>
+                          {log.foodRecord.breakfast && <p>Café da manhã: {log.foodRecord.breakfast}</p>}
+                          {log.foodRecord.lunch && <p>Almoço: {log.foodRecord.lunch}</p>}
+                          {log.foodRecord.dinner && <p>Jantar: {log.foodRecord.dinner}</p>}
+                          {log.foodRecord.snacks && <p>Lanches: {log.foodRecord.snacks}</p>}
+                          <p>Água: {log.foodRecord.waterGlasses || 0} copos</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -800,7 +726,7 @@ const EvolutionReport: React.FC<EvolutionReportProps> = ({ logs, userProfile, se
         </>
       )}
 
-      {setView && (
+      {setView && AI_ENABLED && (
         <NextStepGuide 
           currentStepName="Portal da Evolução"
           stepNumber={6}

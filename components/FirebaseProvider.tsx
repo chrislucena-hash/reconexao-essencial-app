@@ -31,7 +31,10 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     let unsubscribeProfile: (() => void) | null = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      setLoading(true);
+      setError(null);
       setUser(currentUser);
+      setUserProfile(null);
       
       if (unsubscribeProfile) {
         unsubscribeProfile();
@@ -42,6 +45,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Listen to user profile changes
         const userDocRef = doc(db, 'users', currentUser.uid);
         unsubscribeProfile = onSnapshot(userDocRef, (docSnap) => {
+          setError(null);
           if (docSnap.exists()) {
             setUserProfile(docSnap.data() as UserProfile);
           } else {

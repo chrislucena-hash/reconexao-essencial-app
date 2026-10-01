@@ -29,7 +29,7 @@ import { RITUALS } from '../constants';
 import NextStepGuide from './NextStepGuide';
 
 interface TrackerProps {
-  onSaveLog: (log: DailyLog) => void;
+  onSaveLog: (log: DailyLog) => Promise<void>;
   logs: DailyLog[];
   setView?: (view: AppView) => void;
 }
@@ -45,6 +45,8 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
   const [awarenessLevel, setAwarenessLevel] = useState(3);
   const [showConfirmSave, setShowConfirmSave] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Food record state
   const [breakfast, setBreakfast] = useState('');
@@ -108,32 +110,40 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
     }
   }, [date, logs]);
 
-  const executeSave = () => {
-    onSaveLog({
-      date,
-      spiritualPractices: { morning: '', afternoon: '', evening: '' },
-      reflection,
-      synchronicities,
-      shadowObservations,
-      energyLevel,
-      awarenessLevel,
-      foodRecord: {
-        breakfast,
-        lunch,
-        dinner,
-        snacks,
-        waterGlasses,
-        fastingHours
-      },
-      completedActions: { 
-        ...habits, 
-        journaling: true
-      } as any
-    });
-    setShowSuccessToast(true);
-    setTimeout(() => {
-      setShowSuccessToast(false);
-    }, 4000);
+  const executeSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      await onSaveLog({
+        date,
+        spiritualPractices: { morning: '', afternoon: '', evening: '' },
+        reflection,
+        synchronicities,
+        shadowObservations,
+        energyLevel,
+        awarenessLevel,
+        ratingsRecorded: true,
+        foodRecord: {
+          breakfast,
+          lunch,
+          dinner,
+          snacks,
+          waterGlasses,
+          fastingHours
+        },
+        completedActions: {
+          ...habits,
+          journaling: true
+        } as DailyLog['completedActions']
+      });
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 4000);
+    } catch (error) {
+      setSaveError('Não foi possível salvar o diário. Verifique sua conexão e tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSave = () => {
@@ -164,7 +174,7 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
         <div className="space-y-1.5">
           <p className="text-[10px] font-black uppercase text-[#E9B44C] tracking-[0.2em]">Aviso da Senda</p>
           <p className="text-xs text-[#18245C] italic leading-relaxed font-light">
-            No <strong className="text-[#18245C] font-semibold">Livro de Espelhos</strong>, o buscador deve preencher todos os quadros (Vibração, Presença, Recordatório Alimentar, Elixir da Água, Descanso e Emanações da Alma) para obter um reflexo íntegro, fiel e profundo de sua jornada de autocura.
+            No <strong className="text-[#18245C] font-semibold">Livro de Espelhos</strong>, você pode registrar sua energia, presença, alimentação, água, descanso e percepções. Preencha apenas o que desejar compartilhar com seu diário.
           </p>
         </div>
       </div>
@@ -303,7 +313,7 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
                 <div className="p-6 bg-aura-violet/10 rounded-3xl border border-aura-violet/20 flex flex-col items-center gap-4">
                   <div className="flex items-center gap-2 text-aura-violet">
                     <Moon size={18} className="animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Descanso do Templo (Jejum)</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Intervalo entre refeições (opcional)</span>
                   </div>
                   <div className="flex items-center gap-6">
                     <button onClick={() => setFastingHours(Math.max(0, fastingHours - 1))} className="p-2 bg-[#18245C]/10 rounded-full text-[#18245C] hover:bg-[#18245C]/20"><Minus size={16} /></button>
@@ -365,11 +375,14 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
 
         <button 
            onClick={handleSave}
+           disabled={isSaving}
            className="w-full bg-[#18245C] text-white py-7 rounded-[3rem] font-black text-xs uppercase tracking-[0.4em] flex items-center justify-center gap-4 shadow-xl hover:bg-[#203078] active:scale-95 transition-all group overflow-hidden relative"
         >
            <div className="absolute inset-0 bg-magic-gold/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-           <Save size={20} className="relative z-10" /> <span className="relative z-10">Eternizar Registro no Akasha</span>
+           <Save size={20} className="relative z-10" /> <span className="relative z-10">{isSaving ? 'Salvando registro...' : 'Eternizar Registro no Akasha'}</span>
         </button>
+
+        {saveError && <p role="alert" className="text-sm text-rose-700 text-center">{saveError}</p>}
 
         {setView && (
           <NextStepGuide 
@@ -379,7 +392,7 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
             nextStepName="Portal do Guia"
             nextStepLabel="Bússola da Alma"
             onNavigate={() => setView(AppView.GUIDANCE)}
-            message="Diário atualizado com sucesso! Siga para o Portal do Guia para receber oráculos e receitas sagradas."
+            message="Salve seu registro antes de avançar ao Portal do Guia."
           />
         )}
       </div>
@@ -395,12 +408,13 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
             <div className="space-y-2">
               <h3 className="text-xl font-serif text-white italic">Quadros Incompletos</h3>
               <p className="text-xs text-ethereal-300 leading-relaxed">
-                Você possui quadros não preenchidos no seu <strong className="text-white">Livro de Espelhos</strong>. Para obter um reflexo completo e fiel da sua autocura, é altamente recomendável preencher todas as seções. Deseja salvar assim mesmo?
+                Há quadros não preenchidos no seu <strong className="text-white">Livro de Espelhos</strong>. Deseja salvar o que registrou até agora?
               </p>
             </div>
 
             <div className="flex flex-col w-full gap-3">
               <button 
+                disabled={isSaving}
                 onClick={() => {
                   setShowConfirmSave(false);
                   executeSave();
@@ -429,7 +443,7 @@ const Tracker: React.FC<TrackerProps> = ({ onSaveLog, logs, setView }) => {
             </div>
             <div className="flex-1">
               <p className="text-[10px] font-black uppercase tracking-widest text-aura-emerald">Registro Selado</p>
-              <p className="text-xs text-ethereal-100 italic leading-snug">Jornada atualizada e Alma ouvida no Akasha! ✨</p>
+              <p className="text-xs text-ethereal-100 italic leading-snug">Registro do diário salvo na sua conta.</p>
             </div>
             <button 
               onClick={() => setShowSuccessToast(false)}

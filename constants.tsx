@@ -26,7 +26,7 @@ export interface Ritual {
 }
 
 export const RITUALS: Ritual[] = [
-  { id: 'purification', label: 'Purificação e Hidratação', icon: Droplets, desc: 'Corte 2 a 3 lâminas finas de alho e tome com água em jejum (como comprimidos) + 3L de água solarizada.', color: 'text-aura-teal', bg: 'bg-aura-teal/10' },
+  { id: 'purification', label: 'Pausa e Hidratação', icon: Droplets, desc: 'Faça uma pausa e beba água conforme sua sede e necessidades individuais.', color: 'text-aura-teal', bg: 'bg-aura-teal/10' },
   { id: 'nourishment', label: 'Nutrição Consciente', icon: Apple, desc: 'Alimentar o templo com vida e pureza.', color: 'text-aura-gold', bg: 'bg-aura-gold/10' },
   { id: 'movement', label: 'Movimento Amado', icon: Activity, desc: 'Movimentar o corpo com amor e leveza, observando cada ato e praticando a presença.', color: 'text-aura-teal', bg: 'bg-aura-teal/10' },
   { id: 'nature', label: 'Conexão com a Natureza', icon: Sun, desc: 'Sol e pés na terra para ancorar sua luz.', color: 'text-aura-emerald', bg: 'bg-aura-emerald/10' },
@@ -41,18 +41,18 @@ export const INITIAL_JOURNEY: JourneyDay[] = [
     day: 1,
     title: "O Chamado do Templo",
     theme: "Consciência Corporal",
-    description: "Hoje iniciamos a escuta profunda do seu corpo. O templo físico é o primeiro degrau da ascensão. Começamos o ciclo de 21 dias de purificação.",
-    task: "Elimine completamente glúten, leite de vaca, açúcar, ultraprocessados e óleos vegetais. Observe como seu nível de energia se comporta.",
-    reflection: "O que meu corpo está tentando me dizer através do cansaço ou do vigor ao retirar esses gatilhos?",
+    description: "Hoje iniciamos a escuta do corpo e o registro das próprias percepções.",
+    task: "Observe sua rotina de alimentação e descanso sem alterar sua dieta por conta própria.",
+    reflection: "Como me senti ao longo do dia?",
     completed: false
   },
   {
     day: 2,
     title: "A Alquimia Solar",
     theme: "Hidratação Vital",
-    description: "A água solarizada é o condutor da luz líquida. Limpar os canais internos permite que a essência flua sem obstruções.",
-    task: "Beba 3 litros de água solarizada (exposta ao sol por 30-60 min em vidro). Mantenha a retirada dos alimentos inflamatórios.",
-    reflection: "Como me sinto ao nutrir minhas águas internas com a energia do Sol?",
+    description: "Reserve momentos para perceber sua sede e fazer pausas durante o dia.",
+    task: "Beba água de acordo com suas necessidades individuais e registre suas percepções.",
+    reflection: "Como me senti ao fazer uma pausa?",
     completed: false
   },
   {
@@ -69,8 +69,8 @@ export const INITIAL_JOURNEY: JourneyDay[] = [
     title: "Alquimia Alimentar",
     theme: "Vitalidade",
     description: "Cada alimento carrega uma frequência. Escolha a vida para gerar vida.",
-    task: "Consuma apenas alimentos vivos (crus) até o pôr do sol. Sinta a vibração da terra.",
-    reflection: "Sinto diferença na minha clareza mental ao comer alimentos mais puros?",
+    task: "Observe as cores, aromas e sabores de uma refeição variada, sem impor restrições.",
+    reflection: "Como foi minha experiência ao comer com atenção?",
     completed: false
   },
   {
@@ -96,7 +96,7 @@ export const INITIAL_JOURNEY: JourneyDay[] = [
     title: "O Portal do Descanso",
     theme: "Renovação",
     description: "O sono é uma pequena morte e um grande renascimento. Prepare seu altar de repouso.",
-    task: "Desligue todas as luzes artificiais e telas 1 hora antes de dormir. Use apenas luz de velas ou penumbra.",
+    task: "Se desejar, reduza o uso de telas antes de dormir e escolha um ambiente confortável e seguro.",
     reflection: "Como a qualidade do meu descanso afeta minha percepção da realidade?",
     completed: false
   },
@@ -131,7 +131,7 @@ export const INITIAL_JOURNEY: JourneyDay[] = [
     day: 11,
     title: "O Coração Radiante",
     theme: "Amor Próprio",
-    description: "O amor é a frequência de cura mais alta. Comece amando a si mesmo incondicionalmente.",
+    description: "O cuidado consigo pode começar com uma palavra de gentileza.",
     task: "Olhe-se no espelho por 2 minutos e diga: 'Eu te vejo, eu te honro, eu te amo'.",
     reflection: "Qual a maior barreira que eu coloco para não me amar plenamente?",
     completed: false

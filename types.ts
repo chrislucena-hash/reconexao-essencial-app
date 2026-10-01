@@ -56,6 +56,7 @@ export interface DailyLog {
   reflection: string;
   energyLevel: number; // 1-5
   awarenessLevel: number; // 1-5
+  ratingsRecorded?: boolean; // false when only a goal was marked
   synchronicities?: string;
   shadowObservations?: string;
   foodRecord?: {
@@ -80,6 +81,15 @@ export interface DailyLog {
     dailyChallenge?: boolean;
     alignmentConfirmed?: boolean;
   };
+}
+
+export function hasRecordedRatings(log: DailyLog): boolean {
+  const ratingsExist = Number.isFinite(log.energyLevel) && Number.isFinite(log.awarenessLevel)
+    && log.energyLevel >= 1 && log.energyLevel <= 5
+    && log.awarenessLevel >= 1 && log.awarenessLevel <= 5;
+  // Older diary entries have no flag; goal-only entries never marked journaling.
+  return ratingsExist && (log.ratingsRecorded === true
+    || (log.ratingsRecorded == null && log.completedActions?.journaling === true));
 }
 
 export interface Comment {

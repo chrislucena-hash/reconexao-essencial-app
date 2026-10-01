@@ -1,0 +1,139 @@
+name: Android Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: 'Código numérico maior que o último enviado ao Play Console'
+        required: true
+        default: '9'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VITE_API_BASE_URL: https://api.reconexaoessencial.com.br/api/v1
+      VERSION_CODE: ${{ inputs.version_code }}
+      KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Prepare upload keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$KEYSTORE_BASE64"
+          test -n "$KEY_ALIAS"
+          test -n "$KEY_PASSWORD"
+          test -n "$STORE_PASSWORD"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.jks
+          {
+            printf 'storeFile=upload-keystore.jks\n'
+            printf 'storePassword=%s\n' "$STORE_PASSWORD"
+            printf 'keyAlias=%s\n' "$KEY_ALIAS"
+            printf 'keyPassword=%s\n' "$KEY_PASSWORD"
+          } > android/keystore.properties
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify FastAPI backend
+        run: python3 scripts/verify_mobile_backend.py
+
+      - name: Validate and sync Android
+        run: |
+          npm run lint
+          npm run build:mobile
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html = Path('dist/index.html').read_text(encoding='utf-8')
+          javascript = b''.join(path.read_bytes() for path in Path('dist/assets').glob('*.js'))
+          assert 'background-color: #F7F2EC;' in html, 'Expected light frontend background'
+          assert 'cdn.tailwindcss.com' not in html, 'Release must bundle its styles locally'
+          assert any(Path('dist/assets').glob('*.css')), 'Bundled styles missing'
+          assert 'Questionário de Percepções'.encode() in javascript, 'Expected current frontend copy'
+          assert 'Teste do Corpo e da Alma'.encode() not in javascript, 'Outdated frontend copy found'
+          assert b'w3schools.com/html/movie.mp4' not in javascript, 'Demo video found in release'
+          assert 'export const AI_ENABLED = false;' in Path('features.ts').read_text(encoding='utf-8'), 'AI must remain disabled for this release'
+          assert b'/api/daily-content' not in javascript, 'AI content endpoint found in mobile bundle'
+          assert b'/api/moderate-content' not in javascript, 'AI moderation endpoint found in mobile bundle'
+          assert b'gemini-3.6-flash' not in javascript, 'AI model found in mobile bundle'
+          PY
+          npx cap sync android
+
+      - name: Build signed Android App Bundle and APK
+        working-directory: android
+        run: ./gradlew bundleRelease assembleRelease --no-daemon
+
+      - name: Verify AAB signature
+        working-directory: android
+        run: jarsigner -verify -verbose -certs app/build/outputs/bundle/release/app-release.aab
+
+      - name: Verify signed APK and bundled light frontend
+        working-directory: android
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -name apksigner | sort -V | tail -n 1)
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          python3 - <<'PY'
+          from zipfile import ZipFile
+
+          with ZipFile('app/build/outputs/apk/release/app-release.apk') as apk:
+              html = apk.read('assets/public/index.html').decode('utf-8')
+              javascript = b''.join(apk.read(name) for name in apk.namelist()
+                                    if name.startswith('assets/public/assets/') and name.endswith('.js'))
+              assert 'assets/public/meditation-cover.jpg' in apk.namelist(), 'Cover image missing from APK'
+              assert any(name.startswith('assets/public/assets/') and name.endswith('.css')
+                         for name in apk.namelist()), 'Styles missing from APK'
+              assert b'w3schools.com/html/movie.mp4' not in javascript, 'Demo video found in APK'
+          assert 'background-color: #F7F2EC;' in html, 'APK does not contain the light frontend'
+          assert 'cdn.tailwindcss.com' not in html, 'APK depends on external styles'
+          assert 'Questionário de Percepções'.encode() in javascript, 'APK has outdated frontend copy'
+          assert 'Teste do Corpo e da Alma'.encode() not in javascript, 'APK has outdated frontend copy'
+          assert 'export const AI_ENABLED = false;' in open('../features.ts', encoding='utf-8').read(), 'AI must remain disabled for this release'
+          assert b'/api/daily-content' not in javascript, 'AI content endpoint found in APK'
+          assert b'/api/moderate-content' not in javascript, 'AI moderation endpoint found in APK'
+          assert b'gemini-3.6-flash' not in javascript, 'AI model found in APK'
+          PY
+
+      - name: Upload signed AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: reconexao-essencial-v${{ inputs.version_code }}-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: reconexao-essencial-v${{ inputs.version_code }}-claro-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14

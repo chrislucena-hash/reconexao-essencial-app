@@ -22,7 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface SettingsProps {
   userProfile: UserProfile;
-  onUpdateProfile: (profile: Partial<UserProfile>) => void;
+  onUpdateProfile: (profile: Partial<UserProfile>) => Promise<void>;
   setView: (view: AppView) => void;
   onResetJourney: () => void;
 }
@@ -32,15 +32,26 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [tempProfile, setTempProfile] = useState({
     name: userProfile.name,
     email: userProfile.email || '',
     phone: userProfile.phone || ''
   });
 
-  const handleSave = () => {
-    onUpdateProfile(tempProfile);
-    setIsEditing(false);
+  const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      await onUpdateProfile(tempProfile);
+      setIsEditing(false);
+    } catch (error) {
+      setSaveError('Não foi possível salvar o perfil. Tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -71,13 +82,14 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
       <header className="flex items-center gap-4">
         <button 
           onClick={() => setView(AppView.DASHBOARD)}
-          className="p-3 bg-white/5 rounded-2xl text-white hover:bg-white/10 transition-all"
+          className="p-3 bg-reconexao-navy/5 rounded-2xl text-reconexao-navy hover:bg-reconexao-navy/10 transition-all"
+          aria-label="Voltar ao início"
         >
           <ArrowLeft size={20} />
         </button>
         <div>
           <p className="text-magic-gold text-[10px] font-black uppercase tracking-[0.4em]">Configurações</p>
-          <h2 className="text-3xl font-serif text-white italic">Seu Portal</h2>
+          <h2 className="text-3xl font-serif text-reconexao-navy italic">Seu Portal</h2>
         </div>
       </header>
 
@@ -147,11 +159,13 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
             {isEditing && (
               <button 
                 onClick={handleSave}
+                disabled={isSaving}
                 className="w-full bg-magic-gold text-nature-950 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                Salvar Alterações
+                {isSaving ? 'Salvando...' : 'Salvar Alterações'}
               </button>
             )}
+            {saveError && <p role="alert" className="text-sm text-rose-300">{saveError}</p>}
           </div>
         </div>
 
@@ -166,7 +180,7 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
               </div>
               <div className="text-left">
                 <h4 className="text-sm font-bold text-white">Mapeamento de Corpo e Alma</h4>
-                <p className="text-[9px] text-white/40 uppercase tracking-widest">Identificar sensibilidades e sintomas do templo</p>
+                <p className="text-[9px] text-white/40 uppercase tracking-widest">Registrar percepções e sinais do corpo</p>
               </div>
             </div>
             <ChevronRight size={18} className="text-white/20 group-hover:text-white transition-all animate-pulse" />
@@ -256,6 +270,22 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
             <ChevronRight size={18} className="text-white/20 group-hover:text-white transition-all animate-pulse" />
           </button>
 
+          <a
+            href="mailto:reconexaoessencial.br@gmail.com?subject=Solicita%C3%A7%C3%A3o%20de%20exclus%C3%A3o%20da%20conta%20e%20dados"
+            className="w-full glass-mystic p-5 rounded-3xl border border-white/5 flex items-center justify-between group hover:border-rose-500/30 transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-500">
+                <Mail size={20} />
+              </div>
+              <div className="text-left">
+                <h4 className="text-sm font-bold text-white">Solicitar exclusão da conta e dados</h4>
+                <p className="text-[9px] text-white/40 uppercase tracking-widest">Envie o pedido à equipe pelo seu e-mail</p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="text-white/20 group-hover:text-white transition-all" />
+          </a>
+
           <button 
             onClick={handleReset}
             className="w-full glass-mystic p-5 rounded-3xl border border-white/5 flex items-center justify-between group hover:border-rose-500/30 transition-all"
@@ -309,7 +339,7 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
                   <div className="space-y-4">
                     <div>
                       <p className="text-magic-gold font-bold not-italic uppercase tracking-tighter text-[10px] mb-1">Caráter Educativo e Espiritual</p>
-                      <p>Todo o conteúdo, incluindo testes de sensibilidade (glúten/caseína), mapeamento de sintomas e sugestões nutricionais, tem finalidade exclusivamente educativa e de expansão da consciência. Não constitui diagnóstico médico, prescrição dietética ou tratamento de saúde.</p>
+                      <p>O questionário registra percepções, e as sugestões de alimentação e bem-estar são gerais. O app não é um dispositivo médico, não identifica sensibilidades alimentares e não diagnostica, trata, cura nem previne condições médicas.</p>
                     </div>
                     
                     <div>
@@ -319,7 +349,7 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
                     
                     <div>
                       <p className="text-magic-gold font-bold not-italic uppercase tracking-tighter text-[10px] mb-1">Responsabilidade do Usuário</p>
-                      <p>A decisão de implementar mudanças na dieta (como a retirada de glúten ou leite) ou realizar práticas de jejum e purificação é de inteira responsabilidade do usuário. Recomendamos acompanhamento profissional para qualquer alteração clínica.</p>
+                      <p>Se houver sintomas, suspeita de alergia ou intenção de retirar alimentos da dieta, procure orientação individual de um profissional de saúde. As pausas do aplicativo não são indicação de jejum.</p>
                     </div>
                     
                     <div>
@@ -330,7 +360,7 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
 
                     <div>
                       <p className="text-magic-gold font-bold not-italic uppercase tracking-tighter text-[10px] mb-1">Limitação de Resultados</p>
-                      <p>O processo de "autocura" mencionado refere-se à busca por equilíbrio emocional e espiritual, e os resultados podem variar de pessoa para pessoa.</p>
+                      <p>As práticas de reflexão, meditação e relaxamento não prometem resultados clínicos. Observe sua experiência e interrompa qualquer prática que cause desconforto.</p>
                     </div>
                   </div>
                 </div>
@@ -378,7 +408,7 @@ const Settings: React.FC<SettingsProps> = ({ userProfile, onUpdateProfile, setVi
               <div className="space-y-2">
                 <h3 className="text-xl font-serif text-white italic">Reiniciar Senda?</h3>
                 <p className="text-xs text-ethereal-300 leading-relaxed">
-                  Tem certeza de que deseja reiniciar sua jornada de reconexão? Todos os seus dados e diários anteriores serão apagados para um novo ciclo. <strong className="text-white">Todas as mensagens da Egrégora serão preservadas intactas.</strong>
+                  Tem certeza de que deseja reiniciar sua jornada? O progresso e os registros do diário serão apagados. Sua conta e as publicações da comunidade continuarão disponíveis. Para excluir todos os dados associados à conta, use a opção de solicitação de exclusão.
                 </p>
               </div>
 

@@ -1,7 +1,7 @@
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { analyzeSoulJourney, generateDailyContent } from '../services/geminiService';
-import { DailyLog, UserProfile, AppView, DailyContent, JourneyProgress } from '../types';
+import React, { useState, useMemo } from 'react';
+import { DailyLog, UserProfile, AppView, JourneyProgress, hasRecordedRatings } from '../types';
+import { CURATED_DAILY_CHALLENGE } from '../curatedContent';
 import { RITUALS, INITIAL_JOURNEY } from '../constants.tsx';
 import NextStepGuide from './NextStepGuide';
 import { 
@@ -18,17 +18,30 @@ import {
 interface DashboardProps {
   userProfile: UserProfile;
   logs: DailyLog[];
-  onToggleGoal: (goalKey: keyof DailyLog['completedActions']) => void;
+  onToggleGoal: (goalKey: keyof DailyLog['completedActions']) => Promise<void>;
   setView: (view: AppView) => void;
   journeyProgress: JourneyProgress;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, setView, journeyProgress }) => {
-  const [insight, setInsight] = useState<string | null>(null);
-  const [loadingInsight, setLoadingInsight] = useState(false);
-  const [dailyContent, setDailyContent] = useState<DailyContent | null>(null);
-  const [loadingContent, setLoadingContent] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [goalError, setGoalError] = useState<string | null>(null);
+  const [isSavingGoal, setIsSavingGoal] = useState(false);
+
+  const handleToggleGoal = async (goalKey: keyof DailyLog['completedActions']) => {
+    if (isSavingGoal) return;
+    setIsSavingGoal(true);
+    setGoalError(null);
+    try {
+      await onToggleGoal(goalKey);
+      return true;
+    } catch (error) {
+      setGoalError('Não foi possível salvar este rito. Verifique sua conexão e tente novamente.');
+      return false;
+    } finally {
+      setIsSavingGoal(false);
+    }
+  };
 
   const todayStr = new Date().toISOString().split('T')[0];
   const todayLog = logs.find(l => l.date === todayStr);
@@ -54,39 +67,17 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
     return currentDayData ? currentDayData.task : INITIAL_JOURNEY[0].task;
   }, [journeyProgress]);
 
-  useEffect(() => {
-    const fetchContent = async () => {
-      setLoadingContent(true);
-      const content = await generateDailyContent();
-      setDailyContent(content);
-      setLoadingContent(false);
-    };
-    fetchContent();
-  }, []);
-
   const todaysGoals = useMemo(() => {
     return RITUALS;
   }, []);
 
-  const totalGoals = todaysGoals.length + 2; // 8 Rituals + 1 Journey Task + 1 Daily Challenge = 10
+  const totalGoals = todaysGoals.length + 2;
   const completedCount = todaysGoals.filter(g => todayLog?.completedActions[g.id as keyof DailyLog['completedActions']]).length 
     + (todayLog?.completedActions.journeyTask ? 1 : 0)
     + (todayLog?.completedActions.dailyChallenge ? 1 : 0);
 
   const isAlignmentConfirmed = todayLog?.completedActions.alignmentConfirmed;
   const allTasksDone = completedCount >= totalGoals;
-
-  useEffect(() => {
-    const fetchInsight = async () => {
-      if (logs.length >= 2 && !insight) {
-        setLoadingInsight(true);
-        const result = await analyzeSoulJourney(logs);
-        setInsight(result);
-        setLoadingInsight(false);
-      }
-    };
-    fetchInsight();
-  }, [logs]);
 
   return (
     <div className="p-2 sm:p-6 pb-24 sm:pb-32 max-w-2xl mx-auto space-y-8 sm:space-y-12 animate-in fade-in relative w-full">
@@ -145,12 +136,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
           </div>
           <div className="space-y-1">
             <p className="text-[9px] font-black text-[#D87CB5] uppercase tracking-widest flex items-center gap-1.5">
-              <span>Autoexame Sagrado</span>
+              <span>Registro Pessoal</span>
               <span className="w-1.5 h-1.5 rounded-full bg-[#D87CB5]" />
             </p>
-            <h4 className="text-[#18245C] font-serif text-lg italic leading-tight">Teste do Corpo e da Alma</h4>
+            <h4 className="text-[#18245C] font-serif text-lg italic leading-tight">Questionário de Percepções</h4>
             <p className="text-[11px] text-[#4A506B] italic leading-relaxed">
-              Altamente recomendável realizar este teste <strong className="text-[#18245C]">a cada 21 dias</strong> para medir com precisão a evolução da sua vitalidade e expansão de consciência.
+              Registre o que percebe em seu corpo e suas emoções. As respostas não medem vitalidade nem identificam causas de sintomas.
             </p>
           </div>
         </div>
@@ -170,14 +161,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
               </div>
               <h3 className="text-xl font-serif text-[#18245C] italic">Resumo do Dia</h3>
             </div>
-            <div className="flex gap-2">
+            {hasRecordedRatings(todayLog) && <div className="flex gap-2">
               <div className="px-3 py-1 bg-[#2E7D68]/10 rounded-full border border-[#2E7D68]/20 text-[9px] font-bold text-[#2E7D68] uppercase">
                 Energia: {todayLog.energyLevel}/5
               </div>
               <div className="px-3 py-1 bg-[#A268D7]/10 rounded-full border border-[#A268D7]/20 text-[9px] font-bold text-[#A268D7] uppercase">
                 Presença: {todayLog.awarenessLevel}/5
               </div>
-            </div>
+            </div>}
           </div>
           
           <div className="space-y-4">
@@ -193,7 +184,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
                 .filter(([key, val]) => val && !['journaling', 'alignmentConfirmed'].includes(key))
                 .map(([key]) => (
                   <span key={key} className="px-2 py-1 bg-[#18245C]/5 rounded-lg text-[8px] font-black text-[#18245C] uppercase tracking-tighter">
-                    {key === 'purification' ? 'Purificação' : 
+                    {key === 'purification' ? 'Pausa e hidratação' :
                      key === 'nourishment' ? 'Nutrição' : 
                      key === 'nature' ? 'Natureza' : 
                      key === 'presence' ? 'Presença' : 
@@ -208,7 +199,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
         </section>
       )}
 
-      {/* Gráfico e Insight */}
+      {/* Gráfico e reflexão incluída no app */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <section className="relative flex flex-col items-center justify-center p-10 glass-mystic rounded-[4rem] border border-[#18245C]/10 bg-gradient-to-br from-[#A268D7]/10 via-[#18245C]/5 to-[#2E7D68]/10 shadow-sm overflow-hidden group">
           <div className="relative w-48 h-48 flex items-center justify-center">
@@ -253,9 +244,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
           </div>
           <CompassIcon size={32} className="text-[#A268D7]" />
           <div className="space-y-2">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#A268D7]">O Oráculo Diz</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#A268D7]">Reflexão incluída no app</h3>
             <p className="text-lg text-[#18245C] font-serif italic leading-relaxed">
-              {loadingInsight ? "Sintonizando..." : insight ? `"${insight}"` : "Sua jornada de autocura é um farol para sua alma."}
+              Sua jornada de autoconhecimento segue no seu ritmo.
             </p>
           </div>
         </section>
@@ -274,9 +265,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
         </div>
 
         <div className="grid grid-cols-1 gap-4 px-2">
+          {goalError && <p role="alert" className="text-sm text-rose-700">{goalError}</p>}
           {/* Missão da Senda */}
           <button 
-            onClick={() => onToggleGoal('journeyTask')}
+            onClick={() => handleToggleGoal('journeyTask')}
+            disabled={isSavingGoal}
             className={`group relative p-8 rounded-[3rem] flex items-center gap-6 border transition-all duration-300 text-left overflow-hidden ${
               todayLog?.completedActions.journeyTask 
                 ? 'bg-[#E9B44C]/15 border-[#E9B44C]/40 shadow-sm' 
@@ -309,7 +302,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
 
           {/* Desafio de Presença */}
           <button 
-            onClick={() => onToggleGoal('dailyChallenge')}
+            onClick={() => handleToggleGoal('dailyChallenge')}
+            disabled={isSavingGoal}
             className={`group relative p-8 rounded-[3rem] flex items-center gap-6 border transition-all duration-300 text-left overflow-hidden ${
               todayLog?.completedActions.dailyChallenge 
                 ? 'bg-[#2E7D68]/15 border-[#2E7D68]/40 shadow-sm' 
@@ -330,7 +324,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
                 Desafio de Presença
               </span>
               <span className="text-xs text-[#4A506B] leading-relaxed block mt-1.5 font-medium tracking-wide">
-                {loadingContent ? "Sintonizando desafio..." : dailyContent?.dailyChallenge}
+                {CURATED_DAILY_CHALLENGE}
               </span>
             </div>
             <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
@@ -343,7 +337,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
           {todaysGoals.map((goal) => (
             <button 
               key={goal.id}
-              onClick={() => onToggleGoal(goal.id as any)}
+              onClick={() => handleToggleGoal(goal.id as keyof DailyLog['completedActions'])}
+              disabled={isSavingGoal}
               className={`group relative p-8 rounded-[3rem] flex items-center gap-6 border transition-all duration-300 text-left overflow-hidden ${
                 todayLog?.completedActions[goal.id as keyof DailyLog['completedActions']] 
                   ? 'bg-[#A268D7]/15 border-[#A268D7]/40 shadow-sm' 
@@ -389,7 +384,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
               setShowConfirmation(true);
             }
           }}
-          disabled={isAlignmentConfirmed}
+          disabled={isAlignmentConfirmed || isSavingGoal}
           className={`group relative p-8 rounded-[3rem] flex items-center gap-6 border transition-all duration-300 text-left overflow-hidden ${
             isAlignmentConfirmed 
               ? 'bg-[#2E7D68]/15 border-[#2E7D68]/40 shadow-sm' 
@@ -467,11 +462,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, logs, onToggleGoal, 
               </p>
             </div>
             <div className="flex flex-col w-full gap-4">
+              {goalError && <p role="alert" className="text-sm text-rose-700">{goalError}</p>}
               <button 
-                onClick={() => {
-                  onToggleGoal('alignmentConfirmed');
-                  setShowConfirmation(false);
+                onClick={async () => {
+                  if (await handleToggleGoal('alignmentConfirmed')) setShowConfirmation(false);
                 }}
+                disabled={isSavingGoal}
                 className="w-full py-5 bg-[#2E7D68] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] shadow-lg hover:scale-105 active:scale-95 transition-all"
               >
                 Sim, estou alinhado

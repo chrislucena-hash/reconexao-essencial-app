@@ -73,7 +73,7 @@ const WelcomeCover: React.FC<WelcomeCoverProps> = ({ onStart }) => {
         {/* Scenic Mountain Meditating Image at Bottom */}
         <div className="w-full relative overflow-hidden rounded-t-[2.5rem] shadow-2xl border-t border-white/60 shrink-0 mt-auto">
           <img 
-            src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=1000" 
+            src="/meditation-cover.jpg"
             alt="Meditação na Senda" 
             className="w-full h-52 sm:h-60 object-cover object-top filter contrast-[1.05] brightness-[0.98]"
           />
@@ -99,7 +99,7 @@ const WelcomeCover: React.FC<WelcomeCoverProps> = ({ onStart }) => {
 
             <div className="space-y-4 text-[#18245C] text-xs leading-relaxed italic font-normal px-2">
               <p>"Você não encontrou este portal por acaso. Sua alma vibrou nesta frequência porque reconhece que seu templo — seu corpo — clama por libertação."</p>
-              <p>"A Reconexão Essencial é um catalisador. Aqui, removemos os véus da inflamação e do ruído para que a luz da sua centelha divina possa, finalmente, reinar."</p>
+              <p>"A Reconexão Essencial é um espaço para reflexão, meditação e registro da sua jornada pessoal."</p>
               <p className="text-[#E9B44C] font-bold">"O solo que você pisa é sua própria essência. Seja bem-vindo à sua verdade."</p>
             </div>
 
