@@ -231,7 +231,10 @@ const AppContent: React.FC = () => {
       return updated;
     });
 
-    upsertJournalEntry(log).catch(err => console.warn('Backend journal sync failed:', err));
+    (async () => {
+      await syncUserWithBackend(userProfile);
+      await upsertJournalEntry(log);
+    })().catch(err => console.warn('Backend journal sync failed:', err));
   };
 
   const toggleDailyGoal = async (goalKey: keyof DailyLog['completedActions']) => {

@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     schema_version: str = "2026-04-02"
     default_timezone: str = "America/Sao_Paulo"
-    cors_allowed_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    cors_allowed_origins: str = "http://localhost:3000,http://127.0.0.1:3000,http://localhost,capacitor://localhost,https://localhost"
     trusted_hosts: str = "localhost,127.0.0.1"
     firebase_project_id: str | None = None
     firebase_credentials_path: str | None = None

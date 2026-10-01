@@ -60,17 +60,7 @@ jobs:
         run: npm ci
 
       - name: Verify FastAPI backend
-        run: |
-          node --input-type=module <<'NODE'
-          const backendHealthUrl = new URL('/health', process.env.VITE_API_BASE_URL);
-          const backendResponse = await fetch(backendHealthUrl, {
-            redirect: 'error',
-            signal: AbortSignal.timeout(20000),
-          });
-          if (!backendResponse.ok || (await backendResponse.json()).status !== 'ok') {
-            throw new Error('FastAPI backend health check failed');
-          }
-          NODE
+        run: python3 scripts/verify_mobile_backend.py
 
       - name: Validate and sync Android
         run: |

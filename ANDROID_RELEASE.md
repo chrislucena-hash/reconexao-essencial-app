@@ -7,6 +7,7 @@ O frontend React é empacotado com Capacitor usando o identificador
 
 ```bash
 npm ci
+VITE_API_BASE_URL=https://api.reconexaoessencial.com.br/api/v1 python3 scripts/verify_mobile_backend.py
 VITE_API_BASE_URL=https://api.reconexaoessencial.com.br/api/v1 npm run android:sync
 cd android
 ./gradlew bundleRelease
@@ -46,6 +47,9 @@ criada uma única vez antes do primeiro upload.
 ## API
 
 O build de produção usa `https://api.reconexaoessencial.com.br/api/v1` por
-definição. O SSL/TLS do domínio precisa estar configurado no Cloudflare como
-Full ou Full (strict); enquanto houver loop de redirecionamento, o app não
-conseguirá acessar o backend.
+definição. O workflow exige que o domínio público entregue `/health`, as rotas
+de autenticação/Diário e o CORS do Capacitor sem redirecionamento. A VPS já
+responde por HTTPS direto; para dispensar o proxy Cloudflare, o registro DNS
+`api` precisa apontar para `187.127.12.195` em modo **DNS only**. Enquanto o
+proxy produzir `301` para a própria URL, o app não acessará o backend e o
+workflow de release falhará antes de gerar o AAB.

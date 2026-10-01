@@ -1,5 +1,24 @@
 # Reenvio ao Google Play: Reconexão Essencial
 
+## Domínio e contrato móvel (01/10/2026)
+
+O backend FastAPI na VPS `187.127.12.195` respondeu `200` por HTTPS direto.
+O CORS em produção foi atualizado para `http://localhost` (Android),
+`capacitor://localhost` e `https://localhost` (iOS), preservando as origens
+anteriores. Preflights de autenticação e Diário agora retornam `200` com a
+origem correta. O código também inclui essas origens por padrão e os dois
+workflows executam `scripts/verify_mobile_backend.py` para checar `/health`,
+CORS, rotas e envelope de erro antes de compilar. O envio do Diário ao backend
+agora cria/sincroniza o usuário antes da entrada e não envia notas padrão 3/5
+como avaliações reais.
+
+**Pendência externa:** o acesso público via proxy Cloudflare ainda retorna
+`301` para a própria URL de `/health`, embora a origem responda `200`. Para
+não usar o proxy, altere somente o registro DNS `api` para **DNS only** com o
+mesmo IP da VPS. Depois confirme, sem `MOBILE_BACKEND_ORIGIN_IP`:
+`VITE_API_BASE_URL=https://api.reconexaoessencial.com.br/api/v1 python3 scripts/verify_mobile_backend.py`.
+Até esse teste público passar, os workflows param antes de gerar AAB ou IPA.
+
 ## Candidato sem IA (01/10/2026)
 
 Para a próxima compilação Android e iOS, `features.ts` fixa `AI_ENABLED = false`.

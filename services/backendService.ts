@@ -1,5 +1,5 @@
 import { auth } from '../firebase';
-import { DailyLog, UserProfile } from '../types';
+import { DailyLog, UserProfile, hasRecordedRatings } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
@@ -43,6 +43,7 @@ async function getAuthToken(): Promise<string | null> {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = await getAuthToken();
+  if (!token) throw new Error('Entre na sua conta para sincronizar os dados.');
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -84,10 +85,16 @@ function toJournalPayload(log: DailyLog) {
     sincronicidadesText: log.synchronicities || log.shadowObservations || null,
   };
 
+  const waterGlasses = log.foodRecord?.waterGlasses ?? 0;
+  const waterIntakeLabel = waterGlasses > 5 ? 'Mais de 5 copos'
+    : waterGlasses >= 1 ? `${Math.floor(waterGlasses)} ${waterGlasses < 2 ? 'copo' : 'copos'}`
+      : null;
+
   return {
     entryDate: log.date,
-    energyLevel: log.ratingsRecorded === false ? null : log.energyLevel,
-    presenceLevel: log.ratingsRecorded === false ? null : log.awarenessLevel,
+    energyLevel: hasRecordedRatings(log) ? log.energyLevel : null,
+    presenceLevel: hasRecordedRatings(log) ? log.awarenessLevel : null,
+    waterIntakeLabel,
     meals,
     reflections: reflections.emanacoesAlmaText || reflections.sincronicidadesText ? reflections : null,
   };
@@ -99,7 +106,8 @@ function toDailyLog(entry: BackendJournalEntry): DailyLog {
     lunch: entry.meals.find((meal) => meal.mealType === 'almoco')?.description || '',
     dinner: entry.meals.find((meal) => meal.mealType === 'jantar')?.description || '',
     snacks: entry.meals.find((meal) => meal.mealType === 'lanches')?.description || '',
-    waterGlasses: 0,
+    waterGlasses: entry.waterIntakeLabel === 'Mais de 5 copos'
+      ? 6 : Number.parseInt(entry.waterIntakeLabel || '0', 10) || 0,
   };
 
   return {
@@ -132,11 +140,18 @@ export async function syncUserWithBackend(userProfile: Partial<UserProfile>): Pr
   const user = auth.currentUser;
   if (!user) return;
 
+  const email = user.email;
+  if (!email) {
+    // The backend creates a minimal account from the verified Firebase token.
+    await request('/auth/me');
+    return;
+  }
+
   await request('/auth/sync-user', {
     method: 'POST',
     body: JSON.stringify({
       firebaseUid: user.uid,
-      email: userProfile.email || user.email || '',
+      email,
       displayName: userProfile.name || user.displayName || 'Buscador',
       photoUrl: userProfile.photoURL || user.photoURL || null,
       phoneNumber: userProfile.phone || null,
