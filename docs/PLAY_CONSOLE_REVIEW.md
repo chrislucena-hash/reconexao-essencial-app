@@ -144,10 +144,10 @@ faixa ativa**. Se alguma faixa ainda instalar o X do Capacitor, substitua o
 bundle antigo pela nova versão antes de pedir análise.
 
 O servidor Node agora pode ser empacotado pelo `Dockerfile` e foi testado
-localmente. Antes de expô-lo à internet, proteja os endpoints de geração e
-moderação contra uso não autorizado; CORS não substitui autenticação. Depois,
-publique-o em um serviço HTTPS que aceite containers, configure `GEMINI_API_KEY` no servidor e
-`VITE_CONTENT_API_BASE_URL` nas Variables do GitHub com apenas a origem HTTPS,
+localmente. As rotas de conteúdo já exigem token Firebase; CORS não substitui
+essa autenticação. Depois, publique-o em um serviço HTTPS, configure
+`GEMINI_API_KEY` e `FIREBASE_PROJECT_ID` no servidor e
+`VITE_CONTENT_API_BASE_URL` nas Variables do GitHub com a URL base HTTPS,
 sem `/api` no final. Verifique `GET /api/health` (incluindo
 `dynamicContentConfigured: true`) e o preflight `OPTIONS /api/moderate-content`
 com `Origin: capacitor://localhost` e `Origin: http://localhost`. A nova
@@ -175,16 +175,21 @@ da Play Store assinada pelo Google; verifique o AAB na faixa de testes. O v8
 **não foi enviado ao Play Console**. Compare o código 8 com o maior código já
 carregado no Console antes de qualquer envio.
 
-**Bloqueio atual:** em 30/09/2026, `https://api.reconexaoessencial.com.br/health`
-respondia `301` com `Location` igual à própria URL. O app não consegue usar o
-backend enquanto houver esse loop. Verifique o modo SSL/TLS e os redirecionamentos
-do subdomínio `api` no Cloudflare e no servidor de origem; com certificado válido
-na origem, prefira **Full (strict)**. [Guia Cloudflare para loops](https://developers.cloudflare.com/ssl/troubleshooting/too-many-redirects/).
+**Bloqueio atual (confirmado em 01/10/2026):** o FastAPI na VPS responde
+`200` em `127.0.0.1:8000/health`, e o Nginx da origem responde `200` em HTTPS
+direto com certificado válido. Pela URL pública do Cloudflare, a mesma rota
+responde `301` para si mesma. Um pedido público de verificação apareceu no log
+do Nginx como `301`; a configuração do Nginx redireciona HTTP para HTTPS.
+Isso indica que o Cloudflare está chegando à origem por HTTP, possivelmente
+por modo **Flexible** ou regra de origem. Confira o modo efetivo para o
+subdomínio `api` e use **Full (strict)**, já que a origem aceita HTTPS válido.
+Não remova o redirecionamento da origem apenas para contornar o loop, pois isso
+manteria o trecho Cloudflare→VPS sem HTTPS. [Diagnóstico oficial de loops](https://developers.cloudflare.com/ssl/troubleshooting/too-many-redirects/).
 Além disso, as funções de conteúdo dinâmico em `services/geminiService.ts`
 chamam `/api/...` do servidor Node usado na web. Esse servidor **não** é
 empacotado no Android, e o FastAPI em `VITE_API_BASE_URL` não oferece essas
 rotas. Quando esse servidor existir publicamente, defina
-`VITE_CONTENT_API_BASE_URL` no build com a origem HTTPS que oferece as rotas
+`VITE_CONTENT_API_BASE_URL` no build com a URL base HTTPS que oferece as rotas
 `/api/...`; não use `VITE_API_BASE_URL` do FastAPI para isso sem implementar
 as mesmas rotas. A revisão agora apresenta conteúdo local curado ou mensagem explícita
 quando a chamada falha, mas geração dinâmica, áudio remoto e moderação precisam
@@ -209,15 +214,26 @@ em `Authorization: Bearer ...`, e o servidor o verifica com Firebase Admin.
 `/api/health` é público, mas as demais rotas `/api/...` exigem token válido.
 Não configure `FIREBASE_AUTH_EMULATOR_HOST` na produção.
 
-Depois de implantar o Dockerfile em um host HTTPS, verifique que
-`/api/health` retorna `dynamicContentConfigured: true` e
+Na VPS atual, o FastAPI usa `reconexao-api.service` na porta 8000; o
+`reconexao-frontend.service` usa Node na porta 3000 e ainda serve uma versão
+web antiga. `GET /api/health` nessa porta devolve HTML, não o novo health check.
+Docker não está instalado na VPS. É possível implantar a API de conteúdo na
+**mesma VPS em serviço systemd separado**, por exemplo na porta local 3001,
+e expor somente o prefixo `/content/` no Nginx, preservando `/api/v1/` do
+FastAPI e o serviço web existente. Nesse desenho, a variável GitHub seria
+`VITE_CONTENT_API_BASE_URL=https://api.reconexaoessencial.com.br/content`;
+o proxy deve encaminhar `/content/api/...` para `/api/...` no Node. A implantação
+e essa configuração Nginx ainda **não foram feitas**.
+
+Depois de implantar em HTTPS, verifique que
+`<URL base>/api/health` retorna `dynamicContentConfigured: true` e
 `authenticationConfigured: true`, que uma requisição anônima a
 `/api/daily-content` retorna 401 e que um usuário real consegue carregar
 conteúdo e publicar na comunidade. Os workflows Android e iOS verificam o
 backend FastAPI sem redirecionamento, o health check da API de conteúdo, o
 CORS com `Authorization` e a rejeição de anônimos antes de compilar. Defina
-a variável GitHub `VITE_CONTENT_API_BASE_URL` com a origem
-HTTPS, sem `/api` no final. Configure também limites de uso no provedor para
+a variável GitHub `VITE_CONTENT_API_BASE_URL` com essa URL base HTTPS, sem
+`/api` no final. Configure também limites de uso no provedor para
 evitar consumo excessivo da API Gemini por contas autenticadas.
 
 ## Declaração de apps de saúde
