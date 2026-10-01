@@ -13,9 +13,11 @@ on:
         required: true
         default: '8'
         type: string
-  push:
-    tags:
-      - 'ios-release-*'
+      build_only:
+        description: Generate signed IPA without uploading to TestFlight
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -26,7 +28,7 @@ concurrency:
 
 jobs:
   build-ios:
-    name: Build iOS and upload to TestFlight
+    name: Build iOS IPA
     runs-on: macos-26
 
     env:
@@ -158,10 +160,14 @@ jobs:
           ARCHIVE_BUNDLE_ID=$(plutil -extract CFBundleIdentifier raw -o - "$APP_INFO")
           ARCHIVE_VERSION=$(plutil -extract CFBundleShortVersionString raw -o - "$APP_INFO")
           ARCHIVE_BUILD=$(plutil -extract CFBundleVersion raw -o - "$APP_INFO")
+          ARCHIVE_DISPLAY_NAME=$(plutil -extract CFBundleDisplayName raw -o - "$APP_INFO")
+          ARCHIVE_LANGUAGE=$(plutil -extract CFBundleDevelopmentRegion raw -o - "$APP_INFO")
 
           test "$ARCHIVE_BUNDLE_ID" = "$BUNDLE_ID"
           test "$ARCHIVE_VERSION" = "$RELEASE_VERSION"
           test "$ARCHIVE_BUILD" = "$BUILD_NUMBER"
+          test "$ARCHIVE_DISPLAY_NAME" = "Reconexão Essencial"
+          test "$ARCHIVE_LANGUAGE" = "pt-BR"
 
       - name: Export IPA
         shell: bash
@@ -198,6 +204,7 @@ jobs:
             -exportPath "$PWD/build"
 
       - name: Decode App Store Connect API key
+        if: ${{ !inputs.build_only }}
         id: decode_key
         shell: bash
         env:
@@ -218,6 +225,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload IPA to App Store Connect
+        if: ${{ !inputs.build_only }}
         uses: apple-actions/upload-testflight-build@v5.3.0
         with:
           app-path: ${{ github.workspace }}/build/App.ipa

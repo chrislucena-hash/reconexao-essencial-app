@@ -5,9 +5,13 @@
     <key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>pt-BR</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>pt-BR</string>
+	</array>
 	<key>CFBundleDisplayName</key>
-        <string>Reconexao Essencial</string>
+	<string>Reconexão Essencial</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
