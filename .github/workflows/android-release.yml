@@ -6,7 +6,7 @@ on:
       version_code:
         description: 'Código numérico maior que o último enviado ao Play Console'
         required: true
-        default: '9'
+        default: '10'
         type: string
 
 permissions:
@@ -105,6 +105,9 @@ jobs:
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -name apksigner | sort -V | tail -n 1)
           test -n "$APKSIGNER"
           "$APKSIGNER" verify --verbose --print-certs "$APK"
+          AAPT=$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -name aapt | sort -V | tail -n 1)
+          test -n "$AAPT"
+          "$AAPT" dump badging "$APK" | grep -Fxq "sdkVersion:'24'"
           python3 - <<'PY'
           from zipfile import ZipFile
 
