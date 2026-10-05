@@ -41,16 +41,24 @@ test('perfil sem resposta oferece saída da conta e volta à capa', async ({ pag
   await expect(page.getByRole('button', { name: 'ENTRAR', exact: true })).toBeVisible();
 });
 
-test('perfil disponível abre painel e navega sem telas vazias', async ({ page }) => {
+test('perfil disponível abre todas as páginas principais sem telas vazias', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
   await openApp(page, 'profile-ready');
 
   await expect(page.getByRole('heading', { name: 'Olá, Teste de publicação' })).toBeVisible();
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(247, 242, 236)');
-  await page.getByRole('button', { name: 'Diário' }).click();
+  await page.getByRole('button', { name: 'Senda', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '21 Dias de Reconexão' })).toBeVisible();
+  await page.getByRole('button', { name: 'Diário', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Livro de Espelhos' })).toBeVisible();
   await page.getByRole('button', { name: 'Bússola', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Bússola da Alma' })).toBeVisible();
+  await page.getByRole('button', { name: 'Cuidado', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Santuário de Autocuidado' })).toBeVisible();
+  await page.getByRole('button', { name: 'Evolução', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'O Livro está em branco' })).toBeVisible();
+  await page.getByRole('button', { name: 'Início', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Olá, Teste de publicação' })).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
