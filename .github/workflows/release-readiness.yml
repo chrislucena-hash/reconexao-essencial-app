@@ -1,0 +1,53 @@
+name: Release Readiness
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - release/mobile-20261001
+    paths:
+      - '.github/workflows/release-readiness.yml'
+      - 'e2e/**'
+      - 'playwright*.config.ts'
+      - 'App.tsx'
+      - 'components/**'
+      - 'firebase.ts'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'public/**'
+      - 'vite.config.ts'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Browser and production API checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium and system libraries
+        run: npx playwright install --with-deps chromium
+      - name: Type-check
+        run: npm run lint
+      - name: Controlled startup scenarios
+        run: npm run test:e2e
+      - name: Production bundle and public API
+        run: npm run test:release
+      - name: Upload failure traces
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-readiness-traces
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7

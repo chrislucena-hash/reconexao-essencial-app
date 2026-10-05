@@ -9,6 +9,9 @@
     "build:mobile": "vite build",
     "start": "node dist/server.cjs",
     "lint": "tsc --noEmit",
+    "dev:e2e": "vite --config e2e/vite.config.ts --host 127.0.0.1 --port 4173",
+    "test:e2e": "playwright test --config playwright.config.ts",
+    "test:release": "playwright test --config playwright.release.config.ts",
     "android:sync": "npm run build:mobile && cap sync android",
     "android:open": "cap open android",
     "android:run": "cap run android",
@@ -33,6 +36,7 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/express": "^5.0.6",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
