@@ -6,6 +6,7 @@ Execute na revisão exata usada para gerar o AAB e o IPA:
 npm ci
 npx playwright install chromium
 npm run lint
+npm audit --omit=dev
 npm run test:e2e
 npm run test:release
 ```

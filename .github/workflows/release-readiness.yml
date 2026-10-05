@@ -39,6 +39,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Type-check
         run: npm run lint
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev
       - name: Controlled startup scenarios
         run: npm run test:e2e
       - name: Production bundle and public API
