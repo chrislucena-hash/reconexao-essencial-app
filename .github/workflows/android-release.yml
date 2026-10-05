@@ -69,6 +69,7 @@ jobs:
       - name: Validate and sync Android
         run: |
           npm run lint
+          python3 scripts/verify_android_identity.py
           npm run build:mobile
           python3 - <<'PY'
           from pathlib import Path
@@ -95,6 +96,9 @@ jobs:
       - name: Verify AAB signature
         working-directory: android
         run: jarsigner -verify -verbose -certs app/build/outputs/bundle/release/app-release.aab
+
+      - name: Verify installed icon matches Play listing identity
+        run: python3 scripts/verify_android_identity.py --aab android/app/build/outputs/bundle/release/app-release.aab
 
       - name: Verify signed APK and bundled light frontend
         working-directory: android

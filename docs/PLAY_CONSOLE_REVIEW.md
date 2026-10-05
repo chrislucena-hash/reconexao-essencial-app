@@ -1,5 +1,33 @@
 # Reenvio ao Google Play: Reconexão Essencial
 
+## Verificação do ícone em 05/10/2026
+
+A nova captura do Play Console continua mostrando a **arte cósmica com texto**
+na ficha pt-BR e o **X padrão do Capacitor** no launcher analisado. A imagem
+não informa qual `versionCode` foi instalado na análise; portanto, não prova
+que o pacote mais recente tenha o X.
+
+O AAB assinado `versionCode` **11**, produzido pela [execução Android
+37307080225](https://github.com/chrislucena-hash/reconexao-essencial-app/actions/runs/37307080225),
+foi aberto e verificado: nome instalado **Reconexão Essencial**, pacote
+`com.reconexaoessencial`, `minSdkVersion` 24 e todos os 15 PNGs de launcher
+normal, redondo e adaptativo contêm a identidade da ficha, sem o X. O script
+`scripts/verify_android_identity.py` compara os pixels desses recursos com os
+do AAB e bloqueia alterações da arte aprovada no workflow de release.
+
+**Não use o checkout `agent/ios-testflight-release` para uma nova release sem
+alinhar sua identidade:** nele há mudanças locais de ícone para um coração sem
+texto, diferente da ficha mostrada nesta captura. O candidato v11 foi gerado
+do ramo `release/mobile-20261001` com a arte cósmica e o texto.
+
+No Play Console, identifique o `versionCode` da submissão rejeitada e confira
+produção, teste aberto, fechado e interno. Substitua ou desative os pacotes
+antigos que ainda exibem o X; o [procedimento oficial de reenvio](https://support.google.com/googleplay/android-developer/answer/2477981?hl=pt-BR)
+exige tratar as faixas afetadas. Instale o **novo pacote enviado pela própria
+faixa de teste** e compare o launcher com a ficha pt-BR antes de solicitar nova
+revisão. O domínio público da API ainda redireciona `/health` para si mesmo e
+também precisa passar na checagem de pré-publicação antes de produção.
+
 ## Domínio e contrato móvel (01/10/2026)
 
 O backend FastAPI na VPS `187.127.12.195` respondeu `200` por HTTPS direto.
