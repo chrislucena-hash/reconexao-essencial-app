@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signInAnonymously, User } from 'firebase/auth';
-import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { UserProfile } from '../types';
 
@@ -19,6 +19,8 @@ const FirebaseContext = createContext<FirebaseContextType>({
   error: null,
 });
 
+const STARTUP_TIMEOUT_MS = 12000;
+
 export const useFirebase = () => useContext(FirebaseContext);
 
 export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -28,23 +30,46 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
+    let authGeneration = 0;
     let unsubscribeProfile: (() => void) | null = null;
+    let profileTimeout: ReturnType<typeof setTimeout> | null = null;
+    const authTimeout = setTimeout(() => {
+      if (!active || authGeneration !== 0) return;
+      setError('Não foi possível verificar sua sessão. Verifique a conexão e tente novamente.');
+      setLoading(false);
+    }, STARTUP_TIMEOUT_MS);
 
-    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-      setLoading(true);
+    const clearProfileListener = () => {
+      if (profileTimeout) clearTimeout(profileTimeout);
+      profileTimeout = null;
+      if (unsubscribeProfile) unsubscribeProfile();
+      unsubscribeProfile = null;
+    };
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      if (!active) return;
+      clearTimeout(authTimeout);
+      clearProfileListener();
+      const generation = ++authGeneration;
       setError(null);
       setUser(currentUser);
       setUserProfile(null);
-      
-      if (unsubscribeProfile) {
-        unsubscribeProfile();
-        unsubscribeProfile = null;
-      }
 
       if (currentUser) {
+        setLoading(true);
+        profileTimeout = setTimeout(() => {
+          if (!active || generation !== authGeneration) return;
+          setError('A sincronização do perfil demorou demais. Verifique a conexão e tente novamente.');
+          setLoading(false);
+        }, STARTUP_TIMEOUT_MS);
+
         // Listen to user profile changes
         const userDocRef = doc(db, 'users', currentUser.uid);
         unsubscribeProfile = onSnapshot(userDocRef, (docSnap) => {
+          if (!active || generation !== authGeneration) return;
+          if (profileTimeout) clearTimeout(profileTimeout);
+          profileTimeout = null;
           setError(null);
           if (docSnap.exists()) {
             setUserProfile(docSnap.data() as UserProfile);
@@ -53,21 +78,34 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }
           setLoading(false);
         }, (err) => {
+          if (!active || generation !== authGeneration) return;
+          if (profileTimeout) clearTimeout(profileTimeout);
+          profileTimeout = null;
           console.error("Profile sync error:", err);
-          setError("Erro ao sincronizar perfil.");
+          setError('Não foi possível sincronizar o perfil. Verifique a conexão e tente novamente.');
           setLoading(false);
         });
       } else {
         setUserProfile(null);
         setLoading(false);
       }
+    }, (err) => {
+      if (!active) return;
+      clearTimeout(authTimeout);
+      clearProfileListener();
+      ++authGeneration;
+      console.error('Auth initialization error:', err);
+      setUser(null);
+      setUserProfile(null);
+      setError('Não foi possível verificar sua sessão. Verifique a conexão e tente novamente.');
+      setLoading(false);
     });
 
     return () => {
+      active = false;
+      clearTimeout(authTimeout);
       unsubscribeAuth();
-      if (unsubscribeProfile) {
-        unsubscribeProfile();
-      }
+      clearProfileListener();
     };
   }, []);
 

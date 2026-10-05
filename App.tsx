@@ -20,6 +20,7 @@ import { unlockMobileAudio } from './services/audioService';
 import { Compass, Sparkles, X, Flame, Loader2 } from 'lucide-react';
 import { doc, setDoc, collection, onSnapshot, query, orderBy, limit, getDocs, writeBatch } from 'firebase/firestore';
 import { db, auth } from './firebase';
+import { signOut } from 'firebase/auth';
 import { syncUserWithBackend, upsertJournalEntry } from './services/backendService';
 import { AI_ENABLED } from './features';
 
@@ -42,6 +43,7 @@ const AppContent: React.FC = () => {
   const [showNavNudge, setShowNavNudge] = useState(false);
   const [logsSyncError, setLogsSyncError] = useState(false);
   const [journeySyncError, setJourneySyncError] = useState(false);
+  const [startupActionError, setStartupActionError] = useState<string | null>(null);
 
   useEffect(() => {
     setUserProfile({
@@ -383,6 +385,42 @@ const AppContent: React.FC = () => {
         <div className="text-center space-y-4">
           <Loader2 size={48} className="text-[#A268D7] animate-spin mx-auto" />
           <p className="text-[#18245C] font-serif italic tracking-widest">Sincronizando com a Centelha...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (profileSyncError && !fbProfile) {
+    return (
+      <div className="min-h-screen bg-[#F7F2EC] flex items-center justify-center px-6 text-[#18245C]">
+        <div className="w-full max-w-sm space-y-5 rounded-2xl bg-white p-6 text-center shadow-lg">
+          <h1 className="text-xl font-serif font-semibold">Não foi possível iniciar o app</h1>
+          <p role="alert" className="text-sm text-[#4A506B]">{profileSyncError}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="w-full rounded-xl bg-[#18245C] px-4 py-3 font-semibold text-white"
+          >
+            Tentar novamente
+          </button>
+          {user && (
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await signOut(auth);
+                  setStartupActionError(null);
+                } catch (error) {
+                  console.error('Sign out failed:', error);
+                  setStartupActionError('Não foi possível sair da conta. Tente novamente.');
+                }
+              }}
+              className="w-full rounded-xl border border-[#18245C]/20 px-4 py-3 font-semibold"
+            >
+              Entrar com outra conta
+            </button>
+          )}
+          {startupActionError && <p role="alert" className="text-sm text-rose-700">{startupActionError}</p>}
         </div>
       </div>
     );
