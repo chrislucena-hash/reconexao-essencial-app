@@ -6,7 +6,7 @@ on:
       version_code:
         description: 'Código numérico maior que o último enviado ao Play Console'
         required: true
-        default: '11'
+        default: '12'
         type: string
 
 permissions:
@@ -59,12 +59,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev
+
       - name: Verify FastAPI backend
         run: python3 scripts/verify_mobile_backend.py
-        env:
-          # Enquanto o proxy Cloudflare estiver em loop, verifica direto na origem.
-          # Apague a variável do repositório quando o domínio público responder 200.
-          MOBILE_BACKEND_ORIGIN_IP: ${{ vars.MOBILE_BACKEND_ORIGIN_IP }}
 
       - name: Validate and sync Android
         run: |

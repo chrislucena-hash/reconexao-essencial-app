@@ -20,4 +20,4 @@ O workflow **Release Readiness** executa os mesmos testes no GitHub Actions e co
 
 O workflow **Android Release** executa o mesmo verificador de identidade antes do build e o repete com `--aab` no pacote gerado, comparando todos os 15 ícones empacotados com os recursos aprovados. A arte da ficha atualmente usada como referência está em `public/icon-512.png` no ramo de release.
 
-Em 5 de outubro de 2026, os testes controlados e a abertura do bundle passaram. A checagem da API pública falhou porque `/health` devolveu `301` apontando para si mesmo. O candidato ainda não está apto à produção.
+Em 5 de outubro de 2026, a checagem da API pública falhou porque `/health` devolveu `301` apontando para si mesmo. Em 6 de outubro, após mudar somente o DNS de `api` para acesso direto à VPS, a URL pública respondeu `200` com `{"status":"ok"}` e o teste da API passou localmente. A auditoria do workflow então identificou duas dependências críticas recém-divulgadas; o lockfile foi atualizado para Capacitor 7.6.9 e `proxy-addr` 2.0.8. Gere novos AAB e IPA após o workflow completo passar; os pacotes anteriores não contêm essas correções.

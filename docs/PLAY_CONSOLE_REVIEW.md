@@ -25,8 +25,8 @@ produção, teste aberto, fechado e interno. Substitua ou desative os pacotes
 antigos que ainda exibem o X; o [procedimento oficial de reenvio](https://support.google.com/googleplay/android-developer/answer/2477981?hl=pt-BR)
 exige tratar as faixas afetadas. Instale o **novo pacote enviado pela própria
 faixa de teste** e compare o launcher com a ficha pt-BR antes de solicitar nova
-revisão. O domínio público da API ainda redireciona `/health` para si mesmo e
-também precisa passar na checagem de pré-publicação antes de produção.
+revisão. O AAB v11 foi gerado antes da atualização de segurança do Capacitor
+de 6 de outubro; gere e instale um novo pacote a partir da revisão corrigida.
 
 ## Domínio e contrato móvel (01/10/2026)
 
@@ -40,12 +40,12 @@ CORS, rotas e envelope de erro antes de compilar. O envio do Diário ao backend
 agora cria/sincroniza o usuário antes da entrada e não envia notas padrão 3/5
 como avaliações reais.
 
-**Pendência externa:** o acesso público via proxy Cloudflare ainda retorna
-`301` para a própria URL de `/health`, embora a origem responda `200`. Para
-não usar o proxy, altere somente o registro DNS `api` para **DNS only** com o
-mesmo IP da VPS. Depois confirme, sem `MOBILE_BACKEND_ORIGIN_IP`:
-`VITE_API_BASE_URL=https://api.reconexaoessencial.com.br/api/v1 python3 scripts/verify_mobile_backend.py`.
-Até esse teste público passar, os workflows param antes de gerar AAB ou IPA.
+**Acesso público corrigido em 06/10/2026:** o registro DNS `api` foi alterado
+para **DNS only** com o IP da VPS. A URL pública de `/health` respondeu `200`
+com `{"status":"ok"}` sem redirecionamento. Os workflows verificam agora o
+domínio público diretamente, sem `MOBILE_BACKEND_ORIGIN_IP`. Confira novamente
+com `VITE_API_BASE_URL=https://api.reconexaoessencial.com.br/api/v1 python3 scripts/verify_mobile_backend.py`
+antes de enviar às lojas.
 
 ## Candidato sem IA (01/10/2026)
 
