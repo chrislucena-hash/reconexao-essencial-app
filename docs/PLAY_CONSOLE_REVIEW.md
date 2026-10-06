@@ -1,5 +1,23 @@
 # Reenvio ao Google Play: Reconexão Essencial
 
+## Pacote atual em 06/10/2026
+
+O [workflow Android v12](https://github.com/chrislucena-hash/reconexao-essencial-app/actions/runs/37495303769)
+gerou AAB e APK assinados a partir do commit `437d89a`. O manifesto dentro do
+AAB contém `versionCode` **12**, `versionName` 1.0.0 e `minSdkVersion` 24. A
+identidade instalada e os 15 ícones empacotados passaram na comparação com a
+ficha pt-BR; o frontend claro e a auditoria de dependências de execução também
+passaram. O [Release Readiness](https://github.com/chrislucena-hash/reconexao-essencial-app/actions/runs/37495285751)
+ficou verde com a API pública respondendo `200`.
+
+Baixe o artefato `reconexao-essencial-v12-aab` desse workflow, extraia
+`app-release.aab` e envie-o **a uma faixa de testes fechados** no Play Console.
+O pacote v12 ainda não foi enviado ao Play Console por este workflow. Confirme
+que o Console mostra **12 (1.0.0)** nos novos pacotes, instale pela faixa e
+verifique ícone, nome, login, navegação e persistência no aparelho antes de
+solicitar análise para produção. Os pacotes v10/v11 não têm a atualização do
+Capacitor 7.6.9 e não devem ser usados para esta submissão.
+
 ## Verificação do ícone em 05/10/2026
 
 A nova captura do Play Console continua mostrando a **arte cósmica com texto**
