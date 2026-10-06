@@ -236,7 +236,13 @@ jobs:
           api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
           issuer-id: ${{ secrets.APPSTORE_API_ISSUER_ID }}
           api-private-key: ${{ steps.decode_key.outputs.key }}
-          wait-for-processing: 'true'
+          # A API da Apple aceitou o upload, mas devolveu 401 ao consultar o
+          # processamento nas builds 9 e 10. Confirme o estado em TestFlight.
+          wait-for-processing: 'false'
+
+      - name: Confirm processing in App Store Connect before distribution
+        if: ${{ !inputs.build_only }}
+        run: echo '::warning::IPA enviado. Confira o status Complete em App Store Connect > TestFlight > iOS > Build Uploads antes de distribuir.'
 
       - name: Upload IPA artifact
         if: ${{ always() && hashFiles('build/App.ipa') != '' }}
