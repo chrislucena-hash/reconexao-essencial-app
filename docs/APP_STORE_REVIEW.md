@@ -8,7 +8,7 @@ Em 07/10/2026, a [ficha pública brasileira](https://apps.apple.com/br/app/recon
 
 - Nome instalado no novo pacote: **Reconexão Essencial** (`CFBundleDisplayName`). Defina o mesmo nome na ficha principal e em todas as localizações do App Store Connect. Confira também o nome apresentado no resultado de busca.
 - O novo ícone iOS é gerado do mesmo `public/icon.svg` usado para a marca Android e para `assets/play-store/icon-512.png`. Substitua capturas de tela antigas, se mostrarem ícone, nome ou funções desatualizados. Compare o ícone publicado com o instalado no iPhone antes de submeter.
-- A ficha pública está na versão **1.0.7**. Use `version_name` **1.0.8** e um `build_number` ainda não usado para essa versão, conferindo o histórico no App Store Connect. O binário novo declara **Português (Brasil)** como idioma da interface; confira as localizações da ficha separadamente.
+- A ficha pública está na versão **1.0.7**. O candidato atual usa `version_name` **1.0.8** e `build_number` **12**; confirme o processamento desse par no App Store Connect. O binário novo declara **Português (Brasil)** como idioma da interface; confira as localizações da ficha separadamente.
 - Execute o workflow **iOS TestFlight** manualmente com `build_only=true` para gerar o IPA assinado como artefato sem carregá-lo na Apple. Depois de validar, `build_only=false` carrega o IPA no App Store Connect/TestFlight. O upload não publica na App Store; a submissão para revisão é separada.
 
 ## Ficha e alegações de saúde
@@ -21,7 +21,7 @@ Remova da ficha atual as promessas de **autocura**, **paz mental** e qualquer le
 >
 > O app não é um dispositivo médico e não diagnostica, trata, cura ou previne nenhuma condição médica. Consulte um profissional de saúde para orientações médicas, diagnóstico ou tratamento. Não altere sua dieta com base nos registros do app.
 
-Nome sugerido: **Reconexão Essencial**. Subtítulo sugerido: **Diário e práticas de reflexão**. Revise as versões traduzidas, palavras-chave, texto promocional, capturas e classificação indicativa. A categoria “Estilo de vida” pode permanecer se corresponder ao posicionamento real. Verifique também se a interface em português aparece corretamente; a ficha pública atualmente indica apenas **Inglês**.
+Nome sugerido: **Reconexão Essencial**. Subtítulo sugerido: **Diário e práticas de reflexão**. Revise as versões traduzidas, palavras-chave, texto promocional, capturas e classificação indicativa. A categoria “Estilo de vida” pode permanecer se corresponder ao posicionamento real. A ficha pública indica **Português**; confira a interface no build 1.0.8 (12) instalado pelo TestFlight.
 
 Referência: [App Review Guidelines, itens 1.4 e 2.3](https://developer.apple.com/app-store/review/guidelines/).
 
@@ -36,15 +36,15 @@ Referências: [Privacidade do App](https://developer.apple.com/help/app-store-co
 ## Funcionalidade ainda pendente de verificação ou implementação
 
 - **Exclusão de conta:** Configurações hoje abre um e-mail, sem exclusão no app. O login não oferece cadastro na tela, mas é necessário confirmar como as contas são criadas, inclusive fora do app. Se há criação de conta em qualquer canal ou contas geradas automaticamente, implemente uma opção efetiva de iniciar a exclusão dentro do app, abrangendo Firebase Auth, Firestore, backend, publicações e comentários; confirme prazo e conclusão. A Apple diz que encaminhar apenas ao atendimento é permitido somente em setores altamente regulados. [Orientação da Apple](https://developer.apple.com/support/offering-account-deletion-in-your-app/).
-- **Comunidade:** o botão “Reportar” atualmente só oculta a postagem na sessão local. Não envia denúncia para análise, não bloqueia o autor e não há denúncia de comentário. É preciso implementar denúncia entregue à equipe, resposta em prazo adequado, bloqueio de usuários e contato publicado; depois testar esses fluxos. A moderação tenta chamar `/api/moderate-content` por URL relativa, que no Capacitor aponta ao app local; quando essa chamada falha, o código permite a publicação. Configure um endpoint acessível no iOS e Android, faça a moderação falhar de modo seguro e teste a publicação real antes da revisão. [App Review Guidelines, item 1.2](https://developer.apple.com/app-store/review/guidelines/).
+- **Comunidade:** está oculta no candidato 1.0.8 porque `AI_ENABLED` está desativado. Não prometa esse recurso na ficha nem use capturas que o mostrem. Antes de voltar a ativá-la em outra versão, implemente denúncia entregue à equipe, bloqueio de usuários, moderação e resposta a abusos; depois teste esses fluxos. [App Review Guidelines, item 1.2](https://developer.apple.com/app-store/review/guidelines/).
 - **Acesso para revisão:** forneça conta de demonstração ativa e instruções de acesso ao revisor, pois a tela inicial exige credenciais. Confirme que API, Firebase e todo conteúdo funcionam no iPhone e iPad em rede externa. [App Review Guidelines, item 2.1](https://developer.apple.com/app-store/review/guidelines/).
-- **IA e dados pessoais:** confira se diário, questionário, postagens e outros dados identificáveis são enviados a provedores de IA. Se houver compartilhamento com terceiros, divulgue-o com clareza e obtenha a permissão exigida pela Apple antes do envio. [App Review Guidelines, item 5.1.2](https://developer.apple.com/app-store/review/guidelines/).
+- **IA e dados pessoais:** a IA está desativada no candidato 1.0.8. Não descreva geração ou análise por IA na ficha. Se essa funcionalidade voltar, revise o envio de diário, questionário e outros dados a provedores externos e as divulgações aplicáveis. [App Review Guidelines, item 5.1.2](https://developer.apple.com/app-store/review/guidelines/).
 
 ## Validação antes de enviar à revisão
 
-1. Gere o IPA assinado com `build_only=true`; confira `CFBundleIdentifier`, nome, versão, build e ícone no artefato. Instale pelo TestFlight após upload separado e valide no dispositivo o nome e ícone do launcher, diário, práticas, comunidade, conta e links.
-2. Resolva os itens de privacidade, exclusão e comunidade acima; confirme que a ficha, a política e o app descrevem a mesma versão. Confirme o número de build no App Store Connect.
-3. Quando estiver pronto, execute o workflow com `build_only=false` e o número de build definitivo, habilite testes internos/externos conforme necessário e registre feedback. O TestFlight é recomendado para achar falhas, mas não há uma etapa obrigatória de testes fechados equivalente à exigência de algumas contas no Google Play.
+1. O IPA 1.0.8 (12) já foi gerado e enviado. Confirme que a Apple terminou o processamento; instale-o pelo TestFlight e valide no dispositivo o nome e ícone do launcher, diário, práticas, conta e links.
+2. Resolva os itens de privacidade e exclusão acima; confirme que a ficha, a política e o app descrevem a mesma versão. A Comunidade permanece oculta. Confirme o número de build no App Store Connect.
+3. O workflow já foi executado com `build_only=false` para a compilação 12. Após o processamento, habilite os testes internos/externos conforme necessário e registre feedback. O TestFlight é recomendado para achar falhas, mas não há uma etapa obrigatória de testes fechados equivalente à exigência de algumas contas no Google Play.
 4. Selecione o build na versão do App Store Connect e use **Add for Review → Submit for Review**. [Instruções oficiais](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-app).
 
 ### Candidato técnico gerado em 25/09/2026

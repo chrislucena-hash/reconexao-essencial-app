@@ -1,0 +1,36 @@
+name: iOS Build Processing Status
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: App Store version
+        required: true
+        default: '1.0.8'
+        type: string
+      build_number:
+        description: App Store build number
+        required: true
+        default: '12'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Check Apple processing status
+        env:
+          APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_API_KEY_P8_BASE64: ${{ secrets.APPSTORE_API_KEY_P8 }}
+          APPSTORE_APP_ID: '6762309447'
+          APPSTORE_VERSION_NAME: ${{ inputs.version_name }}
+          APPSTORE_BUILD_NUMBER: ${{ inputs.build_number }}
+        run: node scripts/check_appstore_build.mjs
