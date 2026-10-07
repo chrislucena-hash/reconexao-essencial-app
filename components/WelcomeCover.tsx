@@ -7,7 +7,7 @@ interface WelcomeCoverProps {
 
 export const BrandHeartLogo: React.FC<{ size?: number; className?: string }> = ({ size = 80, className = "" }) => (
   <img 
-    src="/icon.svg" 
+    src="/icon-512.png"
     alt="Logo Reconexão Essencial" 
     width={size} 
     height={size} 
@@ -28,7 +28,7 @@ const WelcomeCover: React.FC<WelcomeCoverProps> = ({ onStart }) => {
           {/* Official Logo (Emblem + RECONEXÃO ESSENCIAL) */}
           <div className="p-1 transition-transform hover:scale-105 duration-300">
             <img 
-              src="/icon.svg" 
+              src="/icon-512.png"
               alt="Reconexão Essencial Logo" 
               className="w-56 sm:w-64 h-auto max-h-[220px] object-contain drop-shadow-md mx-auto" 
             />

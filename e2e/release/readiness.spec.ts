@@ -10,6 +10,7 @@ test('bundle de produção abre a capa com identidade e tema claro', async ({ pa
 
   const logo = page.getByRole('img', { name: 'Reconexão Essencial Logo' });
   await expect(logo).toBeVisible();
+  await expect(logo).toHaveAttribute('src', '/icon-512.png');
   expect(await logo.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
 
   const manifest = await request.get('/manifest.json');

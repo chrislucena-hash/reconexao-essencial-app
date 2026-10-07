@@ -1,6 +1,8 @@
 # Revisão iOS: Reconexão Essencial
 
-Em 25/09/2026, a [ficha pública brasileira](https://apps.apple.com/br/app/reconexao-essencial-app/id6762309447) mostra a versão **1.0.6** com nome **reconexao-essencial-app**, idioma **Inglês**, descrição que promete “autocura e paz mental” e rótulo de privacidade **Dados não coletados**. Esses campos são geridos no App Store Connect; um novo IPA não os corrige por si só.
+Em 06/10/2026, a Apple rejeitou o upload **1.0.7 (10)** com `ITMS-90186` e `ITMS-90062`: o trem de pré-lançamento 1.0.7 está fechado e a versão do binário precisa ser maior que a versão 1.0.7 já aprovada. A próxima versão configurada no projeto e no workflow é **1.0.8**. A compilação **1.0.8 (11)** foi enviada pelo CI, mas o sucesso do transporte não comprova a conclusão do processamento pela Apple. Após alinhar a identidade visual da capa com a ficha, o novo candidato é **1.0.8 (12)**. Confirme seu estado em **App Store Connect → TestFlight → iOS → Build Uploads** antes de distribuí-lo; crie a versão 1.0.8 no App Store Connect antes de selecionar o build para revisão. [Instruções da Apple](https://developer.apple.com/help/app-store-connect/update-your-app/create-a-new-version).
+
+Em 25/09/2026, a [ficha pública brasileira](https://apps.apple.com/br/app/reconexao-essencial-app/id6762309447) mostrava a versão **1.0.6** com nome **reconexao-essencial-app**, idioma **Inglês**, descrição que prometia “autocura e paz mental” e rótulo de privacidade **Dados não coletados**. Esses campos são geridos no App Store Connect; um novo IPA não os corrige por si só. Os registros abaixo são históricos e devem ser revalidados antes da submissão.
 
 ## Identidade e versão
 

@@ -11,7 +11,7 @@ on:
       build_number:
         description: App Store build number (CFBundleVersion)
         required: true
-        default: '11'
+        default: '12'
         type: string
       build_only:
         description: Generate signed IPA without uploading to TestFlight
@@ -34,7 +34,7 @@ jobs:
     env:
       BUNDLE_ID: com.reconexaoessencial
       RELEASE_VERSION: ${{ inputs.version_name || '1.0.8' }}
-      BUILD_NUMBER: ${{ inputs.build_number || '11' }}
+      BUILD_NUMBER: ${{ inputs.build_number || '12' }}
       VITE_API_BASE_URL: https://api.reconexaoessencial.com.br/api/v1
       APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM }}
       CERTIFICATE_PASSPHRASE: ${{ secrets.CERTIFICATE_PASSPHRASE }}

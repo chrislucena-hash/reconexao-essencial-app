@@ -6,7 +6,7 @@ on:
       version_code:
         description: 'Código numérico maior que o último enviado ao Play Console'
         required: true
-        default: '12'
+        default: '13'
         type: string
 
 permissions:

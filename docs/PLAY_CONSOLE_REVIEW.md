@@ -1,5 +1,13 @@
 # Reenvio ao Google Play: Reconexão Essencial
 
+## Nova rejeição comunicada em 07/10/2026
+
+O Google apontou incompatibilidade entre **Experiência no app** e **ícone de alta resolução pt-BR**, citando `IN_APP_EXPERIENCE-6304.png` e `HI_RES_ICON-5504.png`. Esses arquivos não vieram com a mensagem disponível neste repositório, e o e-mail não informa o `versionCode` analisado. Portanto, não é possível atribuir a rejeição ao AAB v12.
+
+No AAB v12, os 15 ícones do launcher e `/icon-512.png` contêm a arte cósmica com o nome completo, mas a capa e o cabeçalho exibiam outro desenho (`/icon.svg`). A próxima revisão troca essas duas referências para `/icon-512.png` e unifica o título do atalho web; o teste de release verifica a imagem exibida na capa. Gere um novo AAB com `versionCode` superior ao último usado no Play Console após essa alteração.
+
+Antes de reenviar, compare as duas capturas da rejeição com a **ficha realmente publicada**, incluindo páginas padrão, personalizadas e traduzidas. Confira o `versionCode` rejeitado e os pacotes ativos em produção e em todas as faixas de teste; substitua ou desative versões antigas com o X do Capacitor. Instale o novo pacote **pela faixa de teste** e confira ícone normal, redondo/adaptativo, capa e nome. A comparação automatizada só valida os arquivos locais e do AAB; ela não lê a ficha atual do Play Console.
+
 ## Pacote atual em 06/10/2026
 
 O [workflow Android v12](https://github.com/chrislucena-hash/reconexao-essencial-app/actions/runs/37495303769)
