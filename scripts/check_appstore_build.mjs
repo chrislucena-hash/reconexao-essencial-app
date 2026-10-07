@@ -53,3 +53,18 @@ console.log(`App Store Connect ${versionName} (${buildNumber}): ${state ?? 'UNKN
 if (state !== 'COMPLETE') {
   process.exitCode = 1;
 }
+
+const versionsUrl = new URL(`https://api.appstoreconnect.apple.com/v1/apps/${encodeURIComponent(appId)}/appStoreVersions?limit=200`);
+const versionsResponse = await fetch(versionsUrl, {
+  headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  signal: AbortSignal.timeout(15_000),
+});
+if (versionsResponse.ok) {
+  const versions = await versionsResponse.json();
+  const version = versions.data?.find(({ attributes }) =>
+    attributes?.versionString === versionName && attributes?.platform === 'IOS'
+  );
+  console.log(`App Store version ${versionName}: ${version?.attributes?.appStoreState ?? 'NOT_CREATED'}`);
+} else {
+  console.log(`App Store version lookup: HTTP ${versionsResponse.status}`);
+}
