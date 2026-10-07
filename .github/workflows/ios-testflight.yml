@@ -18,6 +18,11 @@ on:
         required: false
         default: true
         type: boolean
+      check_processing_only:
+        description: Check existing build processing without rebuilding or uploading
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -29,6 +34,7 @@ concurrency:
 jobs:
   build-ios:
     name: Build iOS IPA
+    if: ${{ !inputs.check_processing_only }}
     runs-on: macos-26
 
     env:
@@ -260,3 +266,22 @@ jobs:
           path: build/App.ipa
           if-no-files-found: error
           retention-days: 14
+
+  check-processing:
+    name: Check iOS build processing
+    if: ${{ inputs.check_processing_only }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Check Apple processing status
+        env:
+          APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_API_KEY_P8_BASE64: ${{ secrets.APPSTORE_API_KEY_P8 }}
+          APPSTORE_APP_ID: '6762309447'
+          APPSTORE_VERSION_NAME: ${{ inputs.version_name }}
+          APPSTORE_BUILD_NUMBER: ${{ inputs.build_number }}
+        run: node scripts/check_appstore_build.mjs
