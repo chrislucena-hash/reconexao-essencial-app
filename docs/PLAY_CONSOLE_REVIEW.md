@@ -4,9 +4,15 @@
 
 O Google apontou incompatibilidade entre **Experiência no app** e **ícone de alta resolução pt-BR**, citando `IN_APP_EXPERIENCE-6304.png` e `HI_RES_ICON-5504.png`. Esses arquivos não vieram com a mensagem disponível neste repositório, e o e-mail não informa o `versionCode` analisado. Portanto, não é possível atribuir a rejeição ao AAB v12.
 
-No AAB v12, os 15 ícones do launcher e `/icon-512.png` contêm a arte cósmica com o nome completo, mas a capa e o cabeçalho exibiam outro desenho (`/icon.svg`). A próxima revisão troca essas duas referências para `/icon-512.png` e unifica o título do atalho web; o teste de release verifica a imagem exibida na capa. Gere um novo AAB com `versionCode` superior ao último usado no Play Console após essa alteração.
+No AAB v12, os 15 ícones do launcher e `/icon-512.png` contêm a arte cósmica com o nome completo, mas a capa e o cabeçalho exibiam outro desenho (`/icon.svg`). A revisão v13 trocou essas duas referências para `/icon-512.png` e unificou o título do atalho web; o teste de release verifica a imagem exibida na capa.
 
 Antes de reenviar, compare as duas capturas da rejeição com a **ficha realmente publicada**, incluindo páginas padrão, personalizadas e traduzidas. Confira o `versionCode` rejeitado e os pacotes ativos em produção e em todas as faixas de teste; substitua ou desative versões antigas com o X do Capacitor. Instale o novo pacote **pela faixa de teste** e confira ícone normal, redondo/adaptativo, capa e nome. A comparação automatizada só valida os arquivos locais e do AAB; ela não lê a ficha atual do Play Console.
+
+## Novo candidato Android em 07/10/2026
+
+O [workflow Android v13](https://github.com/chrislucena-hash/reconexao-essencial-app/actions/runs/37655402598) gerou AAB e APK assinados a partir de `556ebe4`. A inspeção do manifesto dentro do AAB confirmou `com.reconexaoessencial`, `versionCode` **13**, `versionName` **1.0.0**, `minSdkVersion` **24** e `targetSdkVersion` **36**. Os 15 ícones normal, redondo e adaptativo passaram na comparação com a arte cósmica com texto. O frontend empacotado usa tema claro e exibe `/icon-512.png` na capa e no cabeçalho, sem referência ao desenho antigo `/icon.svg` no JavaScript.
+
+Baixe o artefato `reconexao-essencial-v13-aab` desse workflow, extraia `app-release.aab` e envie a uma **faixa de testes fechados**. Este workflow não envia o pacote ao Play Console. Antes da revisão de produção, verifique na própria ficha do Console se o ícone de alta resolução pt-BR é a mesma arte, instale a versão 13 pela Play e confira a experiência no aparelho. Se a ficha atual tiver outro ícone, alinhe a ficha e as páginas personalizadas/traduzidas ou gere novo AAB com identidade correspondente.
 
 ## Pacote atual em 06/10/2026
 
