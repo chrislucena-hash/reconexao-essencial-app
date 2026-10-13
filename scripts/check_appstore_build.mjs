@@ -50,6 +50,11 @@ if (!upload) {
 
 const state = upload.attributes?.state?.state;
 console.log(`App Store Connect ${versionName} (${buildNumber}): ${state ?? 'UNKNOWN'}`);
+for (const category of ['errors', 'warnings', 'infos']) {
+  for (const detail of upload.attributes?.state?.[category] ?? []) {
+    console.log(`${category}: ${detail.code ?? 'UNKNOWN'}: ${detail.description ?? ''}`);
+  }
+}
 if (state !== 'COMPLETE') {
   process.exitCode = 1;
 }
