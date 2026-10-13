@@ -18,7 +18,7 @@ import { AppView, UserProfile, DailyLog, JourneyProgress } from './types';
 import { INITIAL_JOURNEY } from './constants';
 import { unlockMobileAudio } from './services/audioService';
 import { Compass, Sparkles, X, Flame, Loader2 } from 'lucide-react';
-import { doc, setDoc, collection, onSnapshot, query, orderBy, limit, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, onSnapshot, query, orderBy, limit, getDocs, writeBatch } from 'firebase/firestore';
 import { db, auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { syncUserWithBackend, upsertJournalEntry } from './services/backendService';
@@ -44,6 +44,7 @@ const AppContent: React.FC = () => {
   const [logsSyncError, setLogsSyncError] = useState(false);
   const [journeySyncError, setJourneySyncError] = useState(false);
   const [startupActionError, setStartupActionError] = useState<string | null>(null);
+  const [showSignInAfterAuthTimeout, setShowSignInAfterAuthTimeout] = useState(false);
 
   useEffect(() => {
     setUserProfile({
@@ -307,11 +308,25 @@ const AppContent: React.FC = () => {
   };
 
   const handleUpdateProfile = async (updates: Partial<UserProfile>) => {
-    const activeUser = user || auth.currentUser;
+    const activeUser = auth.currentUser || user;
     if (!activeUser) throw new Error('Entre na sua conta para salvar o perfil.');
-    await setDoc(doc(db, 'users', activeUser.uid), updates, { merge: true });
+    const profileRef = doc(db, 'users', activeUser.uid);
+    const existingProfile = await getDoc(profileRef);
+    if (auth.currentUser?.uid !== activeUser.uid) return;
+    const initialProfile: Partial<UserProfile> = existingProfile.exists() ? {} : {
+      name: activeUser.displayName?.trim() || 'Buscador',
+      ...(activeUser.email ? { email: activeUser.email } : {}),
+      startDate: null,
+      awakeningScore: 0,
+      hasSeenWarning: false,
+      hasAcceptedTerms: false,
+      isOnPath: false,
+      role: 'client',
+    };
+    await setDoc(profileRef, { ...initialProfile, ...updates }, { merge: true });
+    if (auth.currentUser?.uid !== activeUser.uid) return;
     setUserProfile(prev => ({ ...prev, ...updates }));
-    syncUserWithBackend({ ...userProfile, ...updates }).catch(err => console.warn('Backend user sync failed:', err));
+    syncUserWithBackend({ ...userProfile, ...initialProfile, ...updates }).catch(err => console.warn('Backend user sync failed:', err));
   };
 
   const [resetNotice, setResetNotice] = useState<string | null>(null);
@@ -390,7 +405,7 @@ const AppContent: React.FC = () => {
     );
   }
 
-  if (profileSyncError && !fbProfile) {
+  if (profileSyncError && !fbProfile && !(showSignInAfterAuthTimeout && !user)) {
     return (
       <div className="min-h-screen bg-[#F7F2EC] flex items-center justify-center px-6 text-[#18245C]">
         <div className="w-full max-w-sm space-y-5 rounded-2xl bg-white p-6 text-center shadow-lg">
@@ -403,6 +418,18 @@ const AppContent: React.FC = () => {
           >
             Tentar novamente
           </button>
+          {!user && (
+            <button
+              type="button"
+              onClick={() => {
+                setShowSignInAfterAuthTimeout(true);
+                setCurrentView(AppView.DISCLAIMER);
+              }}
+              className="w-full rounded-xl border border-[#18245C]/20 px-4 py-3 font-semibold"
+            >
+              Entrar com e-mail
+            </button>
+          )}
           {user && (
             <button
               type="button"

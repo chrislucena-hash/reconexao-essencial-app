@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-type Scenario = 'signed-out' | 'auth-stalled' | 'profile-stalled' | 'profile-ready';
+type Scenario = 'signed-out' | 'auth-stalled' | 'auth-stalled-new-user' | 'profile-stalled' | 'profile-ready';
 
 async function openApp(page: Page, scenario: Scenario) {
   await page.addInitScript((value) => {
@@ -30,6 +30,17 @@ test('autenticação sem resposta não deixa a Centelha girando indefinidamente'
   await expect(page.getByRole('heading', { name: 'Não foi possível iniciar o app' })).toBeVisible({ timeout: 16_000 });
   await expect(page.getByText('Sincronizando com a Centelha...')).toBeHidden();
   await expect(page.getByRole('button', { name: 'Tentar novamente' })).toBeEnabled();
+});
+
+test('conta nova consegue entrar após tempo limite e criar perfil completo', async ({ page }) => {
+  await openApp(page, 'auth-stalled-new-user');
+  await expect(page.getByRole('heading', { name: 'Não foi possível iniciar o app' })).toBeVisible({ timeout: 16_000 });
+  await page.getByRole('button', { name: 'Entrar com e-mail' }).click();
+  await expect(page.getByRole('heading', { name: 'Acesso à Jornada' })).toBeVisible();
+  await page.getByPlaceholder('Seu e-mail cadastrado').fill('teste@example.invalid');
+  await page.getByPlaceholder('Sua senha de acesso').fill('senha-de-teste');
+  await page.getByRole('button', { name: 'Entrar na Jornada' }).click();
+  await expect(page.getByRole('heading', { name: 'O Chamado da Centelha' })).toBeVisible();
 });
 
 test('perfil sem resposta oferece saída da conta e volta à capa', async ({ page }) => {

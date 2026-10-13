@@ -39,7 +39,16 @@ export const onSnapshot = (reference: FakeReference, next: (snapshot: unknown) =
   return () => { active = false; };
 };
 
-export const setDoc = async () => {};
+export const getDoc = async (reference: FakeReference) => ({ exists: () => reference.path === 'users/e2e-user' });
+export const setDoc = async (reference: FakeReference, data: Record<string, unknown>) => {
+  if (reference.path === 'users/e2e-new-user') {
+    if (typeof data.name !== 'string' || !data.name ||
+        typeof data.hasSeenWarning !== 'boolean' ||
+        typeof data.hasAcceptedTerms !== 'boolean' || data.role !== 'client') {
+      throw new Error('permission-denied: perfil inicial incompleto');
+    }
+  }
+};
 export const addDoc = async () => ({ id: 'e2e-document' });
 export const updateDoc = async () => {};
 export const deleteDoc = async () => {};

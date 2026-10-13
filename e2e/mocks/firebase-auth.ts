@@ -1,4 +1,4 @@
-type Scenario = 'signed-out' | 'auth-stalled' | 'profile-stalled' | 'profile-ready';
+type Scenario = 'signed-out' | 'auth-stalled' | 'auth-stalled-new-user' | 'profile-stalled' | 'profile-ready';
 type FakeUser = { uid: string; email: string; getIdToken: () => Promise<string> };
 type AuthListener = (user: FakeUser | null) => void;
 
@@ -12,7 +12,7 @@ export const getAuth = () => auth;
 
 export const onAuthStateChanged = (_auth: unknown, listener: AuthListener) => {
   listeners.add(listener);
-  if (scenario() !== 'auth-stalled') {
+  if (!scenario().startsWith('auth-stalled')) {
     queueMicrotask(() => {
       if (!listeners.has(listener)) return;
       auth.currentUser = scenario() === 'signed-out'
@@ -29,6 +29,11 @@ export const signOut = async () => {
   for (const listener of listeners) listener(null);
 };
 
-export const signInWithEmailAndPassword = async () => {
-  throw Object.assign(new Error('Credenciais de teste não configuradas.'), { code: 'auth/invalid-credential' });
+export const signInWithEmailAndPassword = async (_auth: unknown, email: string) => {
+  if (scenario() !== 'auth-stalled-new-user') {
+    throw Object.assign(new Error('Credenciais de teste não configuradas.'), { code: 'auth/invalid-credential' });
+  }
+  auth.currentUser = { uid: 'e2e-new-user', email, getIdToken: async () => 'e2e-token' };
+  for (const listener of listeners) listener(auth.currentUser);
+  return { user: auth.currentUser };
 };
