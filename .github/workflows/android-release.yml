@@ -6,7 +6,7 @@ on:
       version_code:
         description: 'Código numérico maior que o último enviado ao Play Console'
         required: true
-        default: '13'
+        default: '14'
         type: string
 
 permissions:
@@ -26,6 +26,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate version code
+        shell: bash
+        run: |
+          if [[ ! "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
+            echo "Invalid version_code: $VERSION_CODE"
+            exit 1
+          fi
+          if (( VERSION_CODE <= 13 )); then
+            echo "versionCode 13 was already generated for the Play Console; use 14 or higher"
+            exit 1
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
